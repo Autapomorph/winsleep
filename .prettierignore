@@ -1,0 +1,14 @@
+.github/
+.agents/
+.claude/
+.continue/
+.next/
+libs/
+node_modules/
+out/
+package-lock.yaml/
+public/
+*.lock
+*.md
+*.mdx
+*.d.ts

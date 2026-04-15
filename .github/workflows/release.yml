@@ -1,0 +1,349 @@
+name: Build release bundle
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "New Version"
+        required: true
+      force_version:
+        description: "Force specified version"
+        required: false
+        type: boolean
+        default: false
+      is_draft:
+        description: "Create Draft Release"
+        required: false
+        type: boolean
+        default: false
+      is_major:
+        description: "Major update"
+        required: false
+        type: boolean
+        default: false
+      force_npm_install:
+        description: "Force fresh npm install"
+        required: false
+        type: boolean
+        default: false
+      force_cargo_clean:
+        description: "Force cargo clean"
+        required: false
+        type: boolean
+        default: false
+
+run-name: Build release ${{ github.event.inputs.version }}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  validate_version:
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.normalize_new_version.outputs.new_version }}
+      previous_version: ${{ steps.get_previous_version.outputs.previous_version }}
+    steps:
+      - name: Get latest release version
+        id: get_previous_version
+        run: |
+          PREVIOUS_VERSION=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r .tag_name)
+          echo "Found previous version: $PREVIOUS_VERSION"
+          echo "previous_version=$PREVIOUS_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Normalize new version
+        id: normalize_new_version
+        run: |
+          RAW_VERSION="${{ github.event.inputs.version }}"
+          NORMALIZED_VERSION="${RAW_VERSION#v}"
+          echo "new_version=$NORMALIZED_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Validate semantic version format
+        id: validate_format
+        uses: matt-usurp/validate-semver@v3
+        with:
+          version: ${{ steps.normalize_new_version.outputs.new_version }}
+
+      - name: Validate version increment
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const rawPrev = '${{ steps.get_previous_version.outputs.previous_version }}';
+            const prevVersion = rawPrev.replace(/^v/, '');
+            const isFirstRelease = rawPrev === 'null' || !rawPrev;
+            const newVersion = '${{ steps.normalize_new_version.outputs.new_version }}';
+
+            if (isFirstRelease) {
+              console.log(`ℹ️ No previous releases found. Proceeding with ${newVersion} as the initial release.`);
+              return;
+            }
+
+            const [prevMajor, prevMinor, prevPatch] = prevVersion.split('.').map(Number);
+            const [newMajor, newMinor, newPatch] = newVersion.split('.').map(Number);
+
+            // Check if it's a valid increment
+            const isMajor = newMajor > prevMajor && newMinor === 0 && newPatch === 0;
+            const isMinor = newMajor === prevMajor && newMinor > prevMinor && newPatch === 0;
+            const isPatch = newMajor === prevMajor && newMinor === prevMinor && newPatch === prevPatch + 1;
+
+            const forceVersion = '${{ github.event.inputs.force_version }}' === 'true';
+
+            if (!forceVersion && !isMajor && !isMinor && !isPatch) {
+              const validOptions = [
+                `${prevMajor}.${prevMinor}.${prevPatch + 1} (patch)`,
+                `${prevMajor}.${prevMinor + 1}.0 (minor)`,
+                `${prevMajor + 1}.0.0 (major)`
+              ];
+              
+              core.setFailed(
+                `❌ Invalid version increment!\n\n` +
+                `Current: ${prevVersion}\n` +
+                `Attempted: ${newVersion}\n\n` +
+                `Valid options:\n${validOptions.map(v => `  • ${v}`).join('\n')}`
+              );
+            }
+
+            if (forceVersion) {
+              console.log(`⚠️ Force version enabled: skipping increment validation`);
+            } else {
+              console.log(`✅ Valid version increment: ${prevVersion} → ${newVersion}`);
+            }
+
+  build_release_bundle:
+    needs: [validate_version]
+    timeout-minutes: 30
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: "npm"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Rust cache
+        id: cache-rust
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: Clean Cargo artifacts
+        if: steps.cache-rust.outputs.cache-hit != 'true' || github.event.inputs.force_cargo_clean == 'true'
+        run: cargo clean
+        working-directory: ./src-tauri
+
+      - name: Force clean npm cache
+        if: github.event.inputs.force_npm_install == 'true'
+        run: |
+          echo "Forcing fresh npm install"
+          npm cache clean --force
+
+      - name: Install dependencies (npm)
+        run: npm ci --prefer-offline --no-audit --progress=false
+
+      - name: Update version numbers
+        id: update-versions
+        shell: pwsh
+        run: |
+          $previousVersion = "${{ needs.validate_version.outputs.previous_version }}"
+          $newVersion = "${{ needs.validate_version.outputs.new_version }}"
+
+          # update package.json version
+          $packageJson = Get-Content package.json | ConvertFrom-Json
+          $packageJson.version = $newVersion
+          $packageJson | ConvertTo-Json -Depth 10 | Set-Content package.json
+
+          # update package-lock.json version
+          if (Test-Path package-lock.json) {
+            $packageLockJson = Get-Content package-lock.json | ConvertFrom-Json -AsHashTable
+            $packageLockJson.version = $newVersion
+
+            if ($packageLockJson.packages -and $packageLockJson.packages['']) {
+              $packageLockJson.packages[''].version = $newVersion
+            }
+
+            $packageLockJson | ConvertTo-Json -Depth 10 | Set-Content package-lock.json
+          }
+
+          # update tauri.conf.json version
+          $tauriConfJson = Get-Content src-tauri/tauri.conf.json | ConvertFrom-Json
+          $tauriConfJson.version = $newVersion
+          $tauriConfJson | ConvertTo-Json -Depth 10 | Set-Content src-tauri/tauri.conf.json
+
+          # update Cargo.toml version
+          $cargoTomlPath = "src-tauri/Cargo.toml"
+          $cargoToml = Get-Content $cargoTomlPath -Raw
+          $cargoToml = $cargoToml -replace '(?ms)(^\[package\].*?^version\s*=\s*")[^"]+(")', ('${1}' + $newVersion + '${2}')
+          Set-Content -Path $cargoTomlPath -Value $cargoToml -NoNewline
+
+          # update latest.json version & url
+          if (Test-Path latest.json) {
+            $latestJson = Get-Content latest.json | ConvertFrom-Json
+            $latestJson.version = $newVersion
+            $newVersionUrl = "https://github.com/$env:GITHUB_REPOSITORY/releases/download/$newVersion/WinSleep_${newVersion}_x64-setup.exe"
+            
+            if ($previousVersion -and $previousVersion -ne "null") {
+              $latestJson.platforms.'windows-x86_64'.url = $latestJson.platforms.'windows-x86_64'.url -replace [regex]::Escape($previousVersion), $newVersion
+            } else {
+              $latestJson.platforms.'windows-x86_64'.url = $newVersionUrl
+            }
+          } else {
+            $latestJson = @{
+              version = $newVersion
+              major = $false
+              platforms = @{
+                "windows-x86_64" = @{
+                  signature = ""
+                  url = $newVersionUrl
+                }
+              }
+            }
+          }
+
+          $latestJson | ConvertTo-Json -Depth 10 | Set-Content latest.json
+
+      - name: Create .env.production file
+        shell: pwsh
+        run: |
+          # Example:
+          # @"
+          # KEY=$env:KEY
+          # "@ | Set-Content .env.production
+          New-Item -Path .env.production -ItemType File -Force
+        # env:
+        # KEY: ${{ secrets.KEY }}
+
+      - name: Build and package Tauri app
+        if: steps.update-versions.outcome == 'success'
+        shell: pwsh
+        run: |
+          npm run tauri build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          TAURI_CI: "1"
+
+      - name: Update latest.json with signature
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const newVersion = process.env.NEW_VERSION;
+            const isMajorInput = process.env.IS_MAJOR;
+
+            const sigPath = path.resolve(`./src-tauri/target/release/bundle/nsis/WinSleep_${newVersion}_x64-setup.exe.sig`);
+            const latestJsonPath = path.resolve('./latest.json');
+
+            const newSignature = fs.readFileSync(sigPath, 'utf-8').trim();
+            const latestJson = JSON.parse(fs.readFileSync(latestJsonPath, 'utf-8'));
+
+            latestJson.platforms['windows-x86_64'].signature = newSignature;
+            latestJson.major = isMajorInput === 'true';
+
+            fs.writeFileSync(latestJsonPath, JSON.stringify(latestJson, null, 2));
+
+            console.log('Updated latest.json with new signature');
+        env:
+          NEW_VERSION: ${{ needs.validate_version.outputs.new_version }}
+          IS_MAJOR: ${{ github.event.inputs.is_major }}
+
+      - uses: actions/create-github-app-token@v3
+        id: generate-token
+        with:
+          client-id: ${{ secrets.CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Create PR for version changes
+        id: create-pr
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          commit-message: "chore(version): bump to ${{ needs.validate_version.outputs.new_version }}"
+          title: "chore(version): bump to ${{ needs.validate_version.outputs.new_version }}"
+          body: |
+            Automated version bump for release [v${{ needs.validate_version.outputs.new_version }}](https://github.com/${{ github.repository }}/releases/tag/${{ needs.validate_version.outputs.new_version }})
+
+            Generated by workflow run [${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            Merging this PR allows the release to be distributed through Tauri Updater for auto-updates
+          branch: "version-bump-${{ needs.validate_version.outputs.new_version }}-${{ github.run_id }}"
+          base: "main"
+          add-paths: |
+            package.json
+            package-lock.json
+            src-tauri/tauri.conf.json
+            src-tauri/Cargo.toml
+            src-tauri/Cargo.lock
+            latest.json
+          sign-commits: true
+
+      - name: Generate release notes
+        id: generate_notes
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+
+            const previousTag = '${{ needs.validate_version.outputs.previous_version }}';
+            const releaseNotesParams = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: '${{ needs.validate_version.outputs.new_version }}'
+            };
+
+            if (previousTag && previousTag !== 'null') {
+              releaseNotesParams.previous_tag_name = previousTag;
+            }
+
+            const releaseNotes = await github.rest.repos.generateReleaseNotes(releaseNotesParams);
+
+            // Remove lines for version bumps, docs, ci, and chore(ci)
+            const excludedKeywords = [
+              '* chore: update changelog',
+              '* chore(version): bump to',
+              '* chore: push notification',
+              '* chore(i18n): pull translations from crowdin',
+              '* chore(ci):',
+              '* ci:',
+              '* docs:'
+            ];
+
+            const releaseNotesLines = releaseNotes.data.body.split('\n');
+
+            const newReleaseNotesLines = releaseNotesLines.filter(line => {
+              const sanitizedLine = line.trim().toLowerCase();
+              return !excludedKeywords.some(keyword => sanitizedLine.includes(keyword));
+            });
+
+            const newReleaseNotesBody = newReleaseNotesLines.join('\n');
+
+            fs.writeFileSync('./release_notes.md', newReleaseNotesBody);
+
+            console.log('Generated release notes:');
+            console.log(newReleaseNotesBody);
+
+            return newReleaseNotesBody;
+
+      - name: Create release
+        uses: softprops/action-gh-release@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.validate_version.outputs.new_version }}
+          name: v${{ needs.validate_version.outputs.new_version }}
+          body_path: ./release_notes.md
+          draft: ${{ github.event.inputs.is_draft == 'true' }}
+          files: |
+            ./src-tauri/target/release/bundle/nsis/WinSleep_${{ needs.validate_version.outputs.new_version }}_x64-setup.exe
+            ./src-tauri/target/release/bundle/nsis/WinSleep_${{ needs.validate_version.outputs.new_version }}_x64-setup.exe.sig

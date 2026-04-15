@@ -1,0 +1,72 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+.yarn/install-state.gz
+
+# env files
+.env*
+!.env.example
+
+# Tests
+coverage/
+.nyc_output/
+
+# Production
+.next/
+out/
+build/
+dist/
+
+# Generated content
+.source/
+
+# OS
+.DS_Store
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.vs/
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Vercel
+.vercel/
+
+# Tauri
+src-tauri/target
+src-tauri/libs
+src-tauri/gen
+.window-state.json
+
+# Sitemap
+_pagefind/
+public/sitemap*.xml
+public/robots.txt
+
+# Keys
+*.pem

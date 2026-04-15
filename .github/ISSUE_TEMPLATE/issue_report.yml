@@ -1,0 +1,27 @@
+name: Issue/Bug Report
+description: Report a bug or issue
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Issue Description
+      description: Provide a clear and detailed description of the issue. Include any relevant screenshots, error messages, system information
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Provide the exact steps to reproduce this issue. If unsure, describe what you were doing when the issue occurred
+    validations:
+      required: true
+      
+  - type: textarea
+    id: log-file
+    attributes:
+      label: Log File
+      description: Attach your log file by going to `Settings → Debug → Open in Explorer`
+    validations:
+      required: true

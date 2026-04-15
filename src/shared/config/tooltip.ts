@@ -1,0 +1,5 @@
+export const TOOLTIP_DELAY_INSTANT = 0;
+export const TOOLTIP_DELAY_DEFAULT = 500;
+export const TOOLTIP_DELAY_LONG = 700;
+
+export const TOOLTIP_CLOSE_DELAY_DEFAULT = 300;

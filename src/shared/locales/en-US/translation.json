@@ -1,0 +1,782 @@
+{
+  "app": {
+    "name": "WinSleep",
+    "description": "Windows utility for scheduled system actions (Sleep, Hibernate, Shutdown, Restart, Lock, Sign Out)"
+  },
+  "common": {
+    "contextMenu": {
+      "copy": "Copy",
+      "cut": "Cut",
+      "paste": "Paste",
+      "selectAll": "Select All",
+      "aria": {
+        "label": "Context Menu"
+      }
+    },
+    "tooltip": {
+      "aria": {
+        "label": "Details..."
+      }
+    },
+    "accessibility": {
+      "skipToContent": "Skip to content"
+    },
+    "time": {
+      "units": {
+        "day": {
+          "short": "d",
+          "abbr_one": "d.",
+          "abbr_few": "d.",
+          "abbr_many": "d.",
+          "abbr_other": "d.",
+          "full_one": "day",
+          "full_few": "days",
+          "full_many": "days",
+          "full_other": "days"
+        },
+        "hour": {
+          "short": "h",
+          "abbr_one": "hr",
+          "abbr_few": "hrs",
+          "abbr_many": "hrs",
+          "abbr_other": "hrs",
+          "full_one": "hour",
+          "full_few": "hours",
+          "full_many": "hours",
+          "full_other": "hours"
+        },
+        "minute": {
+          "short": "m",
+          "abbr_one": "min",
+          "abbr_few": "mins",
+          "abbr_many": "mins",
+          "abbr_other": "mins",
+          "full_one": "minute",
+          "full_few": "minutes",
+          "full_many": "minutes",
+          "full_other": "minutes"
+        },
+        "second": {
+          "short": "s",
+          "abbr_one": "sec",
+          "abbr_few": "secs",
+          "abbr_many": "secs",
+          "abbr_other": "secs",
+          "full_one": "second",
+          "full_few": "seconds",
+          "full_many": "seconds",
+          "full_other": "seconds"
+        }
+      }
+    },
+    "wheelPicker": {
+      "decrement": {
+        "aria": {
+          "label": "Decrement"
+        }
+      },
+      "increment": {
+        "aria": {
+          "label": "Increment"
+        }
+      },
+      "enterValue": {
+        "value": {
+          "text": "value"
+        },
+        "aria": {
+          "label": "Enter {{label}}"
+        }
+      },
+      "editValue": {
+        "value": {
+          "text": "value"
+        },
+        "aria": {
+          "label": "Edit {{label}}"
+        }
+      }
+    },
+    "errors": {
+      "messages": {
+        "defaultTitle": "An error occurred",
+        "defaultMessage": "Something went wrong. Please try again",
+        "unhandledTitle": "Unexpected application error",
+        "unhandledRejectionTitle": "Background operation failed"
+      },
+      "errorBoundary": {
+        "title": "Oops, something went wrong",
+        "description": "An unexpected error occurred in the application",
+        "retryBtn": "Try Again",
+        "detailsBtn": "Show Details",
+        "hideDetailsBtn": "Hide Details",
+        "reloadBtn": "Reload Application"
+      },
+      "crashTest": {
+        "button": {
+          "aria": {
+            "label": "Crash Test"
+          }
+        },
+        "tooltip": "Simulate a crash"
+      }
+    }
+  },
+  "tray": {
+    "tooltip": {
+      "default": "WinSleep",
+      "paused": "WinSleep (timer paused: {{remainingTime}})",
+      "running": "WinSleep (timer running: {{remainingTime}})"
+    },
+    "menu": {
+      "open": "Open",
+      "quit": "Quit",
+      "timerState": {
+        "notRunning": "Timer not running ({{plannedTime}})",
+        "remaining": "Timer: {{remainingTime}}"
+      },
+      "startTimer": "Start Timer",
+      "resumeTimer": "Resume Timer",
+      "pauseTimer": "Pause Timer",
+      "cancelTimer": "Cancel Timer",
+      "selectPreset": "Select Preset",
+      "increaseTimer": "Increase timer by {{amount}}",
+      "decreaseTimer": "Decrease timer by {{amount}}",
+      "lockSettings": "Lock Settings",
+      "unlockSettings": "Unlock Settings",
+      "checkUpdates": {
+        "default": "Check for updates",
+        "checking": "Checking for updates...",
+        "available": "Update available",
+        "downloading": "Downloading update ({{progress}}%)",
+        "readyToRestart": "Update ready to install"
+      },
+      "timerAction": {
+        "selected": "Action: {{selectedTimerAction}}",
+        "sleep": "Sleep",
+        "hibernate": "Hibernate",
+        "shutdown": "Shutdown",
+        "reboot": "Restart",
+        "lock": "Screen Lock",
+        "signout": "Sign Out"
+      }
+    },
+    "notifications": {
+      "closedToTray": {
+        "title": "WinSleep is running in the background",
+        "body": "You can change this behavior in the application settings"
+      }
+    }
+  },
+  "timer": {
+    "startBtn": {
+      "text": "Start",
+      "aria": {
+        "label": "Start timer"
+      }
+    },
+    "stopBtn": {
+      "text": "Stop",
+      "aria": {
+        "label": "Stop timer"
+      }
+    },
+    "resetBtn": {
+      "text": "Reset",
+      "aria": {
+        "label": "Reset timer"
+      }
+    },
+    "pauseBtn": {
+      "text": "Pause",
+      "aria": {
+        "label": "Pause timer"
+      }
+    },
+    "resumeBtn": {
+      "text": "Resume",
+      "aria": {
+        "label": "Resume timer"
+      }
+    },
+    "cancelBtn": {
+      "text": "Cancel",
+      "aria": {
+        "label": "Cancel timer"
+      }
+    },
+    "nowLabel": {
+      "text": "Now"
+    },
+    "timerEditModal": {
+      "title": "Timer setup",
+      "modes": {
+        "tabs": {
+          "title": {
+            "duration": "Interval",
+            "timestamp": "Specific time"
+          },
+          "aria": {
+            "label": "Timer modes"
+          }
+        }
+      },
+      "rememberConfiguredTime": {
+        "switch": {
+          "label": "Remember timer duration"
+        }
+      },
+      "timestampPicker": {
+        "label": "Time",
+        "aria": {
+          "label": "Select timer date"
+        }
+      },
+      "submitBtn": {
+        "text": "Set"
+      },
+      "errors": {
+        "pastDateTime": "Selected datetime has already passed"
+      }
+    },
+    "editTimeBtn": {
+      "aria": {
+        "label": "Current timer value. Press to open modal and set a custom time"
+      }
+    },
+    "timerDisplay": {
+      "today": "Today",
+      "tomorrow": "Tomorrow"
+    },
+    "triggerAt": {
+      "default": "Trigger time: {{date}} at {{time}}",
+      "now": "Triggers immediately",
+      "today": "Trigger time: today at {{time}}",
+      "tomorrow": "Trigger time: tomorrow at {{time}}"
+    },
+    "decreaseTimeBtn": {
+      "aria": {
+        "label": "Decrease timer by {{amount}}"
+      },
+      "tooltip": "Decrease by {{amount}}"
+    },
+    "increaseTimeBtn": {
+      "aria": {
+        "label": "Increase timer by {{amount}}"
+      },
+      "tooltip": "Increase by {{amount}}"
+    },
+    "notifications": {
+      "expireSoon": {
+        "title": "Timer is about to end"
+      }
+    },
+    "presets": {
+      "aria": {
+        "label": "Timer presets"
+      }
+    },
+    "lockBtn": {
+      "aria": {
+        "label": "Toggle settings lock"
+      },
+      "tooltip": {
+        "lock": "Lock settings",
+        "unlock": "Unlock settings"
+      }
+    },
+    "errors": {
+      "systemNotificationSendFailed": "Failed to send system notification"
+    }
+  },
+  "timerAction": {
+    "sleepLabel": {
+      "text": "Sleep"
+    },
+    "hibernateLabel": {
+      "text": "Hibernate"
+    },
+    "shutdownLabel": {
+      "text": "Shutdown"
+    },
+    "rebootLabel": {
+      "text": "Restart"
+    },
+    "lockLabel": {
+      "text": "Screen Lock"
+    },
+    "signoutLabel": {
+      "text": "Sign Out"
+    },
+    "timerActionSwitch": {
+      "aria": {
+        "sleepLabel": "Current timer action: Sleep",
+        "hibernateLabel": "Current timer action: Hibernate",
+        "shutdownLabel": "Current timer action: Shutdown",
+        "rebootLabel": "Current timer action: Restart",
+        "lockLabel": "Current timer action: Screen Lock",
+        "signoutLabel": "Current timer action: Sign Out"
+      }
+    },
+    "notifications": {
+      "planned": {
+        "sleep": "Putting PC to sleep",
+        "hibernate": "Putting PC to hibernate",
+        "shutdown": "Shutting down PC",
+        "reboot": "Rebooting PC",
+        "lock": "Locking PC",
+        "signout": "Signing Out"
+      },
+      "failed": {
+        "sleep": "Failed to put PC to sleep",
+        "hibernate": "Failed to put PC to hibernate",
+        "shutdown": "Failed to shut down PC",
+        "reboot": "Failed to reboot PC",
+        "lock": "Failed to lock PC",
+        "signout": "Failed to sign out"
+      }
+    }
+  },
+  "titlebar": {
+    "menu": {
+      "menuBtn": {
+        "aria": {
+          "label": "Menu"
+        }
+      },
+      "items": {
+        "reportIssue": "Report an Issue",
+        "featureRequest": "Request a Feature",
+        "viewChangelog": "View Changelog",
+        "checkUpdates": {
+          "default": "Check for Updates",
+          "checking": "Checking for updates...",
+          "available": "Update available",
+          "downloading": "Downloading update ({{progress}}%)",
+          "readyToRestart": "Update ready to install"
+        }
+      }
+    },
+    "updateBtn": {
+      "aria": {
+        "label": {
+          "default": "Check for updates",
+          "checking": "Checking for updates...",
+          "available": "Update available. Press to download",
+          "downloading": "Downloading update",
+          "readyToRestart": "Update downloaded. Press to install",
+          "error": "Failed to check for updates"
+        }
+      },
+      "tooltip": {
+        "default": "Check for updates",
+        "checking": "Checking for updates...",
+        "available": "Update available",
+        "downloading": "Downloading update ({{progress}}%)",
+        "readyToRestart": "Update ready to install",
+        "error": "Failed to check for updates"
+      },
+      "notifications": {
+        "upToDate": "No updates available",
+        "checkFailed": "Failed to check for updates",
+        "installFailed": "Failed to download update",
+        "relaunchFailed": "Failed to relaunch application"
+      }
+    },
+    "minimizeBtn": {
+      "aria": {
+        "label": "Minimize"
+      }
+    },
+    "maximizeBtn": {
+      "aria": {
+        "label": "Maximize"
+      }
+    },
+    "closeBtn": {
+      "aria": {
+        "label": "Close"
+      }
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "backBtn": {
+      "aria": {
+        "label": "Go back to home page"
+      }
+    },
+    "openSettingsBtn": {
+      "aria": {
+        "label": "Open settings"
+      }
+    },
+    "sections": {
+      "timerAction": {
+        "title": "Timer Action",
+        "groups": {
+          "basic": {
+            "title": "Basic settings",
+            "defaultTimerAction": {
+              "select": {
+                "label": "Default timer action",
+                "placeholder": "Default timer action"
+              }
+            },
+            "rememberSelectedTimerAction": {
+              "switch": {
+                "label": "Remember selected timer action"
+              },
+              "tooltip": {
+                "text": "Restore last selected timer action on launch"
+              }
+            }
+          }
+        }
+      },
+      "timer": {
+        "title": "Timer",
+        "groups": {
+          "basic": {
+            "title": "Basic settings",
+            "defaultTimer": {
+              "label": {
+                "text": "Default timer duration"
+              },
+              "editBtn": {
+                "text": "Change"
+              },
+              "editModal": {
+                "title": "Default Timer Duration",
+                "submitBtn": {
+                  "text": "Set"
+                }
+              }
+            },
+            "rememberConfiguredTime": {
+              "switch": {
+                "label": "Remember timer duration"
+              },
+              "tooltip": {
+                "text": "Restore configured timer on launch"
+              }
+            }
+          },
+          "security": {
+            "title": "Protection",
+            "lockByDefault": {
+              "switch": {
+                "label": "Lock timer controls by default"
+              }
+            }
+          },
+          "customSteps": {
+            "title": "Time adjustment steps",
+            "useCustomSteps": {
+              "switch": {
+                "label": "Use custom time adjustment steps"
+              }
+            },
+            "editModal": {
+              "title": {
+                "increase": "Increase Time Step",
+                "decrease": "Decrease Time Step"
+              },
+              "submitBtn": {
+                "text": "Set"
+              }
+            },
+            "stepIncrease": {
+              "label": {
+                "text": "Increase step"
+              },
+              "editBtn": {
+                "text": "Change"
+              }
+            },
+            "stepDecrease": {
+              "label": {
+                "text": "Decrease step"
+              },
+              "editBtn": {
+                "text": "Change"
+              }
+            }
+          },
+          "presets": {
+            "title": "Custom Presets",
+            "addCustomPresetBtn": {
+              "label": "Add preset"
+            },
+            "removeCustomPresetBtn": {
+              "aria": {
+                "label": "Remove preset"
+              }
+            },
+            "empty": "No custom presets added yet",
+            "presetEditModal": {
+              "title": "Notification Time",
+              "submitBtn": {
+                "text": "Set"
+              }
+            }
+          }
+        }
+      },
+      "notifications": {
+        "title": "Notifications",
+        "groups": {
+          "basic": {
+            "title": "Enable Notifications",
+            "enableNotifications": {
+              "switch": {
+                "label": "Enable notification before timer ends"
+              }
+            }
+          },
+          "timePoints": {
+            "title": "Warning points",
+            "notificationTime": {
+              "label": {
+                "text": "Notification time before timer ends"
+              },
+              "editBtn": {
+                "text": "Change"
+              },
+              "editModal": {
+                "title": "Notification Time",
+                "submitBtn": {
+                  "text": "Set"
+                }
+              }
+            },
+            "addNotificationTimeBtn": {
+              "label": "Add notification"
+            },
+            "removeNotificationTimeBtn": {
+              "aria": {
+                "label": "Remove notification"
+              }
+            }
+          },
+          "sound": {
+            "title": "Notification Sound",
+            "playSound": {
+              "switch": {
+                "label": "Play notification sound"
+              }
+            },
+            "soundType": {
+              "select": {
+                "label": "Notification sound",
+                "options": {
+                  "system": "System sound",
+                  "app": "App sound"
+                }
+              }
+            }
+          }
+        }
+      },
+      "general": {
+        "title": "General",
+        "groups": {
+          "language": {
+            "title": "Interface Language",
+            "language": {
+              "select": {
+                "label": "Language",
+                "placeholder": "Select language"
+              }
+            }
+          },
+          "appearance": {
+            "title": "Appearance",
+            "theme": {
+              "select": {
+                "label": "Theme",
+                "placeholder": "Select theme",
+                "options": {
+                  "light": "Light",
+                  "dark": "Dark",
+                  "system": "System"
+                }
+              },
+              "toggle": {
+                "tooltip": {
+                  "lightLabel": "Light theme",
+                  "darkLabel": "Dark theme",
+                  "systemLabel": "System theme"
+                },
+                "aria": {
+                  "lightLabel": "Light theme",
+                  "darkLabel": "Dark theme",
+                  "systemLabel": "System theme"
+                }
+              }
+            }
+          },
+          "system": {
+            "title": "System",
+            "trayMode": {
+              "switch": {
+                "label": "Close to system tray"
+              }
+            },
+            "autostart": {
+              "switch": {
+                "label": "Launch at system startup"
+              }
+            },
+            "startMinimized": {
+              "switch": {
+                "label": "Start minimized"
+              }
+            }
+          },
+          "updates": {
+            "title": "Updates",
+            "autoCheck": {
+              "switch": {
+                "label": "Automatically check for updates"
+              },
+              "intervalSelect": {
+                "label": "Update check interval",
+                "placeholder": "Select interval",
+                "options": {
+                  "startup": "At startup",
+                  "hours_one": "{{count}} hour",
+                  "hours_few": "{{count}} hours",
+                  "hours_many": "{{count}} hours",
+                  "hours_other": "{{count}} hours"
+                }
+              }
+            }
+          },
+          "dangerZone": {
+            "title": "Settings Management",
+            "openInExplorer": "Open in Explorer",
+            "exportSettings": "Export",
+            "notifications": {
+              "export": {
+                "success": "Settings exported to clipboard"
+              },
+              "reset": {
+                "success": "Settings restored to defaults"
+              }
+            },
+            "reset": {
+              "text": "Reset settings",
+              "confirm": {
+                "title": "Reset Settings",
+                "body": "Are you sure you want to reset all settings to their default values? This action cannot be undone",
+                "confirmBtn": "Reset",
+                "cancelBtn": "Cancel"
+              }
+            }
+          }
+        }
+      },
+      "hotkeys": {
+        "title": "Hotkeys",
+        "groups": {
+          "timer": {
+            "title": "Timer Control",
+            "startPauseResume": "Start / Pause / Resume timer",
+            "cancel": "Cancel timer",
+            "increase": "Increase timer time",
+            "decrease": "Decrease timer time",
+            "instantExecute": "Execute action immediately",
+            "lockSettings": "Lock / Unlock settings"
+          },
+          "action": {
+            "title": "Timer Actions",
+            "sleep": "Select action: Sleep",
+            "hibernate": "Select action: Hibernate",
+            "shutdown": "Select action: Shutdown",
+            "reboot": "Select action: Restart",
+            "lock": "Select action: Lock screen",
+            "signOut": "Select action: Sign out"
+          },
+          "general": {
+            "title": "Interface & Navigation",
+            "openSettings": "Open Settings",
+            "back": "Close Settings / Back"
+          },
+          "dev": {
+            "title": "For Developers",
+            "toggleLanguage": "Switch language",
+            "toggleTheme": "Toggle theme",
+            "update": "Force check for updates",
+            "crashTest": "Crash test application"
+          }
+        }
+      },
+      "debug": {
+        "title": "Debug",
+        "groups": {
+          "logs": {
+            "title": "Logs",
+            "empty": "No logs recorded yet",
+            "error": "Failed to read logs",
+            "searchPlaceholder": "Search logs...",
+            "clearSearchBtn": {
+              "aria": {
+                "label": "Clear search query"
+              }
+            },
+            "filter": {
+              "all": "All",
+              "info": "Info",
+              "warn": "Warnings",
+              "error": "Errors",
+              "debug": "Debug"
+            }
+          },
+          "actions": {
+            "title": "Log Management",
+            "openInExplorer": "Open in Explorer",
+            "exportLogs": "Export",
+            "clear": "Clear",
+            "clearConfirm": {
+              "title": "Clear Logs",
+              "body": "Are you sure you want to clear log history? This action cannot be undone.",
+              "confirmBtn": "Clear",
+              "cancelBtn": "Cancel"
+            },
+            "notifications": {
+              "clear": {
+                "success": "Log file has been cleared"
+              },
+              "export": {
+                "success": "Logs copied to clipboard"
+              }
+            }
+          }
+        }
+      },
+      "about": {
+        "title": "About",
+        "description": "Windows utility for scheduled system actions (Sleep, Hibernate, Shutdown, Restart, Lock, Sign Out). Built using Rust, React, and HeroUI.",
+        "github": "GitHub Repository",
+        "copyright": "Copyright © 2026 Autapomorph. All rights reserved."
+      }
+    }
+  },
+  "changelogModal": {
+    "title": "WinSleep Update",
+    "version": "Version {{version}}",
+    "loading": "Loading release notes...",
+    "viewOnGithub": "View on GitHub",
+    "closeBtn": {
+      "text": "Close"
+    },
+    "error": {
+      "title": "Failed to load release notes",
+      "description": "Please check your internet connection or visit the GitHub releases page",
+      "retryBtn": {
+        "text": "Retry"
+      }
+    }
+  }
+}

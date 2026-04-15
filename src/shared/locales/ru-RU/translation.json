@@ -1,0 +1,782 @@
+{
+  "app": {
+    "name": "WinSleep",
+    "description": "Утилита Windows для выполнения запланированных системных действий (Сон, Гибернация, Выключение, Перезагрузка, Блокировка, Выход из системы)"
+  },
+  "common": {
+    "contextMenu": {
+      "copy": "Копировать",
+      "cut": "Вырезать",
+      "paste": "Вставить",
+      "selectAll": "Выделить всё",
+      "aria": {
+        "label": "Контекстное меню"
+      }
+    },
+    "tooltip": {
+      "aria": {
+        "label": "Подробнее..."
+      }
+    },
+    "accessibility": {
+      "skipToContent": "Перейти к содержимому"
+    },
+    "time": {
+      "units": {
+        "day": {
+          "short": "дн",
+          "abbr_one": "дн.",
+          "abbr_few": "дн.",
+          "abbr_many": "дн.",
+          "abbr_other": "дн.",
+          "full_one": "день",
+          "full_few": "дня",
+          "full_many": "дней",
+          "full_other": "дней"
+        },
+        "hour": {
+          "short": "ч",
+          "abbr_one": "час.",
+          "abbr_few": "час.",
+          "abbr_many": "час.",
+          "abbr_other": "час.",
+          "full_one": "час",
+          "full_few": "часа",
+          "full_many": "часов",
+          "full_other": "часов"
+        },
+        "minute": {
+          "short": "м",
+          "abbr_one": "мин.",
+          "abbr_few": "мин.",
+          "abbr_many": "мин.",
+          "abbr_other": "мин.",
+          "full_one": "минута",
+          "full_few": "минуты",
+          "full_many": "минут",
+          "full_other": "минут"
+        },
+        "second": {
+          "short": "с",
+          "abbr_one": "сек.",
+          "abbr_few": "сек.",
+          "abbr_many": "сек.",
+          "abbr_other": "сек.",
+          "full_one": "секунда",
+          "full_few": "секунды",
+          "full_many": "секунд",
+          "full_other": "секунд"
+        }
+      }
+    },
+    "wheelPicker": {
+      "decrement": {
+        "aria": {
+          "label": "Уменьшить"
+        }
+      },
+      "increment": {
+        "aria": {
+          "label": "Увеличить"
+        }
+      },
+      "enterValue": {
+        "value": {
+          "text": "значение"
+        },
+        "aria": {
+          "label": "Введите {{label}}"
+        }
+      },
+      "editValue": {
+        "value": {
+          "text": "значение"
+        },
+        "aria": {
+          "label": "Редактировать {{label}}"
+        }
+      }
+    },
+    "errors": {
+      "messages": {
+        "defaultTitle": "Произошла ошибка",
+        "defaultMessage": "Что-то пошло не так. Пожалуйста, попробуйте еще раз",
+        "unhandledTitle": "Непредвиденная ошибка приложения",
+        "unhandledRejectionTitle": "Сбой фоновой операции"
+      },
+      "errorBoundary": {
+        "title": "Ой, что-то пошло не так",
+        "description": "Произошла непредвиденная ошибка в приложении",
+        "retryBtn": "Попробовать снова",
+        "detailsBtn": "Показать детали",
+        "hideDetailsBtn": "Скрыть детали",
+        "reloadBtn": "Перезагрузить приложение"
+      },
+      "crashTest": {
+        "button": {
+          "aria": {
+            "label": "Тестирование сбоя"
+          }
+        },
+        "tooltip": "Симулировать сбой"
+      }
+    }
+  },
+  "tray": {
+    "tooltip": {
+      "default": "WinSleep",
+      "paused": "WinSleep (таймер приостановлен: {{remainingTime}})",
+      "running": "WinSleep (таймер запущен: {{remainingTime}})"
+    },
+    "menu": {
+      "open": "Открыть",
+      "quit": "Выйти",
+      "timerState": {
+        "notRunning": "Таймер не запущен ({{plannedTime}})",
+        "remaining": "Таймер: {{remainingTime}}"
+      },
+      "startTimer": "Запустить таймер",
+      "resumeTimer": "Продолжить таймер",
+      "pauseTimer": "Приостановить таймер",
+      "cancelTimer": "Отменить таймер",
+      "selectPreset": "Выбрать пресет",
+      "increaseTimer": "Увеличить таймер на {{amount}}",
+      "decreaseTimer": "Уменьшить таймер на {{amount}}",
+      "lockSettings": "Заблокировать настройки",
+      "unlockSettings": "Разблокировать настройки",
+      "checkUpdates": {
+        "default": "Проверить обновления",
+        "checking": "Проверка обновлений...",
+        "available": "Доступно обновление",
+        "downloading": "Загрузка обновления ({{progress}}%)",
+        "readyToRestart": "Обновление готово к установке"
+      },
+      "timerAction": {
+        "selected": "Действие: {{selectedTimerAction}}",
+        "sleep": "Спящий режим",
+        "hibernate": "Гибернация",
+        "shutdown": "Выключение",
+        "reboot": "Перезагрузка",
+        "lock": "Блокировка",
+        "signout": "Выход из системы"
+      }
+    },
+    "notifications": {
+      "closedToTray": {
+        "title": "WinSleep продолжает работать в фоновом режиме",
+        "body": "Вы можете изменить это поведение в настройках приложения"
+      }
+    }
+  },
+  "timer": {
+    "startBtn": {
+      "text": "Старт",
+      "aria": {
+        "label": "Запустить таймер"
+      }
+    },
+    "stopBtn": {
+      "text": "Стоп",
+      "aria": {
+        "label": "Остановить таймер"
+      }
+    },
+    "resetBtn": {
+      "text": "Сброс",
+      "aria": {
+        "label": "Сбросить таймер"
+      }
+    },
+    "pauseBtn": {
+      "text": "Пауза",
+      "aria": {
+        "label": "Приостановить таймер"
+      }
+    },
+    "resumeBtn": {
+      "text": "Продолжить",
+      "aria": {
+        "label": "Продолжить таймер"
+      }
+    },
+    "cancelBtn": {
+      "text": "Отмена",
+      "aria": {
+        "label": "Отменить таймер"
+      }
+    },
+    "nowLabel": {
+      "text": "Сейчас"
+    },
+    "timerEditModal": {
+      "title": "Настройка таймера",
+      "modes": {
+        "tabs": {
+          "title": {
+            "duration": "Интервал",
+            "timestamp": "Точное время"
+          },
+          "aria": {
+            "label": "Режимы таймера"
+          }
+        }
+      },
+      "rememberConfiguredTime": {
+        "switch": {
+          "label": "Запоминать настроенный таймер"
+        }
+      },
+      "timestampPicker": {
+        "label": "Время",
+        "aria": {
+          "label": "Выбрать дату таймера"
+        }
+      },
+      "submitBtn": {
+        "text": "Установить"
+      },
+      "errors": {
+        "pastDateTime": "Выбранное время уже прошло"
+      }
+    },
+    "editTimeBtn": {
+      "aria": {
+        "label": "Текущее значение таймера. Нажмите, чтобы открыть меню и задать произвольное время"
+      }
+    },
+    "timerDisplay": {
+      "today": "Сегодня",
+      "tomorrow": "Завтра"
+    },
+    "triggerAt": {
+      "default": "Сработает: {{date}} в {{time}}",
+      "now": "Сработает сразу",
+      "today": "Сработает сегодня в {{time}}",
+      "tomorrow": "Сработает завтра в {{time}}"
+    },
+    "decreaseTimeBtn": {
+      "aria": {
+        "label": "Уменьшить таймер на {{amount}}"
+      },
+      "tooltip": "Уменьшить на {{amount}}"
+    },
+    "increaseTimeBtn": {
+      "aria": {
+        "label": "Увеличить таймер на {{amount}}"
+      },
+      "tooltip": "Увеличить на {{amount}}"
+    },
+    "notifications": {
+      "expireSoon": {
+        "title": "Таймер скоро завершится"
+      }
+    },
+    "presets": {
+      "aria": {
+        "label": "Пресеты таймера"
+      }
+    },
+    "lockBtn": {
+      "aria": {
+        "label": "Переключить блокировку настроек"
+      },
+      "tooltip": {
+        "lock": "Заблокировать настройки",
+        "unlock": "Разблокировать настройки"
+      }
+    },
+    "errors": {
+      "systemNotificationSendFailed": "Не удалось отправить системное уведомление"
+    }
+  },
+  "timerAction": {
+    "sleepLabel": {
+      "text": "Спящий режим"
+    },
+    "hibernateLabel": {
+      "text": "Гибернация"
+    },
+    "shutdownLabel": {
+      "text": "Выключение"
+    },
+    "rebootLabel": {
+      "text": "Перезагрузка"
+    },
+    "lockLabel": {
+      "text": "Блокировка"
+    },
+    "signoutLabel": {
+      "text": "Выход из системы"
+    },
+    "timerActionSwitch": {
+      "aria": {
+        "sleepLabel": "Текущее действие таймера: Сон",
+        "hibernateLabel": "Текущее действие таймера: Гибернация",
+        "shutdownLabel": "Текущее действие таймера: Выключение",
+        "rebootLabel": "Текущее действие таймера: Перезагрузка",
+        "lockLabel": "Текущее действие таймера: Блокировка",
+        "signoutLabel": "Текущее действие таймера: Выход из системы"
+      }
+    },
+    "notifications": {
+      "planned": {
+        "sleep": "Перевод ПК в спящий режим",
+        "hibernate": "Перевод ПК в режим гибернации",
+        "shutdown": "Выключение ПК",
+        "reboot": "Перезагрузка ПК",
+        "lock": "Блокировка ПК",
+        "signout": "Выход из системы"
+      },
+      "failed": {
+        "sleep": "Не удалось перевести ПК в спящий режим",
+        "hibernate": "Не удалось перевести ПК в режим гибернации",
+        "shutdown": "Не удалось выключить ПК",
+        "reboot": "Не удалось перезагрузить ПК",
+        "lock": "Не удалось заблокировать ПК",
+        "signout": "Не удалось выйти из системы"
+      }
+    }
+  },
+  "titlebar": {
+    "menu": {
+      "menuBtn": {
+        "aria": {
+          "label": "Меню"
+        }
+      },
+      "items": {
+        "reportIssue": "Сообщить о проблеме",
+        "featureRequest": "Предложить идею",
+        "viewChangelog": "Посмотреть список изменений",
+        "checkUpdates": {
+          "default": "Проверить обновления",
+          "checking": "Проверка обновлений...",
+          "available": "Доступно обновление",
+          "downloading": "Загрузка обновления ({{progress}}%)",
+          "readyToRestart": "Обновление готово к установке"
+        }
+      }
+    },
+    "updateBtn": {
+      "aria": {
+        "label": {
+          "default": "Проверить обновления",
+          "checking": "Проверка обновлений...",
+          "available": "Доступно обновление. Нажмите, чтобы загрузить",
+          "downloading": "Загрузка обновления",
+          "readyToRestart": "Обновление загружено. Нажмите, чтобы установить",
+          "error": "Не удалось проверить обновления"
+        }
+      },
+      "tooltip": {
+        "default": "Проверить обновления",
+        "checking": "Проверка обновлений...",
+        "available": "Доступно обновление",
+        "downloading": "Загрузка обновления ({{progress}}%)",
+        "readyToRestart": "Обновление готово к установке",
+        "error": "Не удалось проверить обновления"
+      },
+      "notifications": {
+        "upToDate": "Обновлений нет",
+        "checkFailed": "Не удалось проверить обновления",
+        "installFailed": "Не удалось загрузить обновление",
+        "relaunchFailed": "Не удалось перезапустить приложение"
+      }
+    },
+    "minimizeBtn": {
+      "aria": {
+        "label": "Свернуть"
+      }
+    },
+    "maximizeBtn": {
+      "aria": {
+        "label": "Развернуть"
+      }
+    },
+    "closeBtn": {
+      "aria": {
+        "label": "Закрыть"
+      }
+    }
+  },
+  "settings": {
+    "title": "Настройки",
+    "backBtn": {
+      "aria": {
+        "label": "Назад на главную"
+      }
+    },
+    "openSettingsBtn": {
+      "aria": {
+        "label": "Открыть настройки"
+      }
+    },
+    "sections": {
+      "timerAction": {
+        "title": "Действие таймера",
+        "groups": {
+          "basic": {
+            "title": "Основные настройки",
+            "defaultTimerAction": {
+              "select": {
+                "label": "Действие таймера по умолчанию",
+                "placeholder": "Действие таймера по умолчанию"
+              }
+            },
+            "rememberSelectedTimerAction": {
+              "switch": {
+                "label": "Запоминать выбранное действие таймера"
+              },
+              "tooltip": {
+                "text": "Сохранять выбранное действие таймера между перезапусками приложения"
+              }
+            }
+          }
+        }
+      },
+      "timer": {
+        "title": "Таймер",
+        "groups": {
+          "basic": {
+            "title": "Основные настройки",
+            "defaultTimer": {
+              "label": {
+                "text": "Время таймера по умолчанию"
+              },
+              "editBtn": {
+                "text": "Изменить"
+              },
+              "editModal": {
+                "title": "Время таймера по умолчанию",
+                "submitBtn": {
+                  "text": "Установить"
+                }
+              }
+            },
+            "rememberConfiguredTime": {
+              "switch": {
+                "label": "Запоминать настроенный таймер"
+              },
+              "tooltip": {
+                "text": "Сохранять настроенный таймер между перезапусками приложения"
+              }
+            }
+          },
+          "security": {
+            "title": "Защита",
+            "lockByDefault": {
+              "switch": {
+                "label": "Включать защиту от случайных нажатий по умолчанию"
+              }
+            }
+          },
+          "customSteps": {
+            "title": "Шаги изменения времени",
+            "useCustomSteps": {
+              "switch": {
+                "label": "Использовать свои шаги изменения времени"
+              }
+            },
+            "editModal": {
+              "title": {
+                "increase": "Шаг увеличения времени",
+                "decrease": "Шаг уменьшения времени"
+              },
+              "submitBtn": {
+                "text": "Установить"
+              }
+            },
+            "stepIncrease": {
+              "label": {
+                "text": "Шаг увеличения"
+              },
+              "editBtn": {
+                "text": "Изменить"
+              }
+            },
+            "stepDecrease": {
+              "label": {
+                "text": "Шаг уменьшения"
+              },
+              "editBtn": {
+                "text": "Изменить"
+              }
+            }
+          },
+          "presets": {
+            "title": "Пользовательские пресеты",
+            "addCustomPresetBtn": {
+              "label": "Добавить пресет"
+            },
+            "removeCustomPresetBtn": {
+              "aria": {
+                "label": "Удалить пресет"
+              }
+            },
+            "empty": "Пользовательские пресеты пока не добавлены",
+            "presetEditModal": {
+              "title": "Пользовательский пресет таймера",
+              "submitBtn": {
+                "text": "Установить"
+              }
+            }
+          }
+        }
+      },
+      "notifications": {
+        "title": "Уведомления",
+        "groups": {
+          "basic": {
+            "title": "Включение уведомлений",
+            "enableNotifications": {
+              "switch": {
+                "label": "Включить уведомление о скором завершении таймера"
+              }
+            }
+          },
+          "timePoints": {
+            "title": "Точки предупреждения",
+            "notificationTime": {
+              "label": {
+                "text": "Время уведомления до окончания таймера"
+              },
+              "editBtn": {
+                "text": "Изменить"
+              },
+              "editModal": {
+                "title": "Время уведомления",
+                "submitBtn": {
+                  "text": "Установить"
+                }
+              }
+            },
+            "addNotificationTimeBtn": {
+              "label": "Добавить уведомление"
+            },
+            "removeNotificationTimeBtn": {
+              "aria": {
+                "label": "Удалить уведомление"
+              }
+            }
+          },
+          "sound": {
+            "title": "Звуковые сигналы",
+            "playSound": {
+              "switch": {
+                "label": "Проигрывать звук уведомлений"
+              }
+            },
+            "soundType": {
+              "select": {
+                "label": "Звук уведомления",
+                "options": {
+                  "system": "Системный звук",
+                  "app": "Звук приложения"
+                }
+              }
+            }
+          }
+        }
+      },
+      "general": {
+        "title": "Общие",
+        "groups": {
+          "language": {
+            "title": "Язык интерфейса",
+            "language": {
+              "select": {
+                "label": "Язык",
+                "placeholder": "Выберите язык"
+              }
+            }
+          },
+          "appearance": {
+            "title": "Внешний вид",
+            "theme": {
+              "select": {
+                "label": "Тема",
+                "placeholder": "Выберите тему",
+                "options": {
+                  "light": "Светлая",
+                  "dark": "Темная",
+                  "system": "Системная"
+                }
+              },
+              "toggle": {
+                "tooltip": {
+                  "lightLabel": "Светлая тема",
+                  "darkLabel": "Темная тема",
+                  "systemLabel": "Системная тема"
+                },
+                "aria": {
+                  "lightLabel": "Светлая тема",
+                  "darkLabel": "Темная тема",
+                  "systemLabel": "Системная тема"
+                }
+              }
+            }
+          },
+          "system": {
+            "title": "Система",
+            "trayMode": {
+              "switch": {
+                "label": "Сворачивать в трей вместо закрытия"
+              }
+            },
+            "autostart": {
+              "switch": {
+                "label": "Запускать при загрузке системы"
+              }
+            },
+            "startMinimized": {
+              "switch": {
+                "label": "Запускать в свернутом режиме"
+              }
+            }
+          },
+          "updates": {
+            "title": "Обновления",
+            "autoCheck": {
+              "switch": {
+                "label": "Автоматически проверять обновления"
+              },
+              "intervalSelect": {
+                "label": "Интервал проверки обновлений",
+                "placeholder": "Выберите интервал",
+                "options": {
+                  "startup": "При запуске",
+                  "hours_one": "{{count}} час",
+                  "hours_few": "{{count}} часа",
+                  "hours_many": "{{count}} часов",
+                  "hours_other": "{{count}} часов"
+                }
+              }
+            }
+          },
+          "dangerZone": {
+            "title": "Управление настройками",
+            "openInExplorer": "Открыть в Проводнике",
+            "exportSettings": "Экспорт",
+            "notifications": {
+              "export": {
+                "success": "Настройки скопированы в буфер обмена"
+              },
+              "reset": {
+                "success": "Настройки сброшены"
+              }
+            },
+            "reset": {
+              "text": "Сбросить настройки",
+              "confirm": {
+                "title": "Сброс настроек",
+                "body": "Вы уверены, что хотите сбросить все настройки на значения по умолчанию? Это действие нельзя отменить",
+                "confirmBtn": "Сбросить",
+                "cancelBtn": "Отмена"
+              }
+            }
+          }
+        }
+      },
+      "hotkeys": {
+        "title": "Горячие клавиши",
+        "groups": {
+          "timer": {
+            "title": "Управление таймером",
+            "startPauseResume": "Запустить / Приостановить / Возобновить таймер",
+            "cancel": "Отменить таймер",
+            "increase": "Увеличить время таймера",
+            "decrease": "Уменьшить время таймера",
+            "instantExecute": "Немедленное выполнение действия",
+            "lockSettings": "Заблокировать / Разблокировать настройки"
+          },
+          "action": {
+            "title": "Действия таймера",
+            "sleep": "Выбрать действие: Сон",
+            "hibernate": "Выбрать действие: Гибернация",
+            "shutdown": "Выбрать действие: Выключение",
+            "reboot": "Выбрать действие: Перезагрузка",
+            "lock": "Выбрать действие: Блокировка экрана",
+            "signOut": "Выбрать действие: Выход из системы"
+          },
+          "general": {
+            "title": "Интерфейс и навигация",
+            "openSettings": "Открыть настройки",
+            "back": "Закрыть настройки / Назад"
+          },
+          "dev": {
+            "title": "Для разработчиков",
+            "toggleLanguage": "Переключить язык",
+            "toggleTheme": "Переключить тему оформления",
+            "update": "Принудительно проверить обновления",
+            "crashTest": "Тест аварийного завершения"
+          }
+        }
+      },
+      "debug": {
+        "title": "Отладка",
+        "groups": {
+          "logs": {
+            "title": "Логи",
+            "empty": "Логи отсутствуют",
+            "error": "Не удалось загрузить логи",
+            "searchPlaceholder": "Поиск по логам...",
+            "clearSearchBtn": {
+              "aria": {
+                "label": "Очистить поисковый запрос"
+              }
+            },
+            "filter": {
+              "all": "Все",
+              "info": "Инфо",
+              "warn": "Предупреждения",
+              "error": "Ошибки",
+              "debug": "Отладка"
+            }
+          },
+          "actions": {
+            "title": "Управление логами",
+            "openInExplorer": "Открыть в Проводнике",
+            "exportLogs": "Экспорт",
+            "clear": "Очистить",
+            "clearConfirm": {
+              "title": "Очистка логов",
+              "body": "Вы уверены, что хотите полностью очистить файл логов? Это действие нельзя отменить.",
+              "confirmBtn": "Очистить",
+              "cancelBtn": "Отмена"
+            },
+            "notifications": {
+              "clear": {
+                "success": "Файл логов очищен"
+              },
+              "export": {
+                "success": "Логи скопированы в буфер обмена"
+              }
+            }
+          }
+        }
+      },
+      "about": {
+        "title": "О программе",
+        "description": "Утилита Windows для выполнения запланированных системных действий (Сон, Гибернация, Выключение, Перезагрузка, Блокировка, Выход из системы). Построена с использованием Rust, React и HeroUI.",
+        "github": "Репозиторий GitHub",
+        "copyright": "Copyright © 2026 Autapomorph. Все права защищены."
+      }
+    }
+  },
+  "changelogModal": {
+    "title": "Обновление WinSleep",
+    "version": "Версия {{version}}",
+    "loading": "Загрузка списка изменений...",
+    "closeBtn": {
+      "text": "Закрыть"
+    },
+    "viewOnGithub": "Посмотреть на GitHub",
+    "error": {
+      "title": "Не удалось загрузить список изменений",
+      "description": "Пожалуйста, проверьте интернет-соединение или перейдите на страницу релизов GitHub",
+      "retryBtn": {
+        "text": "Повторить попытку"
+      }
+    }
+  }
+}

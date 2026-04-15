@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "EditFile|WriteFile",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .agents/scripts/format-file.cjs"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .agents/scripts/verify-changes.cjs"
+          }
+        ]
+      }
+    ]
+  }
+}

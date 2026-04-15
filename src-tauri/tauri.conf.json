@@ -1,0 +1,84 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "WinSleep",
+  "mainBinaryName": "WinSleep",
+  "version": "1.0.0",
+  "identifier": "com.autapomorph.winsleep",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:3000",
+    "frontendDist": "../dist"
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDMyMTE3MDQxRjBCNUIxOQpSV1FaV3dzZkJCY2hBNHl2M3ZmM0dXdnZqcFk0czNWOFRkS1VrS3Z0K0tDM3Y3S0d5OFMvOFlhNQo=",
+      "endpoints": ["https://raw.githubusercontent.com/Autapomorph/winsleep/main/latest.json"],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "WinSleep",
+        "width": 800,
+        "height": 600,
+        "visible": false,
+        "resizable": false,
+        "maximizable": false,
+        "fullscreen": false,
+        "decorations": false,
+        "center": true
+      },
+      {
+        "label": "tray_menu",
+        "title": "WinSleep Tray Menu",
+        "url": "/tray-menu",
+        "width": 320,
+        "height": 480,
+        "visible": false,
+        "resizable": true,
+        "maximizable": false,
+        "fullscreen": false,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "category": "Utility",
+    "shortDescription": "WinSleep",
+    "longDescription": "Windows utility for scheduled system actions (Sleep, Hibernate, Shutdown, Restart, Lock, Sign Out)",
+    "publisher": "Autapomorph",
+    "homepage": "https://github.com/Autapomorph/winsleep",
+    "copyright": "Copyright © 2026 Autapomorph",
+    "licenseFile": "../LICENSE",
+    "createUpdaterArtifacts": true,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "digestAlgorithm": "sha256",
+      "nsis": {
+        "installMode": "both",
+        "installerIcon": "icons/icon.ico",
+        "languages": ["English", "Russian"],
+        "displayLanguageSelector": true
+      }
+    }
+  }
+}

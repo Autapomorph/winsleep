@@ -1,0 +1,27 @@
+{
+  "auto-format-file": {
+    "PostToolUse": [
+      {
+        "matcher": "replace_file_content|multi_replace_file_content|write_to_file",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .agents/scripts/format-file.cjs"
+          }
+        ]
+      }
+    ]
+  },
+  "pre-completion-checks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .agents/scripts/verify-changes.cjs"
+          }
+        ]
+      }
+    ]
+  }
+}

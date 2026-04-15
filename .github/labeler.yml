@@ -1,0 +1,144 @@
+# yaml-language-server: $schema=https://www.schemastore.org/pull-request-labeler-5.json
+
+# Infra labels
+ci:core:
+- all:
+  - changed-files:
+    - any-glob-to-any-file: ".github/**/*"
+    - all-globs-to-all-files: '!**/workflows/*'
+    - all-globs-to-all-files: '!**/ISSUE_TEMPLATE/*'
+
+ci:workflows:
+- all:
+  - changed-files:
+    - any-glob-to-any-file: ".github/workflows/**/*"
+
+ci:templates:
+- all:
+  - changed-files:
+    - any-glob-to-any-file: ".github/ISSUE_TEMPLATE/**/*"
+
+versioning:
+- all:
+  - changed-files:
+    - any-glob-to-any-file:
+      - "CHANGELOG.md"
+      - "latest.json"
+
+notifications:
+- all:
+  - changed-files:
+    - any-glob-to-any-file: "notifications.json"
+
+# React specific labels
+ui:assets:
+- all:
+  - changed-files:
+    - any-glob-to-any-file: "src/assets/**/*"
+
+# Tauri specific labels
+tauri:
+- all:
+  - changed-files:
+    - any-glob-to-any-file: "src-tauri/**/*"
+    - all-globs-to-all-files: '!src-tauri/src/**/*'
+    - all-globs-to-all-files: '!src-tauri/build.rs'
+    - all-globs-to-all-files: '!src-tauri/Cargo.lock'
+    - all-globs-to-all-files: '!src-tauri/Cargo.toml'
+    - all-globs-to-all-files: '!src-tauri/*.json'
+
+tauri:core:
+- all:
+  - changed-files:
+    - any-glob-to-any-file:
+      - "src-tauri/build.rs"
+      - "src-tauri/src/main.rs"
+      - "src-tauri/src/lib.rs"
+
+tauri:deps:
+- all:
+  - changed-files:
+    - any-glob-to-any-file:
+      - "src-tauri/Cargo.lock"
+      - "src-tauri/Cargo.toml"
+
+tauri:config:
+- all:
+  - changed-files:
+    - any-glob-to-any-file: "src-tauri/*.json"
+
+# Core labels
+core:deps:
+- all:
+  - changed-files:
+    - any-glob-to-any-file:
+      - "package.json"
+      - "package-lock.json"
+      - "yarn.lock"
+      - "pnpm-lock.yaml"
+
+core:config:
+- all:
+  - changed-files:
+    - any-glob-to-any-file:
+      - "*eslint*"
+      - "*prettier*"
+      - "*lint-staged*"
+      - ".gitignore"
+      - ".gitmodules"
+      - ".npmrc"
+      - "*.config.*"
+      - "*tsconfig.*"
+      - ".husky/*"
+      - "*.json"
+      - "*.yml"
+
+core:docs:
+- all:
+  - changed-files:
+    - any-glob-to-any-file: "README.md"
+
+# Library specific labels
+libs:
+- all:
+  - changed-files:
+    - any-glob-to-any-file: 
+      - "libs/**/*"
+      - "libs/**"
+
+# Types of changes labels
+bugfix:
+- all:
+  - head-branch: ["^fix", "fix/"]
+
+feature:
+- all:
+  - head-branch: ["^feat", "feat/"]
+
+chore:
+- all:
+  - head-branch: ["^chore", "chore/"]
+
+refactor:
+- all:
+  - head-branch: ["^refactor", "refactor/"]
+
+ci:
+- all:
+  - head-branch: ["^ci", "ci/"]
+
+config:
+- all:
+  - head-branch: ["^config", "config/"]
+
+docs:
+- all:
+  - head-branch: ["^docs", "docs/"]
+
+build:
+- all:
+  - head-branch: ["^build", "build/"]
+
+performance:
+- all:
+  - head-branch: ["^perf", "perf/"]

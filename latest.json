@@ -1,0 +1,10 @@
+{
+  "version": "0.0.0",
+  "major": false,
+  "platforms": {
+    "windows-x86_64": {
+      "url": "",
+      "signature": ""
+    }
+  }
+}
