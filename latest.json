@@ -1,10 +1,10 @@
 {
-  "version": "0.0.0",
+  "version": "1.0.0",
   "major": false,
   "platforms": {
     "windows-x86_64": {
-      "url": "",
-      "signature": ""
+      "url": "https://github.com/Autapomorph/winsleep/releases/download/1.0.0/WinSleep_1.0.0_x64-setup.exe",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRWld3c2ZCQmNoQTNMM1ZMaEp6bGsyM1RsK09tMXJhOUxWZG5ybHRpdmdtcEtyZ0RIc09qYk02SS9Bc2ZnemVEVEFZUEhDQk5oNFBEdlNUeitPYkJaVVFQaWIxY3B6SFFJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg2MzA0MjAyCWZpbGU6V2luU2xlZXBfMS4wLjBfeDY0LXNldHVwLmV4ZQpyejNTcytMODhubDFPNWFiYU5hS0kyNTJDK0VOSlRuL3VDQlI0aXhkWnA1OGRhb1hHZHBFcGNZZTZjQ3ZWeXU1ZWZNY2w0RnlZTGtGUCtSWVREb1ZDZz09Cg=="
     }
   }
 }
