@@ -13,7 +13,10 @@
   "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDMyMTE3MDQxRjBCNUIxOQpSV1FaV3dzZkJCY2hBNHl2M3ZmM0dXdnZqcFk0czNWOFRkS1VrS3Z0K0tDM3Y3S0d5OFMvOFlhNQo=",
-      "endpoints": ["https://raw.githubusercontent.com/Autapomorph/winsleep/main/latest.json"],
+      "endpoints": [
+        "https://raw.githubusercontent.com/Autapomorph/winsleep/main/latest.json",
+        "https://winsleep-proxy-updater.vercel.app/update/{{target}}-{{arch}}/{{current_version}}"
+      ],
       "windows": {
         "installMode": "passive"
       }

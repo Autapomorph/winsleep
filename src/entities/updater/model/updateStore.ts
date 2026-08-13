@@ -1,8 +1,15 @@
+import { arch, platform } from '@tauri-apps/plugin-os';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { type Update, check } from '@tauri-apps/plugin-updater';
 import { create } from 'zustand';
 
-import { config, GITHUB_API_REPO_URL } from '@/shared/config';
+import {
+  type GitHubReleaseResponse,
+  type ProxyUpdateResponse,
+  config,
+  GITHUB_API_REPO_URL,
+  PROXY_UPDATER_URL,
+} from '@/shared/config';
 import { delay, logger, showErrorToast } from '@/shared/lib';
 import { MOCK_CHANGELOG, MOCK_VERSION } from './mockUpdate';
 
@@ -205,12 +212,29 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
       try {
         const response = await fetch(`${GITHUB_API_REPO_URL}/releases/tag/${targetVersion}`);
 
-        if (!response.ok) {
-          throw new Error(`${response.status}`);
+        if (response.ok) {
+          const data: GitHubReleaseResponse = await response.json();
+          set({ changelog: data.body ?? '', isChangelogLoading: false });
+          return;
+        }
+      } catch {
+        // Fall back to proxy updater endpoint if direct GitHub API fetch fails
+      }
+
+      try {
+        const currentPlatform = platform();
+        const currentArch = arch();
+        // Pass dummy '0.0.0' version to force updater proxy to return release notes payload instead of HTTP 204
+        const proxyResponse = await fetch(
+          `${PROXY_UPDATER_URL}/update/${currentPlatform}-${currentArch}/0.0.0`,
+        );
+
+        if (!proxyResponse.ok) {
+          throw new Error(`${proxyResponse.status}`);
         }
 
-        const data = await response.json();
-        set({ changelog: data.body ?? '', isChangelogLoading: false });
+        const proxyData: ProxyUpdateResponse = await proxyResponse.json();
+        set({ changelog: proxyData.notes ?? '', isChangelogLoading: false });
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         logger.error(`Failed to fetch release notes: ${message}`);

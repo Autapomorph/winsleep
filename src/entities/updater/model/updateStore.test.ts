@@ -14,6 +14,11 @@ vi.mock(import('@tauri-apps/plugin-updater'), () => ({
   check: vi.fn(),
 }));
 
+vi.mock(import('@tauri-apps/plugin-os'), () => ({
+  platform: vi.fn(() => 'windows'),
+  arch: vi.fn(() => 'x86_64'),
+}));
+
 vi.mock(import('@/shared/config'), async importOriginal => {
   const original = await importOriginal();
   return {
@@ -292,7 +297,7 @@ describe('updateStore', () => {
     fetchSpy.mockRestore();
   });
 
-  test('should handle git release notes fetch failure', async () => {
+  test('should handle git release notes fetch failure on both primary and proxy', async () => {
     const fetchSpy = vi
       .spyOn(globalThis, 'fetch')
       .mockResolvedValue(new Response(null, { status: 404 }));
@@ -302,6 +307,25 @@ describe('updateStore', () => {
     const state = useUpdateStore.getState();
     expect(state.isChangelogLoading).toBe(false);
     expect(state.changelogError).toContain('404');
+
+    fetchSpy.mockRestore();
+  });
+
+  test('should fallback to proxy when primary GitHub API release notes fetch fails', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async url => {
+      if (typeof url === 'string' && url.includes('api.github.com')) {
+        return new Response(null, { status: 500 });
+      }
+
+      return new Response(JSON.stringify({ notes: 'Proxy release notes' }), { status: 200 });
+    });
+
+    await useUpdateStore.getState().fetchChangelog('v1.2.3');
+
+    const state = useUpdateStore.getState();
+    expect(state.isChangelogLoading).toBe(false);
+    expect(state.changelog).toBe('Proxy release notes');
+    expect(state.changelogError).toBeNull();
 
     fetchSpy.mockRestore();
   });
