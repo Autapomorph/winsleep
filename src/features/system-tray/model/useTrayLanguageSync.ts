@@ -211,7 +211,7 @@ export const useTrayLanguageSync = () => {
           throw new AbortError(context.error);
         }
 
-        logger.warn(
+        logger.debug(
           `Failed to update tray menu due to timeout (attempt ${context.attemptNumber}/4). Retrying...`,
         );
       },

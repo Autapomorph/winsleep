@@ -82,7 +82,13 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        logger.error(`Error checking for updates: ${message}`);
+
+        if (options.isManual) {
+          logger.error(`Error checking for updates: ${message}`);
+        } else {
+          logger.debug(`Error checking for updates: ${message}`);
+        }
+
         set({ status: 'error', errorMessage: message });
       }
     },
