@@ -90,14 +90,18 @@ export const ChangelogModal = () => {
         const currentVersion = await getVersion();
         const pendingVersion = localStorage.getItem(STORAGE_HAS_UPDATED_TO_KEY);
 
-        if (
-          pendingVersion &&
-          (pendingVersion === currentVersion || pendingVersion === MOCK_VERSION)
-        ) {
+        if (pendingVersion) {
           localStorage.removeItem(STORAGE_HAS_UPDATED_TO_KEY);
-          openChangelog(pendingVersion);
+
+          const normalizedPending = pendingVersion.replace(/^v/, '');
+          const normalizedCurrent = currentVersion.replace(/^v/, '');
+
+          if (normalizedPending === normalizedCurrent || pendingVersion === MOCK_VERSION) {
+            openChangelog(pendingVersion);
+          }
         }
       } catch (err) {
+        localStorage.removeItem(STORAGE_HAS_UPDATED_TO_KEY);
         logger.error(`Initialization error: ${err}`);
       }
     };

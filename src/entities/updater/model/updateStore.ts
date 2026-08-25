@@ -140,9 +140,9 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
         });
 
         logger.info('Update downloaded successfully. Ready to install.');
-        localStorage.setItem(STORAGE_HAS_UPDATED_TO_KEY, updateInfo.version);
         set({ status: 'readyToRestart' });
       } catch (error) {
+        localStorage.removeItem(STORAGE_HAS_UPDATED_TO_KEY);
         const message = error instanceof Error ? error.message : String(error);
         logger.error(`Download failed: ${message}`);
         set({ status: 'error', errorMessage: message });
@@ -169,9 +169,11 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
       logger.info('Starting update install...');
 
       try {
+        localStorage.setItem(STORAGE_HAS_UPDATED_TO_KEY, updateInfo.version);
         await updateInfo.install();
         logger.info('Update installed');
       } catch (error) {
+        localStorage.removeItem(STORAGE_HAS_UPDATED_TO_KEY);
         const message = error instanceof Error ? error.message : String(error);
         logger.error(`Installation failed: ${message}`);
         set({ status: 'error', errorMessage: message });
