@@ -112,8 +112,8 @@ describe('updateStore', () => {
     expect(check).not.toHaveBeenCalled();
   });
 
-  test('should run downloadAndInstall during installUpdate', async () => {
-    const mockDownloadAndInstall = vi.fn(async onEvent => {
+  test('should run download during checkUpdates and reach readyToRestart', async () => {
+    const mockDownload = vi.fn(async onEvent => {
       if (onEvent) {
         onEvent({ event: 'Started', data: { contentLength: 100 } });
         onEvent({ event: 'Progress', data: { chunkLength: 50 } });
@@ -125,14 +125,15 @@ describe('updateStore', () => {
 
     const mockUpdate = {
       version: '2.1.0',
-      downloadAndInstall: mockDownloadAndInstall,
+      download: mockDownload,
+      install: vi.fn(),
     };
 
     vi.mocked(check).mockResolvedValueOnce(
       mockUpdate as unknown as Awaited<ReturnType<typeof check>>,
     );
 
-    // checkUpdates calls installUpdate in background, wait for it
+    // checkUpdates calls downloadUpdate in background, wait for it
     await useUpdateStore.getState().checkUpdates();
     // Flush microtasks
     await vi.advanceTimersByTimeAsync(0);
@@ -140,34 +141,73 @@ describe('updateStore', () => {
     const state = useUpdateStore.getState();
     expect(state.status).toBe('readyToRestart');
     expect(state.downloadProgress).toBe(100);
+    expect(mockDownload).toHaveBeenCalled();
   });
 
-  test('should ignore installUpdate if no updateInfo or already downloading', async () => {
+  test('should ignore downloadUpdate if no updateInfo or already downloading', async () => {
     useUpdateStore.setState({ updateInfo: null, status: 'idle' });
-    await useUpdateStore.getState().installUpdate();
+    await useUpdateStore.getState().downloadUpdate();
     expect(useUpdateStore.getState().status).toBe('idle');
 
     useUpdateStore.setState({ updateInfo: {} as unknown as Update, status: 'downloading' });
-    await useUpdateStore.getState().installUpdate();
+    await useUpdateStore.getState().downloadUpdate();
     expect(useUpdateStore.getState().status).toBe('downloading');
   });
 
-  test('should handle installUpdate failure and capture errors', async () => {
-    const mockDownloadAndInstall = vi.fn(async () => {
+  test('should handle downloadUpdate failure and capture errors', async () => {
+    const mockDownload = vi.fn(async () => {
       throw new Error('Disk full');
     });
 
     const mockUpdate = {
       version: '2.1.0',
-      downloadAndInstall: mockDownloadAndInstall,
+      download: mockDownload,
     };
 
     useUpdateStore.setState({ updateInfo: mockUpdate as unknown as Update, status: 'idle' });
-    await useUpdateStore.getState().installUpdate();
+    await useUpdateStore.getState().downloadUpdate();
 
     const state = useUpdateStore.getState();
     expect(state.status).toBe('error');
     expect(state.errorMessage).toBe('Disk full');
+  });
+
+  test('should run install during installUpdate when status is readyToRestart', async () => {
+    const mockInstall = vi.fn(async () => {});
+    const mockUpdate = {
+      version: '2.1.0',
+      install: mockInstall,
+      download: vi.fn(),
+    };
+
+    useUpdateStore.setState({
+      updateInfo: mockUpdate as unknown as Update,
+      status: 'readyToRestart',
+    });
+    await useUpdateStore.getState().installUpdate();
+
+    expect(mockInstall).toHaveBeenCalled();
+  });
+
+  test('should handle install failure during installUpdate', async () => {
+    const mockInstall = vi.fn(async () => {
+      throw new Error('Install error');
+    });
+    const mockUpdate = {
+      version: '2.1.0',
+      install: mockInstall,
+      download: vi.fn(),
+    };
+
+    useUpdateStore.setState({
+      updateInfo: mockUpdate as unknown as Update,
+      status: 'readyToRestart',
+    });
+    await useUpdateStore.getState().installUpdate();
+
+    const state = useUpdateStore.getState();
+    expect(state.status).toBe('error');
+    expect(state.errorMessage).toBe('Install error');
   });
 
   test('should open and close changelog', () => {

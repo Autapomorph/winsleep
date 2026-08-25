@@ -16,6 +16,7 @@ export const useUpdater = () => {
 
     if (status === 'readyToRestart') {
       try {
+        await installUpdate();
         await relaunchApp();
       } catch (err) {
         logger.error(`Failed to relaunch application: ${err}`);

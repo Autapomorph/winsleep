@@ -31,6 +31,7 @@ interface UpdateState {
 
 interface UpdateActions {
   checkUpdates: (options?: { isManual?: boolean }) => Promise<void>;
+  downloadUpdate: () => Promise<void>;
   installUpdate: () => Promise<void>;
   relaunchApp: () => Promise<void>;
   resetStore: () => void;
@@ -74,7 +75,7 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
           logger.info(`Update available: v${update.version}`);
           set({ status: 'available', updateInfo: update });
           get()
-            .installUpdate()
+            .downloadUpdate()
             .catch(() => {});
         } else {
           logger.info('Application is up-to-date.');
@@ -93,7 +94,7 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
       }
     },
 
-    installUpdate: async () => {
+    downloadUpdate: async () => {
       const { updateInfo, status } = get();
 
       if (!updateInfo || status === 'downloading') {
@@ -101,13 +102,13 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
       }
 
       set({ status: 'downloading', downloadProgress: 0 });
-      logger.info('Starting update download and install...');
+      logger.info('Starting update download...');
 
       try {
         let downloaded = 0;
         let contentLength = 0;
 
-        await updateInfo.downloadAndInstall(event => {
+        await updateInfo.download(event => {
           switch (event.event) {
             case 'Started':
               contentLength = event.data.contentLength ?? 0;
@@ -129,7 +130,7 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
               break;
 
             case 'Finished':
-              logger.info('Download finished, installing...');
+              logger.info('Download finished.');
               set({ downloadProgress: 100 });
               break;
 
@@ -138,9 +139,38 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
           }
         });
 
-        logger.info('Update downloaded and installed. Ready to restart.');
+        logger.info('Update downloaded successfully. Ready to install.');
         localStorage.setItem(STORAGE_HAS_UPDATED_TO_KEY, updateInfo.version);
         set({ status: 'readyToRestart' });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        logger.error(`Download failed: ${message}`);
+        set({ status: 'error', errorMessage: message });
+        showErrorToast($ => $.titlebar.updateBtn.notifications.installFailed);
+      }
+    },
+
+    installUpdate: async () => {
+      const { updateInfo, status } = get();
+
+      if (!updateInfo) {
+        return;
+      }
+
+      if (status !== 'readyToRestart') {
+        await get().downloadUpdate();
+      }
+
+      const currentStatus = get().status;
+      if (currentStatus !== 'readyToRestart') {
+        return;
+      }
+
+      logger.info('Starting update install...');
+
+      try {
+        await updateInfo.install();
+        logger.info('Update installed');
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         logger.error(`Installation failed: ${message}`);
@@ -271,7 +301,7 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
             version: MOCK_VERSION,
             errorMessage: null,
             downloadProgress: 0,
-            downloadAndInstall: async (
+            download: async (
               onEvent?: (event: {
                 event: string;
                 data?: { contentLength?: number; chunkLength?: number } | Record<string, never>;
@@ -301,11 +331,14 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
                 throw error;
               }
             },
+            install: async () => {
+              logger.info('Mock install executed');
+            },
           } as unknown as Update,
         });
 
         get()
-          .installUpdate()
+          .downloadUpdate()
           .catch(() => {});
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
