@@ -1,14 +1,14 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "major": false,
   "platforms": {
     "windows-x86_64": {
-      "url": "https://github.com/Autapomorph/winsleep/releases/download/1.0.0/WinSleep_1.0.0_x64-setup.exe",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRWld3c2ZCQmNoQTNMM1ZMaEp6bGsyM1RsK09tMXJhOUxWZG5ybHRpdmdtcEtyZ0RIc09qYk02SS9Bc2ZnemVEVEFZUEhDQk5oNFBEdlNUeitPYkJaVVFQaWIxY3B6SFFJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg2MzA0MjAyCWZpbGU6V2luU2xlZXBfMS4wLjBfeDY0LXNldHVwLmV4ZQpyejNTcytMODhubDFPNWFiYU5hS0kyNTJDK0VOSlRuL3VDQlI0aXhkWnA1OGRhb1hHZHBFcGNZZTZjQ3ZWeXU1ZWZNY2w0RnlZTGtGUCtSWVREb1ZDZz09Cg=="
+      "url": "https://github.com/Autapomorph/winsleep/releases/download/1.1.0/WinSleep_1.1.0_x64-setup.exe",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRWld3c2ZCQmNoQTNUSjhSbk5Ya0E2MHRlTXg0YmQzRzhqdENpK1B3QUdSVmlPVE1IenZwaE1zdkVSblYxVjN5OXhNODJmcXQ5aTQ5TDVhdStyOTh0OEdWZjB4RkdoSWdBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg3Njk5NzI3CWZpbGU6V2luU2xlZXBfMS4xLjBfeDY0LXNldHVwLmV4ZQpLY01JeDZqeE5oaDQ3WDJOYjdOQVZ2ZGlqMUZBbkszckJRR3A1aEkzUUhpaUJKNm1YK08vTGFLNUIxbmRSSDJ1ZnE5Q21jbHZHYStGVHEzQW9scm5DQT09Cg=="
     },
     "windows-aarch64": {
-      "url": "https://github.com/Autapomorph/winsleep/releases/download/1.0.0/WinSleep_1.0.0_arm64-setup.exe",
-      "signature": ""
+      "url": "https://github.com/Autapomorph/winsleep/releases/download/1.1.0/WinSleep_1.1.0_arm64-setup.exe",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRWld3c2ZCQmNoQTRENkdYTTZpMFhoRHRNMm1DSmtnalRUV0lsZXlVV04xa1ljeFJYaXRRT3J5ckxKRWNraTh6dENkbWNXbml5THJobEhNYmRmSjMvU1RMaGNSeXBjaHdFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg3Njk5NzU1CWZpbGU6V2luU2xlZXBfMS4xLjBfYXJtNjQtc2V0dXAuZXhlCkF0VXU4bloyVU9EL1EycjFGSWZDNHhVREp3Risxa0NuUjBmd3RKUC9XNVAzRU40bWN6c0dlN0wzMGMzL3NuZ2VYZWhaWit4NzBkOFRDcHBFSGZvakRRPT0K"
     }
   }
 }
