@@ -1,14 +1,14 @@
 {
-  "version": "1.1.0",
+  "version": "1.1.1",
   "major": false,
   "platforms": {
     "windows-x86_64": {
-      "url": "https://github.com/Autapomorph/winsleep/releases/download/1.1.0/WinSleep_1.1.0_x64-setup.exe",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRWld3c2ZCQmNoQTNUSjhSbk5Ya0E2MHRlTXg0YmQzRzhqdENpK1B3QUdSVmlPVE1IenZwaE1zdkVSblYxVjN5OXhNODJmcXQ5aTQ5TDVhdStyOTh0OEdWZjB4RkdoSWdBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg3Njk5NzI3CWZpbGU6V2luU2xlZXBfMS4xLjBfeDY0LXNldHVwLmV4ZQpLY01JeDZqeE5oaDQ3WDJOYjdOQVZ2ZGlqMUZBbkszckJRR3A1aEkzUUhpaUJKNm1YK08vTGFLNUIxbmRSSDJ1ZnE5Q21jbHZHYStGVHEzQW9scm5DQT09Cg=="
+      "url": "https://github.com/Autapomorph/winsleep/releases/download/1.1.1/WinSleep_1.1.1_x64-setup.exe",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRWld3c2ZCQmNoQXdqbHNUbVJzZVJ5MmZCRG93Y1Fob3BTQUNyby9JYzVUSHB2YVlqV0RtYzN1cXZOU3JvT2s5UWFPaFNhaE1peVNRbjlpckE1aXNKVHNPT3hqTndjNFFJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg3NzAwOTk3CWZpbGU6V2luU2xlZXBfMS4xLjFfeDY0LXNldHVwLmV4ZQpoOW1qblVNbjVqV3hqVTJxRW1hYmJMdWMwd0NrUEJDeTUxb0xOaGRldU1sdHpYQUNPK3pkaFIxMm8wZVl4SzFBTGc5Tjk1NnRCeDM5UTJZSlpna3JEdz09Cg=="
     },
     "windows-aarch64": {
-      "url": "https://github.com/Autapomorph/winsleep/releases/download/1.1.0/WinSleep_1.1.0_arm64-setup.exe",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRWld3c2ZCQmNoQTRENkdYTTZpMFhoRHRNMm1DSmtnalRUV0lsZXlVV04xa1ljeFJYaXRRT3J5ckxKRWNraTh6dENkbWNXbml5THJobEhNYmRmSjMvU1RMaGNSeXBjaHdFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg3Njk5NzU1CWZpbGU6V2luU2xlZXBfMS4xLjBfYXJtNjQtc2V0dXAuZXhlCkF0VXU4bloyVU9EL1EycjFGSWZDNHhVREp3Risxa0NuUjBmd3RKUC9XNVAzRU40bWN6c0dlN0wzMGMzL3NuZ2VYZWhaWit4NzBkOFRDcHBFSGZvakRRPT0K"
+      "url": "https://github.com/Autapomorph/winsleep/releases/download/1.1.1/WinSleep_1.1.1_arm64-setup.exe",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRWld3c2ZCQmNoQTRtZGxLMFRzMWxyTWV6d0toV2N0S0pFNVhjSzRXMlhRZ0RoZU5SQTlhL3lVTWxaRDg0dzFMMG9YbkZwZUlSU2FPdGVMMEh5K2kvM3Q5TFJqSkZuOFFzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg3NzAxMDAzCWZpbGU6V2luU2xlZXBfMS4xLjFfYXJtNjQtc2V0dXAuZXhlCkdwUWZNeDdMKzNKNm5ldTc0SjVyQ01yKzZ4bmh4Z2c4WGwvK1liTEliZkVlaUp5NkQ2ZEVQN3FmMHEweEpXMHJwNUVhcDh4azFjN1JEM20yK2VsR0FRPT0K"
     }
   }
 }
