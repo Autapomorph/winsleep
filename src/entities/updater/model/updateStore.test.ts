@@ -15,8 +15,8 @@ vi.mock(import('@tauri-apps/plugin-updater'), () => ({
 }));
 
 vi.mock(import('@tauri-apps/plugin-os'), () => ({
-  platform: vi.fn(() => 'windows'),
-  arch: vi.fn(() => 'x86_64'),
+  platform: vi.fn((): import('@tauri-apps/plugin-os').Platform => 'windows'),
+  arch: vi.fn((): import('@tauri-apps/plugin-os').Arch => 'x86_64'),
 }));
 
 vi.mock(import('@/shared/config'), async importOriginal => {
