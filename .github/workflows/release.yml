@@ -114,6 +114,14 @@ jobs:
     needs: [validate_version]
     timeout-minutes: 30
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-msvc
+            arch: x64
+          - target: aarch64-pc-windows-msvc
+            arch: arm64
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -128,12 +136,15 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
 
       - name: Setup Rust cache
         id: cache-rust
         uses: swatinem/rust-cache@v2
         with:
           workspaces: "./src-tauri -> target"
+          key: ${{ matrix.target }}
 
       - name: Clean Cargo artifacts
         if: steps.cache-rust.outputs.cache-hit != 'true' || github.event.inputs.force_cargo_clean == 'true'
@@ -153,62 +164,7 @@ jobs:
         id: update-versions
         shell: pwsh
         run: |
-          $previousVersion = "${{ needs.validate_version.outputs.previous_version }}"
-          $newVersion = "${{ needs.validate_version.outputs.new_version }}"
-
-          # update package.json version
-          $packageJson = Get-Content package.json | ConvertFrom-Json
-          $packageJson.version = $newVersion
-          $packageJson | ConvertTo-Json -Depth 10 | Set-Content package.json
-
-          # update package-lock.json version
-          if (Test-Path package-lock.json) {
-            $packageLockJson = Get-Content package-lock.json | ConvertFrom-Json -AsHashTable
-            $packageLockJson.version = $newVersion
-
-            if ($packageLockJson.packages -and $packageLockJson.packages['']) {
-              $packageLockJson.packages[''].version = $newVersion
-            }
-
-            $packageLockJson | ConvertTo-Json -Depth 10 | Set-Content package-lock.json
-          }
-
-          # update tauri.conf.json version
-          $tauriConfJson = Get-Content src-tauri/tauri.conf.json | ConvertFrom-Json
-          $tauriConfJson.version = $newVersion
-          $tauriConfJson | ConvertTo-Json -Depth 10 | Set-Content src-tauri/tauri.conf.json
-
-          # update Cargo.toml version
-          $cargoTomlPath = "src-tauri/Cargo.toml"
-          $cargoToml = Get-Content $cargoTomlPath -Raw
-          $cargoToml = $cargoToml -replace '(?ms)(^\[package\].*?^version\s*=\s*")[^"]+(")', ('${1}' + $newVersion + '${2}')
-          Set-Content -Path $cargoTomlPath -Value $cargoToml -NoNewline
-
-          # update latest.json version & url
-          if (Test-Path latest.json) {
-            $latestJson = Get-Content latest.json | ConvertFrom-Json
-            $latestJson.version = $newVersion
-            $newVersionUrl = "https://github.com/$env:GITHUB_REPOSITORY/releases/download/$newVersion/WinSleep_${newVersion}_x64-setup.exe"
-            
-            if ($previousVersion -and $previousVersion -ne "null") {
-              $latestJson.platforms.'windows-x86_64'.url = $latestJson.platforms.'windows-x86_64'.url -replace [regex]::Escape($previousVersion), $newVersion
-            } else {
-              $latestJson.platforms.'windows-x86_64'.url = $newVersionUrl
-            }
-          } else {
-            $latestJson = @{
-              version = $newVersion
-              major = $false
-              platforms = @{
-                "windows-x86_64" = @{
-                  signature = ""
-                  url = $newVersionUrl
-                }
-              }
-            }
-          }
-
-          $latestJson | ConvertTo-Json -Depth 10 | Set-Content latest.json
+          ./scripts/bump-version.ps1 -NewVersion "${{ needs.validate_version.outputs.new_version }}"
 
       - name: Create .env.production file
         shell: pwsh
@@ -221,39 +177,102 @@ jobs:
         # env:
         # KEY: ${{ secrets.KEY }}
 
-      - name: Build and package Tauri app
+      - name: Build and package Tauri app (${{ matrix.arch }})
         if: steps.update-versions.outcome == 'success'
         shell: pwsh
         run: |
-          npm run tauri build
+          npm run tauri build -- --target ${{ matrix.target }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           TAURI_CI: "1"
 
-      - name: Update latest.json with signature
+      - name: Upload artifacts (${{ matrix.arch }})
+        uses: actions/upload-artifact@v7
+        with:
+          name: bundle-${{ matrix.arch }}
+          path: |
+            ./src-tauri/target/${{ matrix.target }}/release/bundle/nsis/WinSleep_${{ needs.validate_version.outputs.new_version }}_${{ matrix.arch }}-setup.exe
+            ./src-tauri/target/${{ matrix.target }}/release/bundle/nsis/WinSleep_${{ needs.validate_version.outputs.new_version }}_${{ matrix.arch }}-setup.exe.sig
+          if-no-files-found: error
+
+  publish_release:
+    needs: [validate_version, build_release_bundle]
+    timeout-minutes: 20
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Download all bundles
+        uses: actions/download-artifact@v7
+        with:
+          path: ./downloaded-artifacts
+
+      - name: Organize bundles
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path ./release-bundles
+          Get-ChildItem -Path ./downloaded-artifacts -Recurse -File | ForEach-Object {
+            Move-Item -Path $_.FullName -Destination ./release-bundles/ -Force
+          }
+          Get-ChildItem -Path ./release-bundles
+
+      - name: Update repository version numbers
+        shell: pwsh
+        run: |
+          ./scripts/bump-version.ps1 -NewVersion "${{ needs.validate_version.outputs.new_version }}"
+
+      - name: Update latest.json with signatures
         uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
             const path = require('path');
 
+            const repo = process.env.GITHUB_REPOSITORY;
             const newVersion = process.env.NEW_VERSION;
-            const isMajorInput = process.env.IS_MAJOR;
+            const isMajor = process.env.IS_MAJOR === 'true';
 
-            const sigPath = path.resolve(`./src-tauri/target/release/bundle/nsis/WinSleep_${newVersion}_x64-setup.exe.sig`);
             const latestJsonPath = path.resolve('./latest.json');
 
-            const newSignature = fs.readFileSync(sigPath, 'utf-8').trim();
-            const latestJson = JSON.parse(fs.readFileSync(latestJsonPath, 'utf-8'));
+            const x64SigPath = path.resolve(`./release-bundles/WinSleep_${newVersion}_x64-setup.exe.sig`);
+            const x64Sig = fs.readFileSync(x64SigPath, 'utf-8').trim();
 
-            latestJson.platforms['windows-x86_64'].signature = newSignature;
-            latestJson.major = isMajorInput === 'true';
+            const arm64SigPath = path.resolve(`./release-bundles/WinSleep_${newVersion}_arm64-setup.exe.sig`);
+            const arm64Sig = fs.readFileSync(arm64SigPath, 'utf-8').trim();
+
+            let latestJson = {
+              version: newVersion,
+              major: isMajor,
+              platforms: {}
+            };
+
+            if (fs.existsSync(latestJsonPath)) {
+              try {
+                latestJson = JSON.parse(fs.readFileSync(latestJsonPath, 'utf-8'));
+              } catch (e) {
+                console.warn('Could not parse existing latest.json, resetting.');
+              }
+            }
+
+            latestJson.version = newVersion;
+            latestJson.major = isMajor;
+            latestJson.platforms = latestJson.platforms || {};
+
+            latestJson.platforms['windows-x86_64'] = {
+              url: `https://github.com/${repo}/releases/download/${newVersion}/WinSleep_${newVersion}_x64-setup.exe`,
+              signature: x64Sig
+            };
+
+            latestJson.platforms['windows-aarch64'] = {
+              url: `https://github.com/${repo}/releases/download/${newVersion}/WinSleep_${newVersion}_arm64-setup.exe`,
+              signature: arm64Sig
+            };
 
             fs.writeFileSync(latestJsonPath, JSON.stringify(latestJson, null, 2));
-
-            console.log('Updated latest.json with new signature');
+            console.log('Successfully updated latest.json');
         env:
           NEW_VERSION: ${{ needs.validate_version.outputs.new_version }}
           IS_MAJOR: ${{ github.event.inputs.is_major }}
@@ -345,5 +364,7 @@ jobs:
           body_path: ./release_notes.md
           draft: ${{ github.event.inputs.is_draft == 'true' }}
           files: |
-            ./src-tauri/target/release/bundle/nsis/WinSleep_${{ needs.validate_version.outputs.new_version }}_x64-setup.exe
-            ./src-tauri/target/release/bundle/nsis/WinSleep_${{ needs.validate_version.outputs.new_version }}_x64-setup.exe.sig
+            ./release-bundles/WinSleep_${{ needs.validate_version.outputs.new_version }}_x64-setup.exe
+            ./release-bundles/WinSleep_${{ needs.validate_version.outputs.new_version }}_x64-setup.exe.sig
+            ./release-bundles/WinSleep_${{ needs.validate_version.outputs.new_version }}_arm64-setup.exe
+            ./release-bundles/WinSleep_${{ needs.validate_version.outputs.new_version }}_arm64-setup.exe.sig
