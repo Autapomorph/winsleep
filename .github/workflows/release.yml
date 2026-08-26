@@ -271,7 +271,7 @@ jobs:
               signature: arm64Sig
             };
 
-            fs.writeFileSync(latestJsonPath, JSON.stringify(latestJson, null, 2));
+            fs.writeFileSync(latestJsonPath, JSON.stringify(latestJson, null, 2) + '\n');
             console.log('Successfully updated latest.json');
         env:
           NEW_VERSION: ${{ needs.validate_version.outputs.new_version }}

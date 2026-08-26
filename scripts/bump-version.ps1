@@ -14,9 +14,9 @@ Write-Host "✓ Updated package.json and package-lock.json"
 # 3. Update src-tauri/tauri.conf.json
 $tauriConfPath = "src-tauri/tauri.conf.json"
 if (Test-Path $tauriConfPath) {
-  $tauriConfJson = Get-Content $tauriConfPath -Raw | ConvertFrom-Json
-  $tauriConfJson.version = $NewVersion
-  $tauriConfJson | ConvertTo-Json -Depth 10 | Set-Content $tauriConfPath
+  $tauriConf = Get-Content $tauriConfPath -Raw
+  $tauriConf = $tauriConf -replace '(?ms)(^  "version": ")[^"]+(")', ('${1}' + $NewVersion + '${2}')
+  Set-Content -Path $tauriConfPath -Value $tauriConf -NoNewline
   Write-Host "✓ Updated tauri.conf.json"
 }
 
