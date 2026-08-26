@@ -247,7 +247,9 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
       }
 
       try {
-        const proxyResponse = await fetch(`${PROXY_UPDATER_URL}/changelog/${targetVersion}`);
+        const proxyResponse = await fetch(`${PROXY_UPDATER_URL}/changelog/${targetVersion}`, {
+          cache: 'no-cache',
+        });
 
         if (proxyResponse.ok) {
           const proxyData: ProxyChangelogResponse = await proxyResponse.json();
@@ -259,7 +261,9 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
       }
 
       try {
-        const response = await fetch(`${GITHUB_API_REPO_URL}/releases/tag/${targetVersion}`);
+        const response = await fetch(`${GITHUB_API_REPO_URL}/releases/tag/${targetVersion}`, {
+          cache: 'no-cache',
+        });
 
         if (!response.ok) {
           throw new Error(`${response.status}`);
