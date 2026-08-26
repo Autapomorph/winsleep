@@ -1,11 +1,10 @@
-import { arch, platform } from '@tauri-apps/plugin-os';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { type Update, check } from '@tauri-apps/plugin-updater';
 import { create } from 'zustand';
 
 import {
   type GitHubReleaseResponse,
-  type ProxyUpdateResponse,
+  type ProxyChangelogResponse,
   config,
   GITHUB_API_REPO_URL,
   PROXY_UPDATER_URL,
@@ -248,31 +247,26 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
       }
 
       try {
-        const response = await fetch(`${GITHUB_API_REPO_URL}/releases/tag/${targetVersion}`);
+        const proxyResponse = await fetch(`${PROXY_UPDATER_URL}/changelog/${targetVersion}`);
 
-        if (response.ok) {
-          const data: GitHubReleaseResponse = await response.json();
-          set({ changelog: data.body ?? '', isChangelogLoading: false });
+        if (proxyResponse.ok) {
+          const proxyData: ProxyChangelogResponse = await proxyResponse.json();
+          set({ changelog: proxyData.notes ?? '', isChangelogLoading: false });
           return;
         }
       } catch {
-        // Fall back to proxy updater endpoint if direct GitHub API fetch fails
+        // Fall back to direct GitHub API if proxy endpoint fails
       }
 
       try {
-        const currentPlatform = platform();
-        const currentArch = arch();
-        // Pass dummy '0.0.0' version to force updater proxy to return release notes payload instead of HTTP 204
-        const proxyResponse = await fetch(
-          `${PROXY_UPDATER_URL}/update/${currentPlatform}-${currentArch}/0.0.0`,
-        );
+        const response = await fetch(`${GITHUB_API_REPO_URL}/releases/tag/${targetVersion}`);
 
-        if (!proxyResponse.ok) {
-          throw new Error(`${proxyResponse.status}`);
+        if (!response.ok) {
+          throw new Error(`${response.status}`);
         }
 
-        const proxyData: ProxyUpdateResponse = await proxyResponse.json();
-        set({ changelog: proxyData.notes ?? '', isChangelogLoading: false });
+        const data: GitHubReleaseResponse = await response.json();
+        set({ changelog: data.body ?? '', isChangelogLoading: false });
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         logger.error(`Failed to fetch release notes: ${message}`);

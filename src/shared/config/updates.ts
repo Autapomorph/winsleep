@@ -7,6 +7,13 @@ export interface ProxyUpdateResponse {
   notes?: string;
 }
 
+export interface ProxyChangelogResponse {
+  tag_name?: string;
+  version?: string;
+  notes?: string;
+  published_at?: string;
+}
+
 export type UpdateInterval = 'startup' | 1 | 3 | 6 | 12 | 24;
 
 export const DEFAULT_UPDATE_INTERVAL: UpdateInterval = 6;

@@ -320,24 +320,24 @@ describe('updateStore', () => {
     expect(state.changelog).toBe(MOCK_CHANGELOG);
   });
 
-  test('should fetch git release notes successfully', async () => {
+  test('should fetch git release notes from proxy successfully', async () => {
     const fetchSpy = vi
       .spyOn(globalThis, 'fetch')
       .mockResolvedValue(
-        new Response(JSON.stringify({ body: 'Release body text' }), { status: 200 }),
+        new Response(JSON.stringify({ notes: 'Proxy release notes' }), { status: 200 }),
       );
 
     await useUpdateStore.getState().fetchChangelog('v1.2.3');
 
     const state = useUpdateStore.getState();
     expect(state.isChangelogLoading).toBe(false);
-    expect(state.changelog).toBe('Release body text');
+    expect(state.changelog).toBe('Proxy release notes');
     expect(state.changelogError).toBeNull();
 
     fetchSpy.mockRestore();
   });
 
-  test('should handle git release notes fetch failure on both primary and proxy', async () => {
+  test('should handle git release notes fetch failure on both proxy and GitHub API', async () => {
     const fetchSpy = vi
       .spyOn(globalThis, 'fetch')
       .mockResolvedValue(new Response(null, { status: 404 }));
@@ -351,20 +351,20 @@ describe('updateStore', () => {
     fetchSpy.mockRestore();
   });
 
-  test('should fallback to proxy when primary GitHub API release notes fetch fails', async () => {
+  test('should fallback to GitHub API when proxy release notes fetch fails', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async url => {
-      if (typeof url === 'string' && url.includes('api.github.com')) {
+      if (typeof url === 'string' && url.includes('winsleep-proxy-updater')) {
         return new Response(null, { status: 500 });
       }
 
-      return new Response(JSON.stringify({ notes: 'Proxy release notes' }), { status: 200 });
+      return new Response(JSON.stringify({ body: 'GitHub release body' }), { status: 200 });
     });
 
     await useUpdateStore.getState().fetchChangelog('v1.2.3');
 
     const state = useUpdateStore.getState();
     expect(state.isChangelogLoading).toBe(false);
-    expect(state.changelog).toBe('Proxy release notes');
+    expect(state.changelog).toBe('GitHub release body');
     expect(state.changelogError).toBeNull();
 
     fetchSpy.mockRestore();
