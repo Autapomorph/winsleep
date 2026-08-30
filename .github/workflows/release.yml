@@ -35,8 +35,7 @@ on:
 run-name: Build release ${{ github.event.inputs.version }}
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   validate_version:
@@ -178,7 +177,6 @@ jobs:
         # KEY: ${{ secrets.KEY }}
 
       - name: Build and package Tauri app (${{ matrix.arch }})
-        if: steps.update-versions.outcome == 'success'
         shell: pwsh
         run: |
           npm run tauri build -- --target ${{ matrix.target }}
@@ -200,7 +198,10 @@ jobs:
   publish_release:
     needs: [validate_version, build_release_bundle]
     timeout-minutes: 20
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -208,16 +209,8 @@ jobs:
       - name: Download all bundles
         uses: actions/download-artifact@v7
         with:
-          path: ./downloaded-artifacts
-
-      - name: Organize bundles
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path ./release-bundles
-          Get-ChildItem -Path ./downloaded-artifacts -Recurse -File | ForEach-Object {
-            Move-Item -Path $_.FullName -Destination ./release-bundles/ -Force
-          }
-          Get-ChildItem -Path ./release-bundles
+          path: ./release-bundles
+          merge-multiple: true
 
       - name: Update repository version numbers
         shell: pwsh
@@ -368,3 +361,15 @@ jobs:
             ./release-bundles/WinSleep_${{ needs.validate_version.outputs.new_version }}_x64-setup.exe.sig
             ./release-bundles/WinSleep_${{ needs.validate_version.outputs.new_version }}_arm64-setup.exe
             ./release-bundles/WinSleep_${{ needs.validate_version.outputs.new_version }}_arm64-setup.exe.sig
+
+      - name: Cleanup bundle-x64 artifact
+        if: always() && needs.build_release_bundle.result == 'success'
+        uses: geekyeggo/delete-artifact@v6
+        with:
+          name: bundle-x64
+
+      - name: Cleanup bundle-arm64 artifact
+        if: always() && needs.build_release_bundle.result == 'success'
+        uses: geekyeggo/delete-artifact@v6
+        with:
+          name: bundle-arm64
