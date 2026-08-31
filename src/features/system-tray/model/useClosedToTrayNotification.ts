@@ -11,7 +11,7 @@ export const useClosedToTrayNotification = () => {
   useEffect(() => {
     let isActive = true;
 
-    const unlistenPromise = typedListen('window-closed-to-tray', async () => {
+    const unlistenWindowClosedToTray = typedListen('window-closed-to-tray', async () => {
       if (isActive) {
         const settings = useSettingsStore.getState();
 
@@ -30,7 +30,7 @@ export const useClosedToTrayNotification = () => {
 
     return () => {
       isActive = false;
-      unlistenPromise
+      unlistenWindowClosedToTray
         .then(unlisten => unlisten())
         .catch(err => {
           logger.error(`Failed to unsubscribe from closed-to-tray events: ${err}`);

@@ -6,7 +6,7 @@ import { FaLock, FaLockOpen, FaMinus, FaPause, FaPlay, FaPlus, FaStop } from 're
 import { IoSyncOutline } from 'react-icons/io5';
 import { MdOutlineLaunch, MdPowerSettingsNew } from 'react-icons/md';
 
-import { type TrayMenuState, typedEmit, typedInvoke, typedListen } from '@/shared/api';
+import { type TrayMenuState, typedEmit, typedListen } from '@/shared/api';
 import { TimerActionSelector } from './TimerActionSelector';
 import { TimerPresetSelector } from './TimerPresetSelector';
 import { TimerStatus } from './TimerStatus';
@@ -183,7 +183,10 @@ export const TrayMenuPage = () => {
         <Separator className="shrink-0" />
 
         {/* Quit */}
-        <TrayMenuButton icon={<MdPowerSettingsNew />} onPress={() => typedInvoke('quit_app')}>
+        <TrayMenuButton
+          icon={<MdPowerSettingsNew />}
+          onPress={() => typedEmit('app-exit-requested')}
+        >
           {quitLabel}
         </TrayMenuButton>
       </div>

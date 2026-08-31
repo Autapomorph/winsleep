@@ -39,7 +39,8 @@ pub fn handle_window_event(window: &tauri::Window, event: &tauri::WindowEvent) {
                 window.hide().unwrap();
                 let _ = window.emit("window-closed-to-tray", ());
             } else {
-                app_handle.exit(0);
+                api.prevent_close();
+                let _ = window.emit("app-exit-requested", ());
             }
         }
     }

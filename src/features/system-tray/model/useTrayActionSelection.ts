@@ -8,7 +8,7 @@ export const useTrayActionSelection = () => {
   useEffect(() => {
     let isActive = true;
 
-    const unlistenPromise = typedListen('tray-timer-action-selected', event => {
+    const unlistenTrayTimerActionSelected = typedListen('tray-timer-action-selected', event => {
       if (isActive) {
         const selectedAction = event.payload;
         logger.info(`Timer action selected from tray menu: ${selectedAction}`);
@@ -20,7 +20,7 @@ export const useTrayActionSelection = () => {
 
     return () => {
       isActive = false;
-      unlistenPromise
+      unlistenTrayTimerActionSelected
         .then(unlisten => unlisten())
         .catch(err => {
           logger.error(`Failed to unsubscribe from tray timer action selection events: ${err}`);

@@ -1,4 +1,4 @@
-import { useAutoUpdater, useMockUpdater } from '@/features/check-updates';
+import { useAutoInstallOnExit, useAutoUpdater, useMockUpdater } from '@/features/check-updates';
 import { usePowerSystemEvents, useTimerNotification } from '@/features/manage-timer';
 import { useTrayMode } from '@/features/system-tray';
 import { useDevLanguageShortcut } from '@/features/toggle-language';
@@ -15,6 +15,7 @@ export const MainWindowInitializer = () => {
   useTrayMode();
   useAutoUpdater();
   useMockUpdater();
+  useAutoInstallOnExit();
   useAppReady();
 
   return null;

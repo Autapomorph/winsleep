@@ -3,9 +3,10 @@ import type { TrayMenuState } from './tray-menu';
 
 export interface Events {
   'app-ready': never;
+  'app-exit-requested': never;
+  'window-closed-to-tray': never;
   'timer-tick': number;
   'timer-complete': never;
-  'window-closed-to-tray': never;
   'tray-sync-request': never;
   'tray-timer-action-selected': TimerAction;
   'tray-timer-start-resume-pause-clicked': never;

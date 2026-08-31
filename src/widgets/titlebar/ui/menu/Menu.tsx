@@ -15,7 +15,7 @@ export const Menu = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    let unlistenPromise: Promise<() => void> | undefined;
+    let unlistenTauriMove: Promise<() => void> | undefined;
     let initialPosition: { x: number; y: number } | null = null;
 
     // Closes the menu if the user clicks outside the dropdown popover.
@@ -43,7 +43,7 @@ export const Menu = () => {
       // Close the menu if the user drags the window.
       // Comparing actual window positions prevents false positives (micro-movements)
       // fired by the OS immediately upon menu focus/activation.
-      unlistenPromise = getCurrentWindow().listen<{ x: number; y: number }>(
+      unlistenTauriMove = getCurrentWindow().listen<{ x: number; y: number }>(
         'tauri://move',
         event => {
           const { x, y } = event.payload;
@@ -62,7 +62,7 @@ export const Menu = () => {
 
     return () => {
       window.removeEventListener('pointerdown', handlePointerDown, true);
-      unlistenPromise?.then(unlisten => unlisten());
+      unlistenTauriMove?.then(unlisten => unlisten());
     };
   }, [isOpen]);
 

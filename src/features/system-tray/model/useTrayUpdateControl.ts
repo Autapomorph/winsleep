@@ -15,7 +15,7 @@ export const useTrayUpdateControl = () => {
   useEffect(() => {
     let isActive = true;
 
-    const unlistenPromise = typedListen('tray-update-clicked', () => {
+    const unlistenTrayUpdateClicked = typedListen('tray-update-clicked', () => {
       if (isActive) {
         logger.info('Update clicked from tray menu');
         updateRef.current().catch(() => {});
@@ -24,7 +24,7 @@ export const useTrayUpdateControl = () => {
 
     return () => {
       isActive = false;
-      unlistenPromise
+      unlistenTrayUpdateClicked
         .then(unlisten => unlisten())
         .catch(err => {
           logger.error(`Failed to unsubscribe from tray update control events: ${err}`);

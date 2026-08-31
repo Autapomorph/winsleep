@@ -58,7 +58,7 @@ export const useTrayLanguageSync = () => {
   useEffect(() => {
     let isActive = true;
 
-    const unlistenPromise = typedListen('tray-sync-request', () => {
+    const unlistenTraySyncRequest = typedListen('tray-sync-request', () => {
       if (isActive) {
         setSyncTrigger(prev => prev + 1);
       }
@@ -66,7 +66,7 @@ export const useTrayLanguageSync = () => {
 
     return () => {
       isActive = false;
-      unlistenPromise
+      unlistenTraySyncRequest
         .then(unlisten => unlisten())
         .catch(err => {
           logger.error(`Failed to unsubscribe from tray sync events: ${err}`);
