@@ -321,4 +321,11 @@ export default defineConfig([
       ],
     },
   },
+
+  {
+    files: ['scripts/**/*.?([cm])[jt]s'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
 ]);

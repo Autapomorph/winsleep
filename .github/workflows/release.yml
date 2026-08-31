@@ -44,6 +44,9 @@ jobs:
       new_version: ${{ steps.normalize_new_version.outputs.new_version }}
       previous_version: ${{ steps.get_previous_version.outputs.previous_version }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
       - name: Get latest release version
         id: get_previous_version
         run: |
@@ -65,49 +68,11 @@ jobs:
           version: ${{ steps.normalize_new_version.outputs.new_version }}
 
       - name: Validate version increment
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const rawPrev = '${{ steps.get_previous_version.outputs.previous_version }}';
-            const prevVersion = rawPrev.replace(/^v/, '');
-            const isFirstRelease = rawPrev === 'null' || !rawPrev;
-            const newVersion = '${{ steps.normalize_new_version.outputs.new_version }}';
-
-            if (isFirstRelease) {
-              console.log(`ℹ️ No previous releases found. Proceeding with ${newVersion} as the initial release.`);
-              return;
-            }
-
-            const [prevMajor, prevMinor, prevPatch] = prevVersion.split('.').map(Number);
-            const [newMajor, newMinor, newPatch] = newVersion.split('.').map(Number);
-
-            // Check if it's a valid increment
-            const isMajor = newMajor > prevMajor && newMinor === 0 && newPatch === 0;
-            const isMinor = newMajor === prevMajor && newMinor > prevMinor && newPatch === 0;
-            const isPatch = newMajor === prevMajor && newMinor === prevMinor && newPatch === prevPatch + 1;
-
-            const forceVersion = '${{ github.event.inputs.force_version }}' === 'true';
-
-            if (!forceVersion && !isMajor && !isMinor && !isPatch) {
-              const validOptions = [
-                `${prevMajor}.${prevMinor}.${prevPatch + 1} (patch)`,
-                `${prevMajor}.${prevMinor + 1}.0 (minor)`,
-                `${prevMajor + 1}.0.0 (major)`
-              ];
-              
-              core.setFailed(
-                `❌ Invalid version increment!\n\n` +
-                `Current: ${prevVersion}\n` +
-                `Attempted: ${newVersion}\n\n` +
-                `Valid options:\n${validOptions.map(v => `  • ${v}`).join('\n')}`
-              );
-            }
-
-            if (forceVersion) {
-              console.log(`⚠️ Force version enabled: skipping increment validation`);
-            } else {
-              console.log(`✅ Valid version increment: ${prevVersion} → ${newVersion}`);
-            }
+        run: node scripts/validate-version-increment.js
+        env:
+          PREVIOUS_VERSION: ${{ steps.get_previous_version.outputs.previous_version }}
+          NEW_VERSION: ${{ steps.normalize_new_version.outputs.new_version }}
+          FORCE_VERSION: ${{ github.event.inputs.force_version }}
 
   build_release_bundle:
     needs: [validate_version]
@@ -163,7 +128,7 @@ jobs:
         id: update-versions
         shell: pwsh
         run: |
-          ./scripts/bump-version.ps1 -NewVersion "${{ needs.validate_version.outputs.new_version }}"
+          node ./scripts/bump-version.js "${{ needs.validate_version.outputs.previous_version }}" "${{ needs.validate_version.outputs.new_version }}"
 
       - name: Create .env.production file
         shell: pwsh
@@ -213,62 +178,15 @@ jobs:
           merge-multiple: true
 
       - name: Update repository version numbers
-        shell: pwsh
         run: |
-          ./scripts/bump-version.ps1 -NewVersion "${{ needs.validate_version.outputs.new_version }}"
+          node ./scripts/bump-version.js "${{ needs.validate_version.outputs.previous_version }}" "${{ needs.validate_version.outputs.new_version }}"
 
       - name: Update latest.json with signatures
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const fs = require('fs');
-            const path = require('path');
-
-            const repo = process.env.GITHUB_REPOSITORY;
-            const newVersion = process.env.NEW_VERSION;
-            const isMajor = process.env.IS_MAJOR === 'true';
-
-            const latestJsonPath = path.resolve('./latest.json');
-
-            const x64SigPath = path.resolve(`./release-bundles/WinSleep_${newVersion}_x64-setup.exe.sig`);
-            const x64Sig = fs.readFileSync(x64SigPath, 'utf-8').trim();
-
-            const arm64SigPath = path.resolve(`./release-bundles/WinSleep_${newVersion}_arm64-setup.exe.sig`);
-            const arm64Sig = fs.readFileSync(arm64SigPath, 'utf-8').trim();
-
-            let latestJson = {
-              version: newVersion,
-              major: isMajor,
-              platforms: {}
-            };
-
-            if (fs.existsSync(latestJsonPath)) {
-              try {
-                latestJson = JSON.parse(fs.readFileSync(latestJsonPath, 'utf-8'));
-              } catch (e) {
-                console.warn('Could not parse existing latest.json, resetting.');
-              }
-            }
-
-            latestJson.version = newVersion;
-            latestJson.major = isMajor;
-            latestJson.platforms = latestJson.platforms || {};
-
-            latestJson.platforms['windows-x86_64'] = {
-              url: `https://github.com/${repo}/releases/download/${newVersion}/WinSleep_${newVersion}_x64-setup.exe`,
-              signature: x64Sig
-            };
-
-            latestJson.platforms['windows-aarch64'] = {
-              url: `https://github.com/${repo}/releases/download/${newVersion}/WinSleep_${newVersion}_arm64-setup.exe`,
-              signature: arm64Sig
-            };
-
-            fs.writeFileSync(latestJsonPath, JSON.stringify(latestJson, null, 2) + '\n');
-            console.log('Successfully updated latest.json');
+        run: node scripts/update-latest-json.js
         env:
           NEW_VERSION: ${{ needs.validate_version.outputs.new_version }}
           IS_MAJOR: ${{ github.event.inputs.is_major }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
 
       - uses: actions/create-github-app-token@v3
         id: generate-token
@@ -302,50 +220,12 @@ jobs:
 
       - name: Generate release notes
         id: generate_notes
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const fs = require('fs');
-
-            const previousTag = '${{ needs.validate_version.outputs.previous_version }}';
-            const releaseNotesParams = {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: '${{ needs.validate_version.outputs.new_version }}'
-            };
-
-            if (previousTag && previousTag !== 'null') {
-              releaseNotesParams.previous_tag_name = previousTag;
-            }
-
-            const releaseNotes = await github.rest.repos.generateReleaseNotes(releaseNotesParams);
-
-            // Remove lines for version bumps, docs, ci, and chore(ci)
-            const excludedKeywords = [
-              '* chore: update changelog',
-              '* chore(version): bump to',
-              '* chore: push notification',
-              '* chore(i18n): pull translations from crowdin',
-              '* chore(ci):',
-              '* ci:',
-              '* docs:'
-            ];
-
-            const releaseNotesLines = releaseNotes.data.body.split('\n');
-
-            const newReleaseNotesLines = releaseNotesLines.filter(line => {
-              const sanitizedLine = line.trim().toLowerCase();
-              return !excludedKeywords.some(keyword => sanitizedLine.includes(keyword));
-            });
-
-            const newReleaseNotesBody = newReleaseNotesLines.join('\n');
-
-            fs.writeFileSync('./release_notes.md', newReleaseNotesBody);
-
-            console.log('Generated release notes:');
-            console.log(newReleaseNotesBody);
-
-            return newReleaseNotesBody;
+        run: node scripts/generate-release-notes.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          NEW_VERSION: ${{ needs.validate_version.outputs.new_version }}
+          PREVIOUS_VERSION: ${{ needs.validate_version.outputs.previous_version }}
 
       - name: Create release
         uses: softprops/action-gh-release@v3
