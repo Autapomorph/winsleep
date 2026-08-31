@@ -1,6 +1,6 @@
 [package]
 name = "winsleep"
-version = "1.1.4"
+version = "1.1.5"
 description = "Windows utility for scheduled system actions (Sleep, Hibernate, Shutdown, Restart, Lock, Sign Out)"
 authors = ["Autapomorph"]
 license = "GPL-3.0-only"
