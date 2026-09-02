@@ -21,6 +21,8 @@ export const DEFAULT_CUSTOM_TIMER_PRESETS: number[] = [];
 
 export const DEFAULT_IS_LOCKED_BY_DEFAULT = false;
 
+export const DEFAULT_IS_RESTORE_SCHEDULED_TIMER_ON_STARTUP_ENABLED = true;
+
 export const SECONDS_IN_DAY = 24 * 60 * 60; // 86400
 
 export const MS_IN_MINUTE = 1000 * 60;

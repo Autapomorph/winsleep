@@ -26,6 +26,8 @@ export type Commands = CommandsShape<{
   load_settings: CommandDef<Record<string, unknown> | null>;
   save_settings: CommandDef<void, { settings: Record<string, unknown> }>;
   open_settings_dir: CommandDef<void>;
+  load_app_state: CommandDef<Record<string, unknown> | null>;
+  save_app_state: CommandDef<void, { state: Record<string, unknown> }>;
   log_message: CommandDef<void, LogMessageCommandArgs>;
   read_logs: CommandDef<string>;
   clear_logs: CommandDef<void>;

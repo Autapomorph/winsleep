@@ -1,5 +1,10 @@
 import { useAutoInstallOnExit, useAutoUpdater, useMockUpdater } from '@/features/check-updates';
-import { usePowerSystemEvents, useTimerNotification } from '@/features/manage-timer';
+import {
+  usePowerSystemEvents,
+  useScheduledTimerRestore,
+  useScheduledTimerStateSync,
+  useTimerNotification,
+} from '@/features/manage-timer';
 import { useTrayMode } from '@/features/system-tray';
 import { useDevLanguageShortcut } from '@/features/toggle-language';
 import { useDevThemeShortcut } from '@/features/toggle-theme';
@@ -12,6 +17,8 @@ export const MainWindowInitializer = () => {
   useDevLanguageShortcut();
   usePowerSystemEvents();
   useTimerNotification();
+  useScheduledTimerStateSync();
+  useScheduledTimerRestore();
   useTrayMode();
   useAutoUpdater();
   useMockUpdater();

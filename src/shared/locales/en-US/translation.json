@@ -269,6 +269,12 @@
     "notifications": {
       "expireSoon": {
         "title": "Timer is about to end"
+      },
+      "scheduledTimerRestored": {
+        "title": "Scheduled timer restored"
+      },
+      "scheduledTimerExpiredWhileOffline": {
+        "title": "Scheduled timer expired while WinSleep was closed"
       }
     },
     "presets": {
@@ -459,6 +465,14 @@
               },
               "tooltip": {
                 "text": "Restore configured timer on launch"
+              }
+            },
+            "restoreScheduledTimerOnStartup": {
+              "switch": {
+                "label": "Restore scheduled timer on startup"
+              },
+              "tooltip": {
+                "text": "Automatically restore active scheduled timer when WinSleep starts"
               }
             }
           },

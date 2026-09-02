@@ -21,6 +21,7 @@ import {
   TimerActionSwitch,
   useTimerActionHotkeys,
 } from '@/features/select-timer-action';
+import { useAppStateStore } from '@/entities/app-state';
 import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import { MAX_SECONDS, MIN_SECONDS } from '@/entities/timer';
@@ -28,6 +29,7 @@ import { type TimerAction, config, SECONDS_IN_DAY, SHORTCUT_SCOPES } from '@/sha
 import {
   formatDays,
   formatTime,
+  getDateNow,
   logger,
   sendSystemNotification,
   showErrorToast,
@@ -232,12 +234,21 @@ export const Timer = () => {
       return;
     }
 
-    if (defaultTimerAction) {
-      setAction(defaultTimerAction);
-    }
+    const { isRestoreScheduledTimerOnStartupEnabled } = useSettingsStore.getState();
+    const { scheduledTimer } = useAppStateStore.getState();
+    const hasRestorableScheduledTimer =
+      isRestoreScheduledTimerOnStartupEnabled &&
+      scheduledTimer !== null &&
+      scheduledTimer.targetDateTime > getDateNow();
 
-    if (defaultTimerSeconds) {
-      setExactTime(defaultTimerSeconds);
+    if (!hasRestorableScheduledTimer) {
+      if (defaultTimerAction) {
+        setAction(defaultTimerAction);
+      }
+
+      if (defaultTimerSeconds) {
+        setExactTime(defaultTimerSeconds);
+      }
     }
 
     setIsLocked(isLockedByDefault);

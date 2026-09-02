@@ -42,6 +42,9 @@ describe('settingsStore', () => {
     store.setIsLockedByDefault(true);
     expect(useSettingsStore.getState().isLockedByDefault).toBe(true);
 
+    store.setIsRestoreScheduledTimerOnStartupEnabled(false);
+    expect(useSettingsStore.getState().isRestoreScheduledTimerOnStartupEnabled).toBe(false);
+
     store.setIsCustomTimerStepsEnabled(true);
     expect(useSettingsStore.getState().isCustomTimerStepsEnabled).toBe(true);
 

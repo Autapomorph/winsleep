@@ -9,6 +9,7 @@ describe('serializeSettings', () => {
       defaultTimerSeconds: 120,
       shouldRememberConfiguredTime: false,
       isLockedByDefault: false,
+      isRestoreScheduledTimerOnStartupEnabled: true,
       isCustomTimerStepsEnabled: false,
       timerStepIncrease: 30,
       timerStepDecrease: 30,

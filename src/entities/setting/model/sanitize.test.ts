@@ -1,8 +1,20 @@
 import { DEFAULT_TIMER_ACTION, DEFAULT_TIMER_SECONDS } from '@/shared/config';
 import { CURRENT_SETTINGS_VERSION } from './migrate';
-import { sanitizeSettings } from './sanitize';
+import { DEFAULT_SERIALIZED_SETTINGS, sanitizeSettings } from './sanitize';
 
 describe('sanitizeSettings', () => {
+  test('should return default settings for null or non-object input', () => {
+    expect(sanitizeSettings(null as unknown as Record<string, unknown>)).toEqual(
+      DEFAULT_SERIALIZED_SETTINGS,
+    );
+    expect(sanitizeSettings(undefined as unknown as Record<string, unknown>)).toEqual(
+      DEFAULT_SERIALIZED_SETTINGS,
+    );
+    expect(sanitizeSettings('string' as unknown as Record<string, unknown>)).toEqual(
+      DEFAULT_SERIALIZED_SETTINGS,
+    );
+  });
+
   test('should use default values for empty input', () => {
     const sanitized = sanitizeSettings({});
 

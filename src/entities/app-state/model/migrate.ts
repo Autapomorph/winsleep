@@ -1,27 +1,25 @@
-export interface LegacySettings {
+export interface LegacyAppState {
   version?: number;
   [key: string]: unknown;
 }
 
-export interface MigratedSettingsResult {
-  settings: Record<string, unknown>;
+export interface MigratedAppStateResult {
+  state: Record<string, unknown>;
   version: number;
 }
 
-export const CURRENT_SETTINGS_VERSION = 0;
+export const CURRENT_APP_STATE_VERSION = 0;
 
 /**
- * Migration helper function demonstrating how we can transition settings schemas
+ * Migration helper function demonstrating how we can transition app state schemas
  * over time when properties are renamed, restructured, or deprecated.
  */
-export function migrateSettings(data: LegacySettings): MigratedSettingsResult {
+export function migrateAppState(data: LegacyAppState): MigratedAppStateResult {
   const version = data.version ?? 0;
-  const settings = { ...data };
-  delete settings.version;
+  const state = { ...data };
+  delete state.version;
 
   // Example migration block showing how version updates work
-
-  // First make some updates to match v1
   // if (version === 0) {
   //   version = 1;
   // }
@@ -36,5 +34,5 @@ export function migrateSettings(data: LegacySettings): MigratedSettingsResult {
   //   version = 3;
   // }
 
-  return { settings, version };
+  return { state, version };
 }

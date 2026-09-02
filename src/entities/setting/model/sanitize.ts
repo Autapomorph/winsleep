@@ -9,6 +9,7 @@ import {
   DEFAULT_IS_LOCKED_BY_DEFAULT,
   DEFAULT_IS_NOTIFICATION_SOUND_ENABLED,
   DEFAULT_IS_NOTIFICATIONS_ENABLED,
+  DEFAULT_IS_RESTORE_SCHEDULED_TIMER_ON_STARTUP_ENABLED,
   DEFAULT_IS_START_MINIMIZED_ENABLED,
   DEFAULT_IS_TRAY_MODE_ENABLED,
   DEFAULT_NOTIFICATION_SECONDS,
@@ -25,7 +26,35 @@ import { isValidTimerAction, isValidUpdateInterval } from '@/shared/lib';
 import { CURRENT_SETTINGS_VERSION } from './migrate';
 import { type SerializedSettings } from './serialize';
 
+export const DEFAULT_SERIALIZED_SETTINGS: SerializedSettings = {
+  version: CURRENT_SETTINGS_VERSION,
+  defaultTimerAction: DEFAULT_TIMER_ACTION,
+  shouldRememberSelectedTimerAction: DEFAULT_SHOULD_REMEMBER_SELECTED_TIMER_ACTION,
+  defaultTimerSeconds: DEFAULT_TIMER_SECONDS,
+  shouldRememberConfiguredTime: DEFAULT_SHOULD_REMEMBER_CONFIGURED_TIME,
+  isLockedByDefault: DEFAULT_IS_LOCKED_BY_DEFAULT,
+  isRestoreScheduledTimerOnStartupEnabled: DEFAULT_IS_RESTORE_SCHEDULED_TIMER_ON_STARTUP_ENABLED,
+  isCustomTimerStepsEnabled: DEFAULT_IS_CUSTOM_TIMER_STEPS_ENABLED,
+  timerStepIncrease: DEFAULT_TIMER_STEP_SECONDS,
+  timerStepDecrease: DEFAULT_TIMER_STEP_SECONDS,
+  customTimerPresets: DEFAULT_CUSTOM_TIMER_PRESETS,
+  isNotificationsEnabled: DEFAULT_IS_NOTIFICATIONS_ENABLED,
+  notificationTimes: DEFAULT_NOTIFICATION_TIMES,
+  isNotificationSoundEnabled: DEFAULT_IS_NOTIFICATION_SOUND_ENABLED,
+  notificationSoundType: DEFAULT_NOTIFICATION_SOUND_TYPE,
+  isTrayModeEnabled: DEFAULT_IS_TRAY_MODE_ENABLED,
+  isAutostartEnabled: DEFAULT_IS_AUTOSTART_ENABLED,
+  isStartMinimizedEnabled: DEFAULT_IS_START_MINIMIZED_ENABLED,
+  isAutoUpdateEnabled: DEFAULT_IS_AUTO_UPDATE_ENABLED,
+  updateInterval: DEFAULT_UPDATE_INTERVAL,
+  hasSeenTrayNotification: DEFAULT_HAS_SEEN_TRAY_NOTIFICATION,
+};
+
 export const sanitizeSettings = (rawSettings: Record<string, unknown>): SerializedSettings => {
+  if (!rawSettings || typeof rawSettings !== 'object') {
+    return DEFAULT_SERIALIZED_SETTINGS;
+  }
+
   // Sanitize version
   const version =
     typeof rawSettings.version === 'number' ? rawSettings.version : CURRENT_SETTINGS_VERSION;
@@ -76,6 +105,12 @@ export const sanitizeSettings = (rawSettings: Record<string, unknown>): Serializ
     typeof rawSettings.isLockedByDefault === 'boolean'
       ? rawSettings.isLockedByDefault
       : DEFAULT_IS_LOCKED_BY_DEFAULT;
+
+  // Sanitize isRestoreScheduledTimerOnStartupEnabled
+  const isRestoreScheduledTimerOnStartupEnabled =
+    typeof rawSettings.isRestoreScheduledTimerOnStartupEnabled === 'boolean'
+      ? rawSettings.isRestoreScheduledTimerOnStartupEnabled
+      : DEFAULT_IS_RESTORE_SCHEDULED_TIMER_ON_STARTUP_ENABLED;
 
   // Sanitize isNotificationsEnabled
   const isNotificationsEnabled =
@@ -162,6 +197,7 @@ export const sanitizeSettings = (rawSettings: Record<string, unknown>): Serializ
     defaultTimerSeconds,
     shouldRememberConfiguredTime,
     isLockedByDefault,
+    isRestoreScheduledTimerOnStartupEnabled,
     isCustomTimerStepsEnabled,
     timerStepIncrease,
     timerStepDecrease,

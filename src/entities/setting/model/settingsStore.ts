@@ -18,6 +18,7 @@ import {
   DEFAULT_IS_LOCKED_BY_DEFAULT,
   DEFAULT_IS_NOTIFICATION_SOUND_ENABLED,
   DEFAULT_IS_NOTIFICATIONS_ENABLED,
+  DEFAULT_IS_RESTORE_SCHEDULED_TIMER_ON_STARTUP_ENABLED,
   DEFAULT_IS_START_MINIMIZED_ENABLED,
   DEFAULT_IS_TRAY_MODE_ENABLED,
   DEFAULT_NOTIFICATION_SOUND_TYPE,
@@ -55,6 +56,7 @@ interface TimerState {
   defaultTimerSeconds: number;
   shouldRememberConfiguredTime: boolean;
   isLockedByDefault: boolean;
+  isRestoreScheduledTimerOnStartupEnabled: boolean;
   isCustomTimerStepsEnabled: boolean;
   timerStepIncrease: number;
   timerStepDecrease: number;
@@ -65,6 +67,9 @@ interface TimerActions {
   setDefaultTimerSeconds: (defaultTimerSeconds: number) => void;
   setShouldRememberConfiguredTime: (shouldRememberConfiguredTime: boolean) => void;
   setIsLockedByDefault: (isLockedByDefault: boolean) => void;
+  setIsRestoreScheduledTimerOnStartupEnabled: (
+    isRestoreScheduledTimerOnStartupEnabled: boolean,
+  ) => void;
   setIsCustomTimerStepsEnabled: (isCustomTimerStepsEnabled: boolean) => void;
   setTimerStepIncrease: (timerStepIncrease: number) => void;
   setTimerStepDecrease: (timerStepDecrease: number) => void;
@@ -134,6 +139,7 @@ const initialTimerState = {
     seconds,
   })),
   isLockedByDefault: DEFAULT_IS_LOCKED_BY_DEFAULT,
+  isRestoreScheduledTimerOnStartupEnabled: DEFAULT_IS_RESTORE_SCHEDULED_TIMER_ON_STARTUP_ENABLED,
 };
 
 const initialNotificationState = {
@@ -192,6 +198,12 @@ const createTimerSlice: StateCreator<
     set({ shouldRememberConfiguredTime }, false, 'settings/setShouldRememberConfiguredTime'),
   setIsLockedByDefault: isLockedByDefault =>
     set({ isLockedByDefault }, false, 'settings/setIsLockedByDefault'),
+  setIsRestoreScheduledTimerOnStartupEnabled: isRestoreScheduledTimerOnStartupEnabled =>
+    set(
+      { isRestoreScheduledTimerOnStartupEnabled },
+      false,
+      'settings/setIsRestoreScheduledTimerOnStartupEnabled',
+    ),
   setIsCustomTimerStepsEnabled: isCustomTimerStepsEnabled =>
     set({ isCustomTimerStepsEnabled }, false, 'settings/setIsCustomTimerStepsEnabled'),
   setTimerStepIncrease: timerStepIncrease =>
