@@ -269,6 +269,12 @@
     "notifications": {
       "expireSoon": {
         "title": "Таймер скоро завершится"
+      },
+      "scheduledTimerRestored": {
+        "title": "Таймер восстановлен"
+      },
+      "scheduledTimerExpiredWhileOffline": {
+        "title": "Время таймера истекло, пока WinSleep был закрыт"
       }
     },
     "presets": {
@@ -459,6 +465,14 @@
               },
               "tooltip": {
                 "text": "Сохранять настроенный таймер между перезапусками приложения"
+              }
+            },
+            "restoreScheduledTimerOnStartup": {
+              "switch": {
+                "label": "Восстанавливать таймер при запуске"
+              },
+              "tooltip": {
+                "text": "Автоматически восстанавливать активный таймер при запуске WinSleep"
               }
             }
           },

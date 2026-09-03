@@ -6,3 +6,5 @@ export { useTimer } from './model/useTimer';
 export { useTimerHotkeys } from './model/useTimerHotkeys';
 export { useTimerNotification } from './model/useTimerNotification';
 export { usePowerSystemEvents } from './model/usePowerSystemEvents';
+export { useScheduledTimerRestore } from './model/useScheduledTimerRestore';
+export { useScheduledTimerStateSync } from './model/useScheduledTimerStateSync';

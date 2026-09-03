@@ -173,4 +173,18 @@ describe('timerStore', () => {
     expect(useTimerStore.getState().remainingSeconds).toBe(60);
     expect(useTimerStore.getState().endTime).toBeGreaterThan(Date.now());
   });
+
+  test('should restore scheduled timer correctly', () => {
+    const onComplete = vi.fn();
+    const targetDateTime = Date.now() + 60000;
+
+    useTimerStore.getState().restoreScheduledTimer(targetDateTime, onComplete);
+
+    const state = useTimerStore.getState();
+    expect(state.timerState).toBe('running');
+    expect(state.timerMode).toBe('timestamp');
+    expect(state.targetDateTime).toBe(targetDateTime);
+    expect(state.endTime).toBe(targetDateTime);
+    expect(state.remainingSeconds).toBe(60);
+  });
 });

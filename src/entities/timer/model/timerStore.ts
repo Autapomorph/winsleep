@@ -31,6 +31,7 @@ interface TimerActions {
   setTimerMode: (mode: TimerMode) => void;
   setExactTime: (seconds: number) => void;
   setTargetDateTime: (timestamp: number | null) => void;
+  restoreScheduledTimer: (targetDateTime: number, onComplete?: () => void) => void;
 }
 
 const initialState: TimerStoreState = {
@@ -293,6 +294,37 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
       const seconds = Math.max(0, Math.ceil((timestamp - getDateNow()) / 1000));
       set({ plannedSeconds: seconds, remainingSeconds: seconds }, false, 'timer/setTargetDateTime');
     }
+  },
+
+  restoreScheduledTimer: (targetDateTime, onComplete) => {
+    const actualSeconds = Math.max(0, Math.ceil((targetDateTime - getDateNow()) / 1000));
+    logger.info(
+      `Restoring scheduled timer with target timestamp: ${targetDateTime} (${actualSeconds}s remaining)`,
+    );
+
+    if (onComplete) {
+      set({ onCompleteCallback: onComplete }, false, 'timer/restoreScheduledTimer');
+    }
+
+    set(
+      {
+        timerState: 'running',
+        timerMode: 'timestamp',
+        targetDateTime,
+        plannedSeconds: actualSeconds,
+        remainingSeconds: actualSeconds,
+        endTime: targetDateTime,
+      },
+      false,
+      'timer/restoreScheduledTimer',
+    );
+
+    typedInvoke('start_timer', {
+      durationMs: actualSeconds * 1000,
+      targetTimestampMs: targetDateTime,
+    }).catch(err => {
+      logger.error(`Failed to start backend timer on restoreScheduledTimer: ${err}`);
+    });
   },
 });
 

@@ -12,6 +12,7 @@ export interface SerializedSettings {
   defaultTimerSeconds: number;
   shouldRememberConfiguredTime: boolean;
   isLockedByDefault: boolean;
+  isRestoreScheduledTimerOnStartupEnabled: boolean;
   isCustomTimerStepsEnabled: boolean;
   timerStepIncrease: number;
   timerStepDecrease: number;
@@ -38,6 +39,7 @@ export const serializeSettings = (
     defaultTimerSeconds: state.defaultTimerSeconds,
     shouldRememberConfiguredTime: state.shouldRememberConfiguredTime,
     isLockedByDefault: state.isLockedByDefault,
+    isRestoreScheduledTimerOnStartupEnabled: state.isRestoreScheduledTimerOnStartupEnabled,
     isCustomTimerStepsEnabled: state.isCustomTimerStepsEnabled,
     timerStepIncrease: state.timerStepIncrease,
     timerStepDecrease: state.timerStepDecrease,

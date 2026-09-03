@@ -1,4 +1,5 @@
 mod app;
+mod app_state;
 mod logging;
 mod notifications;
 mod pc_management;
@@ -49,6 +50,8 @@ pub fn run() {
             settings::commands::load_settings,
             settings::commands::save_settings,
             settings::commands::open_settings_dir,
+            app_state::commands::load_app_state,
+            app_state::commands::save_app_state,
             logging::commands::log_message,
             logging::commands::read_logs,
             logging::commands::clear_logs,

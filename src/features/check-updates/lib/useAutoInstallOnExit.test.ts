@@ -19,7 +19,6 @@ vi.mock(import('@/shared/api'), () => ({
 
 describe('useAutoInstallOnExit', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     Object.keys(mockListeners).forEach(key => {
       delete mockListeners[key];
     });
