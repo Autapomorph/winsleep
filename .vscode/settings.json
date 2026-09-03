@@ -4,6 +4,7 @@
   "files.associations": {
     "*.css": "tailwindcss"
   },
+  "tailwindCSS.classFunctions": ["tw", "cn", "clsx", "tw\\.[a-z-]+"],
   "[rust]": {
     "editor.defaultFormatter": "rust-lang.rust-analyzer"
   },

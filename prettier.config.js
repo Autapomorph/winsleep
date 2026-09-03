@@ -19,4 +19,5 @@ export default {
   endOfLine: 'lf',
   plugins: ['prettier-plugin-tailwindcss'],
   tailwindStylesheet: './src/app/styles/index.css',
+  tailwindFunctions: ['tw', 'cn', 'clsx', 'tw\\.[a-z-]+'],
 };
