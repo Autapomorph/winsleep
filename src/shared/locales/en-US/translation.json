@@ -780,10 +780,17 @@
   "changelogModal": {
     "title": "WinSleep Update",
     "version": "Version {{version}}",
+    "selectVersion": "Select version",
+    "releasedAt": "Released on {{releasedAt}}",
     "loading": "Loading release notes...",
     "viewOnGithub": "View on GitHub",
     "closeBtn": {
       "text": "Close"
+    },
+    "tags": {
+      "new": "New",
+      "improved": "Improved",
+      "fixed": "Fixed"
     },
     "error": {
       "title": "Failed to load release notes",
