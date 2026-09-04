@@ -1,10 +1,12 @@
 import { relaunch } from '@tauri-apps/plugin-process';
 import { type Update, check } from '@tauri-apps/plugin-updater';
-import { create } from 'zustand';
+import { type StateCreator, create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 
 import {
   type GitHubReleaseResponse,
   type ProxyChangelogResponse,
+  type ProxyChangelogVersionsResponse,
   config,
   GITHUB_API_REPO_URL,
   PROXY_UPDATER_URL,
@@ -15,47 +17,89 @@ import { MOCK_CHANGELOG, MOCK_VERSION } from './mockUpdate';
 export type UpdateStatus =
   'idle' | 'checking' | 'upToDate' | 'available' | 'downloading' | 'readyToRestart' | 'error';
 
-interface UpdateState {
+export interface UpdateState {
   status: UpdateStatus;
   isManualCheck: boolean;
   updateInfo: Update | null;
   downloadProgress: number;
   errorMessage: string | null;
-  changelogVersion: string | null;
-  isChangelogOpen: boolean;
-  changelog: string;
-  isChangelogLoading: boolean;
-  changelogError: string | null;
 }
 
-interface UpdateActions {
+export interface UpdateActions {
   checkUpdates: (options?: { isManual?: boolean }) => Promise<void>;
   downloadUpdate: () => Promise<void>;
   installUpdate: () => Promise<void>;
   relaunchApp: () => Promise<void>;
   resetStore: () => void;
   triggerMockUpdate: () => Promise<void>;
+}
+
+export type UpdateSlice = UpdateState & UpdateActions;
+
+export interface ChangelogMeta {
+  releasedAt?: string;
+  tags?: string[];
+}
+
+export interface ChangelogState {
+  availableVersions: string[];
+  isVersionsLoading: boolean;
+  isChangelogOpen: boolean;
+  isChangelogLoading: boolean;
+  changelogError: string | null;
+  changelog: string;
+  changelogVersion: string | null;
+  changelogMeta: ChangelogMeta | null;
+}
+
+export interface ChangelogActions {
   openChangelog: (version: string) => void;
   closeChangelog: () => void;
   fetchChangelog: (version: string) => Promise<void>;
+  fetchAvailableVersions: () => Promise<void>;
 }
+
+export type ChangelogSlice = ChangelogState & ChangelogActions;
+
+export type UpdateStore = UpdateSlice & ChangelogSlice;
+export type UpdateStoreState = UpdateState & ChangelogState;
 
 export const STORAGE_HAS_UPDATED_TO_KEY = 'hasUpdatedTo';
 
-export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => {
+const initialUpdateState: UpdateState = {
+  status: 'idle',
+  isManualCheck: false,
+  updateInfo: null,
+  downloadProgress: 0,
+  errorMessage: null,
+};
+
+const initialChangelogState: ChangelogState = {
+  availableVersions: [],
+  isChangelogLoading: false,
+  isChangelogOpen: false,
+  isVersionsLoading: false,
+  changelogError: null,
+  changelog: '',
+  changelogVersion: null,
+  changelogMeta: null,
+};
+
+const initialState: UpdateStoreState = {
+  ...initialUpdateState,
+  ...initialChangelogState,
+};
+
+const createUpdateSlice: StateCreator<
+  UpdateStore,
+  [['zustand/devtools', never]],
+  [],
+  UpdateSlice
+> = (set, get) => {
   let mockUpdateController: AbortController | null = null;
 
   return {
-    status: 'idle',
-    isManualCheck: false,
-    updateInfo: null,
-    downloadProgress: 0,
-    errorMessage: null,
-    changelogVersion: null,
-    isChangelogOpen: false,
-    changelog: '',
-    isChangelogLoading: false,
-    changelogError: null,
+    ...initialUpdateState,
 
     checkUpdates: async (options = {}) => {
       const { status } = get();
@@ -64,7 +108,11 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
         return;
       }
 
-      set({ status: 'checking', errorMessage: null, isManualCheck: Boolean(options.isManual) });
+      set(
+        { status: 'checking', errorMessage: null, isManualCheck: Boolean(options.isManual) },
+        false,
+        'updater/checkUpdates',
+      );
       logger.info('Checking for updates...');
 
       try {
@@ -72,13 +120,13 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
 
         if (update) {
           logger.info(`Update available: v${update.version}`);
-          set({ status: 'available', updateInfo: update });
+          set({ status: 'available', updateInfo: update }, false, 'updater/updateAvailable');
           get()
             .downloadUpdate()
             .catch(() => {});
         } else {
           logger.info('Application is up-to-date.');
-          set({ status: 'upToDate', updateInfo: null });
+          set({ status: 'upToDate', updateInfo: null }, false, 'updater/upToDate');
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -89,7 +137,7 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
           logger.debug(`Error checking for updates: ${message}`);
         }
 
-        set({ status: 'error', errorMessage: message });
+        set({ status: 'error', errorMessage: message }, false, 'updater/checkError');
       }
     },
 
@@ -100,7 +148,7 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
         return;
       }
 
-      set({ status: 'downloading', downloadProgress: 0 });
+      set({ status: 'downloading', downloadProgress: 0 }, false, 'updater/downloadStart');
       logger.info('Starting update download...');
 
       try {
@@ -122,7 +170,7 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
                 const nextProgress = Math.min(progress, 99);
 
                 if (nextProgress !== get().downloadProgress) {
-                  set({ downloadProgress: nextProgress });
+                  set({ downloadProgress: nextProgress }, false, 'updater/downloadProgress');
                 }
               }
 
@@ -130,7 +178,7 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
 
             case 'Finished':
               logger.info('Download finished.');
-              set({ downloadProgress: 100 });
+              set({ downloadProgress: 100 }, false, 'updater/downloadFinished');
               break;
 
             default:
@@ -139,12 +187,12 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
         });
 
         logger.info('Update downloaded successfully. Ready to install.');
-        set({ status: 'readyToRestart' });
+        set({ status: 'readyToRestart' }, false, 'updater/downloadReadyToRestart');
       } catch (error) {
         localStorage.removeItem(STORAGE_HAS_UPDATED_TO_KEY);
         const message = error instanceof Error ? error.message : String(error);
         logger.error(`Download failed: ${message}`);
-        set({ status: 'error', errorMessage: message });
+        set({ status: 'error', errorMessage: message }, false, 'updater/downloadError');
         showErrorToast($ => $.titlebar.updateBtn.notifications.installFailed);
       }
     },
@@ -175,7 +223,7 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
         localStorage.removeItem(STORAGE_HAS_UPDATED_TO_KEY);
         const message = error instanceof Error ? error.message : String(error);
         logger.error(`Installation failed: ${message}`);
-        set({ status: 'error', errorMessage: message });
+        set({ status: 'error', errorMessage: message }, false, 'updater/installError');
         showErrorToast($ => $.titlebar.updateBtn.notifications.installFailed);
       }
     },
@@ -206,76 +254,7 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
         mockUpdateController = null;
       }
 
-      set({
-        status: 'idle',
-        updateInfo: null,
-        downloadProgress: 0,
-        errorMessage: null,
-        isChangelogOpen: false,
-        changelogVersion: null,
-        isManualCheck: false,
-        changelog: '',
-        isChangelogLoading: false,
-        changelogError: null,
-      });
-    },
-
-    openChangelog: (version: string) => {
-      set({ isChangelogOpen: true, changelogVersion: version });
-      get()
-        .fetchChangelog(version)
-        .catch(() => {});
-    },
-
-    closeChangelog: () => {
-      set({
-        isChangelogOpen: false,
-        changelogVersion: null,
-        changelog: '',
-        isChangelogLoading: false,
-        changelogError: null,
-      });
-    },
-
-    fetchChangelog: async (targetVersion: string) => {
-      set({ isChangelogLoading: true, changelogError: null });
-
-      if (targetVersion === MOCK_VERSION) {
-        await delay(3000);
-        set({ changelog: MOCK_CHANGELOG, isChangelogLoading: false });
-        return;
-      }
-
-      try {
-        const proxyResponse = await fetch(`${PROXY_UPDATER_URL}/changelog/${targetVersion}`, {
-          cache: 'no-cache',
-        });
-
-        if (proxyResponse.ok) {
-          const proxyData: ProxyChangelogResponse = await proxyResponse.json();
-          set({ changelog: proxyData.notes ?? '', isChangelogLoading: false });
-          return;
-        }
-      } catch {
-        // Fall back to direct GitHub API if proxy endpoint fails
-      }
-
-      try {
-        const response = await fetch(`${GITHUB_API_REPO_URL}/releases/tag/${targetVersion}`, {
-          cache: 'no-cache',
-        });
-
-        if (!response.ok) {
-          throw new Error(`${response.status}`);
-        }
-
-        const data: GitHubReleaseResponse = await response.json();
-        set({ changelog: data.body ?? '', isChangelogLoading: false });
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        logger.error(`Failed to fetch release notes: ${message}`);
-        set({ changelogError: message, isChangelogLoading: false });
-      }
+      set({ ...initialState }, false, 'updater/resetStore');
     },
 
     triggerMockUpdate: async () => {
@@ -290,52 +269,60 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
       const { signal } = mockUpdateController;
 
       logger.info('Triggering mock update with 3s check simulation...');
-      set({ status: 'checking', errorMessage: null, isManualCheck: true });
+      set(
+        { status: 'checking', errorMessage: null, isManualCheck: true },
+        false,
+        'updater/triggerMockUpdateChecking',
+      );
 
       try {
         await delay(3000, signal);
 
-        set({
-          status: 'available',
-          updateInfo: {
-            version: MOCK_VERSION,
-            errorMessage: null,
-            downloadProgress: 0,
-            download: async (
-              onEvent?: (event: {
-                event: string;
-                data?: { contentLength?: number; chunkLength?: number } | Record<string, never>;
-              }) => void,
-            ) => {
-              if (!onEvent) {
-                return;
-              }
-
-              try {
-                onEvent({ event: 'Started', data: { contentLength: 100 } });
-
-                for (let i = 1; i <= 100; i += 1) {
-                  /* eslint-disable-next-line no-await-in-loop */
-                  await delay(25, signal);
-
-                  onEvent({ event: 'Progress', data: { chunkLength: 1 } });
-                }
-
-                onEvent({ event: 'Finished', data: {} });
-              } catch (error) {
-                if (error instanceof Error && error.name === 'AbortError') {
-                  logger.info('Mock download cancelled via AbortSignal');
+        set(
+          {
+            status: 'available',
+            updateInfo: {
+              version: MOCK_VERSION,
+              errorMessage: null,
+              downloadProgress: 0,
+              download: async (
+                onEvent?: (event: {
+                  event: string;
+                  data?: { contentLength?: number; chunkLength?: number } | Record<string, never>;
+                }) => void,
+              ) => {
+                if (!onEvent) {
                   return;
                 }
 
-                throw error;
-              }
-            },
-            install: async () => {
-              logger.info('Mock install executed');
-            },
-          } as unknown as Update,
-        });
+                try {
+                  onEvent({ event: 'Started', data: { contentLength: 100 } });
+
+                  for (let i = 1; i <= 100; i += 1) {
+                    /* eslint-disable-next-line no-await-in-loop */
+                    await delay(25, signal);
+
+                    onEvent({ event: 'Progress', data: { chunkLength: 1 } });
+                  }
+
+                  onEvent({ event: 'Finished', data: {} });
+                } catch (error) {
+                  if (error instanceof Error && error.name === 'AbortError') {
+                    logger.info('Mock download cancelled via AbortSignal');
+                    return;
+                  }
+
+                  throw error;
+                }
+              },
+              install: async () => {
+                logger.info('Mock install executed');
+              },
+            } as unknown as Update,
+          },
+          false,
+          'updater/triggerMockUpdateAvailable',
+        );
 
         get()
           .downloadUpdate()
@@ -347,7 +334,7 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
         }
 
         const message = error instanceof Error ? error.message : String(error);
-        set({ status: 'error', errorMessage: message });
+        set({ status: 'error', errorMessage: message }, false, 'updater/triggerMockUpdateError');
       } finally {
         if (mockUpdateController?.signal === signal) {
           mockUpdateController = null;
@@ -355,4 +342,156 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
       }
     },
   };
+};
+
+const createChangelogSlice: StateCreator<
+  UpdateStore,
+  [['zustand/devtools', never]],
+  [],
+  ChangelogSlice
+> = (set, get) => ({
+  ...initialChangelogState,
+
+  openChangelog: (version: string) => {
+    set({ isChangelogOpen: true, changelogVersion: version }, false, 'updater/openChangelog');
+    get()
+      .fetchChangelog(version)
+      .catch(() => {});
+    get()
+      .fetchAvailableVersions()
+      .catch(() => {});
+  },
+
+  closeChangelog: () => {
+    set(
+      {
+        isChangelogOpen: false,
+        changelogVersion: null,
+        changelog: '',
+        changelogMeta: null,
+        isChangelogLoading: false,
+        changelogError: null,
+      },
+      false,
+      'updater/closeChangelog',
+    );
+  },
+
+  fetchAvailableVersions: async () => {
+    set({ isVersionsLoading: true }, false, 'updater/fetchAvailableVersionsStart');
+    try {
+      const response = await fetch(`${PROXY_UPDATER_URL}/changelogs`, {
+        cache: 'no-cache',
+      });
+      if (response.ok) {
+        const data: ProxyChangelogVersionsResponse = await response.json();
+        if (Array.isArray(data.versions) && data.versions.length > 0) {
+          set(
+            { availableVersions: data.versions, isVersionsLoading: false },
+            false,
+            'updater/fetchAvailableVersionsSuccess',
+          );
+          return;
+        }
+      }
+    } catch (err) {
+      logger.debug(`Failed to fetch available versions from proxy: ${err}`);
+    }
+    set({ isVersionsLoading: false }, false, 'updater/fetchAvailableVersionsEnd');
+  },
+
+  fetchChangelog: async (targetVersion: string) => {
+    set(
+      {
+        isChangelogLoading: true,
+        changelogError: null,
+        changelogVersion: targetVersion,
+      },
+      false,
+      'updater/fetchChangelogStart',
+    );
+
+    if (targetVersion === MOCK_VERSION) {
+      await delay(3000);
+      set(
+        {
+          changelog: MOCK_CHANGELOG,
+          changelogMeta: {
+            releasedAt: '2026-09-03',
+            tags: ['New', 'Improved', 'Fixed'],
+          },
+          isChangelogLoading: false,
+        },
+        false,
+        'updater/fetchMockChangelogSuccess',
+      );
+      return;
+    }
+
+    try {
+      const proxyResponse = await fetch(`${PROXY_UPDATER_URL}/changelogs/${targetVersion}`, {
+        cache: 'no-cache',
+      });
+
+      if (proxyResponse.ok) {
+        const proxyData: ProxyChangelogResponse = await proxyResponse.json();
+        set(
+          {
+            changelog: proxyData.notes ?? '',
+            changelogMeta: {
+              releasedAt: proxyData.released_at,
+              tags: proxyData.tags ?? [],
+            },
+            isChangelogLoading: false,
+          },
+          false,
+          'updater/fetchChangelogProxySuccess',
+        );
+        return;
+      }
+    } catch {
+      // Fall back to direct GitHub API if proxy endpoint fails
+    }
+
+    try {
+      const response = await fetch(`${GITHUB_API_REPO_URL}/releases/tag/${targetVersion}`, {
+        cache: 'no-cache',
+      });
+
+      if (!response.ok) {
+        throw new Error(`${response.status}`);
+      }
+
+      const data: GitHubReleaseResponse = await response.json();
+      set(
+        {
+          changelog: data.body ?? '',
+          changelogMeta: data.published_at ? { releasedAt: data.published_at, tags: [] } : null,
+          isChangelogLoading: false,
+        },
+        false,
+        'updater/fetchChangelogGithubSuccess',
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      logger.error(`Failed to fetch release notes: ${message}`);
+      set(
+        { changelogError: message, isChangelogLoading: false },
+        false,
+        'updater/fetchChangelogError',
+      );
+    }
+  },
 });
+
+export const useUpdateStore = create<UpdateStore>()(
+  devtools(
+    (...a) => ({
+      ...createUpdateSlice(...a),
+      ...createChangelogSlice(...a),
+    }),
+    {
+      name: 'updater',
+    },
+  ),
+);

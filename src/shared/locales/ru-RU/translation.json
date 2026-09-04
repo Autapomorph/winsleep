@@ -780,9 +780,16 @@
   "changelogModal": {
     "title": "Обновление WinSleep",
     "version": "Версия {{version}}",
+    "selectVersion": "Выберите версию",
+    "releasedAt": "Дата релиза: {{releasedAt}}",
     "loading": "Загрузка списка изменений...",
     "closeBtn": {
       "text": "Закрыть"
+    },
+    "tags": {
+      "new": "Новое",
+      "improved": "Улучшено",
+      "fixed": "Исправлено"
     },
     "viewOnGithub": "Посмотреть на GitHub",
     "error": {

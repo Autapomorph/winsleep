@@ -1,16 +1,22 @@
-import { type PropsWithChildren, type ReactNode, useEffect } from 'react';
+import { type Key, type PropsWithChildren, type ReactNode, useEffect } from 'react';
 import { getVersion } from '@tauri-apps/api/app';
 import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
-import { Button, Link, Modal, Spinner } from '@heroui/react';
+import { Button, Chip, cn, Link, ListBox, Modal, Select, Spinner } from '@heroui/react';
 import { FaExternalLinkAlt } from 'react-icons/fa';
 import { FaGithub, FaTriangleExclamation } from 'react-icons/fa6';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { MOCK_VERSION, STORAGE_HAS_UPDATED_TO_KEY, useUpdateStore } from '@/entities/updater';
-import { GITHUB_REPO_URL } from '@/shared/config';
-import { logger, openExternalLink } from '@/shared/lib';
+import { CHANGELOG_TAGS, config, DEFAULT_LOCALE, GITHUB_REPO_URL } from '@/shared/config';
+import {
+  compareSemver,
+  formatReleaseDate,
+  isChangelogTag,
+  logger,
+  openExternalLink,
+} from '@/shared/lib';
 
 const markdownComponents = {
   h1: ({ children }: PropsWithChildren) => (
@@ -55,12 +61,37 @@ const markdownComponents = {
   ),
 };
 
+const getChangelogTagClassName = (tag: string) => {
+  const normalizedTag = tag.toLowerCase();
+
+  switch (normalizedTag) {
+    case CHANGELOG_TAGS.NEW:
+      return cn(
+        'border-green-400/15 bg-green-200 text-green-800 dark:border-green-300/15 dark:bg-green-500/15 dark:text-green-400',
+      );
+    case CHANGELOG_TAGS.IMPROVED:
+      return cn(
+        'border-purple-400/15 bg-purple-200 text-purple-800 dark:border-purple-300/15 dark:bg-purple-500/15 dark:text-purple-400',
+      );
+    case CHANGELOG_TAGS.FIXED:
+      return cn(
+        'border-cyan-400/15 bg-cyan-200 text-cyan-800 dark:border-cyan-300/15 dark:bg-cyan-500/15 dark:text-cyan-400',
+      );
+    default:
+      return cn(
+        'border-neutral-400/15 bg-neutral-100 text-neutral-800 dark:border-neutral-300/15 dark:bg-neutral-600/15 dark:text-neutral-200',
+      );
+  }
+};
+
 export const ChangelogModal = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const {
     isChangelogOpen,
     changelogVersion,
     changelog,
+    changelogMeta,
+    availableVersions,
     isChangelogLoading,
     changelogError,
     closeChangelog,
@@ -71,6 +102,8 @@ export const ChangelogModal = () => {
       isChangelogOpen: state.isChangelogOpen,
       changelogVersion: state.changelogVersion,
       changelog: state.changelog,
+      changelogMeta: state.changelogMeta,
+      availableVersions: state.availableVersions,
       isChangelogLoading: state.isChangelogLoading,
       changelogError: state.changelogError,
       closeChangelog: state.closeChangelog,
@@ -81,6 +114,12 @@ export const ChangelogModal = () => {
 
   const version = changelogVersion ?? '';
   const releaseUrl = `${GITHUB_REPO_URL}/releases/tag`;
+
+  const versionsToDisplay = Array.from(
+    new Set(
+      [...(config.isDev ? [MOCK_VERSION] : []), ...availableVersions, version].filter(Boolean),
+    ),
+  ).sort((a, b) => compareSemver(a, b, { pinnedTop: config.isDev ? MOCK_VERSION : undefined }));
 
   let modalContent: ReactNode;
 
@@ -109,9 +148,15 @@ export const ChangelogModal = () => {
     init().catch(() => {});
   }, [openChangelog]);
 
+  const handleVersionChange = (val: Key | null) => {
+    if (val !== null && val !== version) {
+      fetchChangelog(String(val)).catch(() => {});
+    }
+  };
+
   if (isChangelogLoading) {
     modalContent = (
-      <div className="flex min-h-40 flex-col items-center justify-center gap-3">
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 py-6">
         <Spinner size="lg" />
         <p className="text-muted-foreground text-sm">{t($ => $.changelogModal.loading)}</p>
       </div>
@@ -120,27 +165,29 @@ export const ChangelogModal = () => {
 
   if (changelogError) {
     modalContent = (
-      <div className="my-2 flex flex-col items-center gap-3 rounded-2xl border border-danger/20 bg-danger/5 p-6 text-center">
-        <div className="rounded-full bg-danger/10 p-3 text-danger">
-          <FaTriangleExclamation size={24} />
+      <div className="flex flex-1 flex-col items-center justify-center py-6">
+        <div className="my-2 flex flex-col items-center gap-3 rounded-2xl border border-danger/20 bg-danger/5 p-6 text-center">
+          <div className="rounded-full bg-danger/10 p-3 text-danger">
+            <FaTriangleExclamation size={24} />
+          </div>
+
+          <h3 className="text-base font-bold text-foreground">
+            {t($ => $.changelogModal.error.title)}
+          </h3>
+
+          <p className="max-w-xs text-xs leading-relaxed text-muted">
+            {t($ => $.changelogModal.error.description)}
+          </p>
+
+          <Button
+            variant="secondary"
+            onPress={() => {
+              fetchChangelog(version).catch(() => {});
+            }}
+          >
+            {t($ => $.changelogModal.error.retryBtn.text)}
+          </Button>
         </div>
-
-        <h3 className="text-base font-bold text-foreground">
-          {t($ => $.changelogModal.error.title)}
-        </h3>
-
-        <p className="max-w-xs text-xs leading-relaxed text-muted">
-          {t($ => $.changelogModal.error.description)}
-        </p>
-
-        <Button
-          variant="secondary"
-          onPress={() => {
-            fetchChangelog(version).catch(() => {});
-          }}
-        >
-          {t($ => $.changelogModal.error.retryBtn.text)}
-        </Button>
       </div>
     );
   }
@@ -161,31 +208,96 @@ export const ChangelogModal = () => {
     }
   };
 
+  let versionSelector: ReactNode = null;
+
+  if (versionsToDisplay.length > 1) {
+    versionSelector = (
+      <Select
+        variant="secondary"
+        value={version}
+        placeholder={t($ => $.changelogModal.selectVersion)}
+        onChange={handleVersionChange}
+      >
+        <Select.Trigger className="font-mono text-xs font-semibold">
+          <Select.Value />
+          <Select.Indicator />
+        </Select.Trigger>
+
+        <Select.Popover>
+          <ListBox>
+            {versionsToDisplay.map(v => (
+              <ListBox.Item key={v} id={v} textValue={v}>
+                v{v}
+                <ListBox.ItemIndicator />
+              </ListBox.Item>
+            ))}
+          </ListBox>
+        </Select.Popover>
+      </Select>
+    );
+  } else if (version) {
+    versionSelector = (
+      <span className="font-mono text-xs font-semibold">
+        {t($ => $.changelogModal.version, { version })}
+      </span>
+    );
+  }
+
+  const formattedReleaseDate = changelogMeta?.releasedAt
+    ? formatReleaseDate(changelogMeta.releasedAt, i18n.language)
+    : null;
+  const hasMeta = Boolean(formattedReleaseDate) || (changelogMeta?.tags?.length ?? 0) > 0;
+
+  const renderChangelogTagChip = (tag: string) => {
+    const normalizedTag = tag.toLowerCase();
+    const label = isChangelogTag(normalizedTag)
+      ? t($ => $.changelogModal.tags[normalizedTag], {
+          lng: DEFAULT_LOCALE,
+          defaultValue: tag,
+        })
+      : tag;
+
+    return (
+      <Chip key={tag} className={cn('border', getChangelogTagClassName(tag))} size="sm">
+        {label}
+      </Chip>
+    );
+  };
+
   return (
     <Modal.Backdrop isOpen={isChangelogOpen} onOpenChange={handleOpenChange}>
       <Modal.Container placement="center" size="cover">
         <Modal.Dialog>
           <Modal.CloseTrigger />
 
-          <Modal.Header>
-            <Modal.Heading className="text-xl font-bold">
+          <Modal.Header className="flex flex-col gap-1.5">
+            <Modal.Heading className="flex items-center gap-4 text-xl font-bold">
               {t($ => $.changelogModal.title)}
+              {versionSelector}
             </Modal.Heading>
 
-            {version && (
-              <span className="font-mono text-xs font-semibold">
-                {t($ => $.changelogModal.version, { version })}
-              </span>
+            {hasMeta && (
+              <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                {formattedReleaseDate && (
+                  <span className="text-xs text-muted">{formattedReleaseDate}</span>
+                )}
+
+                {changelogMeta?.tags?.map(renderChangelogTagChip)}
+              </div>
             )}
           </Modal.Header>
 
-          <Modal.Body className="px-6 py-4">{modalContent}</Modal.Body>
+          <Modal.Body className="flex flex-col px-6 py-4">{modalContent}</Modal.Body>
 
           <Modal.Footer className="flex items-center justify-end gap-8 border-t px-6 py-4">
             <Link
               href="##"
               onPress={() => {
-                openExternalLink(`${releaseUrl}/${version}`).catch(() => {});
+                const targetUrl =
+                  version === MOCK_VERSION
+                    ? `${GITHUB_REPO_URL}/releases`
+                    : `${releaseUrl}/${version}`;
+                openExternalLink(targetUrl).catch(() => {});
               }}
             >
               <Link.Icon className="mr-1.5 size-3">

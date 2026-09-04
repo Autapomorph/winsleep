@@ -290,11 +290,17 @@ describe('updateStore', () => {
     expect(state.changelog).toBe('');
     expect(state.isChangelogLoading).toBe(false);
     expect(state.changelogError).toBeNull();
+    expect(state.availableVersions).toEqual([]);
+    expect(state.isVersionsLoading).toBe(false);
+    expect(state.changelogMeta).toBeNull();
   });
 
-  test('should open changelog and trigger fetchChangelog', async () => {
+  test('should open changelog and trigger fetchChangelog and fetchAvailableVersions', async () => {
     const fetchSpy = vi
       .spyOn(useUpdateStore.getState(), 'fetchChangelog')
+      .mockImplementation(async () => {});
+    const fetchVersionsSpy = vi
+      .spyOn(useUpdateStore.getState(), 'fetchAvailableVersions')
       .mockImplementation(async () => {});
 
     useUpdateStore.getState().openChangelog('1.0.0');
@@ -302,8 +308,10 @@ describe('updateStore', () => {
     expect(useUpdateStore.getState().isChangelogOpen).toBe(true);
     expect(useUpdateStore.getState().changelogVersion).toBe('1.0.0');
     expect(fetchSpy).toHaveBeenCalledWith('1.0.0');
+    expect(fetchVersionsSpy).toHaveBeenCalled();
 
     fetchSpy.mockRestore();
+    fetchVersionsSpy.mockRestore();
   });
 
   test('should fetch mock changelog', async () => {
@@ -318,20 +326,46 @@ describe('updateStore', () => {
     const state = useUpdateStore.getState();
     expect(state.isChangelogLoading).toBe(false);
     expect(state.changelog).toBe(MOCK_CHANGELOG);
+    expect(state.changelogMeta).toEqual({
+      releasedAt: '2026-09-03',
+      tags: ['New', 'Improved', 'Fixed'],
+    });
   });
 
-  test('should fetch git release notes from proxy successfully', async () => {
+  test('should fetch available versions from proxy successfully', async () => {
     const fetchSpy = vi
       .spyOn(globalThis, 'fetch')
       .mockResolvedValue(
-        new Response(JSON.stringify({ notes: 'Proxy release notes' }), { status: 200 }),
+        new Response(JSON.stringify({ versions: ['1.2.0', '1.1.5'] }), { status: 200 }),
       );
+
+    await useUpdateStore.getState().fetchAvailableVersions();
+
+    const state = useUpdateStore.getState();
+    expect(state.isVersionsLoading).toBe(false);
+    expect(state.availableVersions).toEqual(['1.2.0', '1.1.5']);
+
+    fetchSpy.mockRestore();
+  });
+
+  test('should fetch git release notes from proxy successfully', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          notes: 'Proxy release notes',
+          released_at: '2026-09-03',
+          tags: ['New'],
+        }),
+        { status: 200 },
+      ),
+    );
 
     await useUpdateStore.getState().fetchChangelog('v1.2.3');
 
     const state = useUpdateStore.getState();
     expect(state.isChangelogLoading).toBe(false);
     expect(state.changelog).toBe('Proxy release notes');
+    expect(state.changelogMeta).toEqual({ releasedAt: '2026-09-03', tags: ['New'] });
     expect(state.changelogError).toBeNull();
 
     fetchSpy.mockRestore();
@@ -357,7 +391,10 @@ describe('updateStore', () => {
         return new Response(null, { status: 500 });
       }
 
-      return new Response(JSON.stringify({ body: 'GitHub release body' }), { status: 200 });
+      return new Response(
+        JSON.stringify({ body: 'GitHub release body', published_at: '2026-09-03T12:00:00Z' }),
+        { status: 200 },
+      );
     });
 
     await useUpdateStore.getState().fetchChangelog('v1.2.3');
@@ -365,6 +402,7 @@ describe('updateStore', () => {
     const state = useUpdateStore.getState();
     expect(state.isChangelogLoading).toBe(false);
     expect(state.changelog).toBe('GitHub release body');
+    expect(state.changelogMeta).toEqual({ releasedAt: '2026-09-03T12:00:00Z', tags: [] });
     expect(state.changelogError).toBeNull();
 
     fetchSpy.mockRestore();

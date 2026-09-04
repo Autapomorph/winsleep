@@ -8,6 +8,7 @@ export { getTotalSeconds } from './date/getTotalSeconds';
 export { formatTime } from './date/formatTime';
 export { formatDays } from './date/formatDays';
 export { formatDurationFull, formatDurationShort } from './date/formatDuration';
+export { formatReleaseDate } from './date/formatReleaseDate';
 
 export { openExternalLink } from './browser/openExternalLink';
 export { useTabUnsuspend } from './browser/useTabUnsuspend';
@@ -38,6 +39,13 @@ export { showWarningToast } from './toast/warningToast';
 export { showErrorToast } from './toast/errorToast';
 
 export { isValidTimerAction } from './timer-action/isValidTimerAction';
+export {
+  type CompareSemverOptions,
+  type SortDirection,
+  compareSemver,
+  compareSemverDesc,
+} from './updates/compareSemver';
+export { isChangelogTag } from './updates/isChangelogTag';
 export { isValidUpdateInterval } from './updates/isValidUpdateInterval';
 
 export { isMainWindow } from './window/isMainWindow';
