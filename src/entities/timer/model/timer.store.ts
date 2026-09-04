@@ -57,7 +57,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
   },
 
   start: onComplete => {
-    const { timerState, timerMode, targetDateTime, plannedSeconds } = get();
+    const { plannedSeconds, targetDateTime, timerMode, timerState } = get();
 
     if (timerState !== 'idle') {
       return;
@@ -76,7 +76,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
       timerMode === 'timestamp' && targetDateTime
         ? targetDateTime
         : getDateNow() + actualSeconds * 1000;
-    set({ timerState: 'running', remainingSeconds: actualSeconds, endTime }, false, 'timer/start');
+    set({ endTime, remainingSeconds: actualSeconds, timerState: 'running' }, false, 'timer/start');
 
     typedInvoke('start_timer', {
       durationMs: actualSeconds * 1000,
@@ -87,7 +87,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
   },
 
   pause: () => {
-    const { timerState, timerMode, endTime } = get();
+    const { endTime, timerMode, timerState } = get();
 
     if (timerState !== 'running' || !endTime) {
       return;
@@ -107,10 +107,10 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
     logger.info(`Timer paused with ${remainingSecs}s remaining`);
     set(
       {
-        timerState: 'paused',
-        remainingSeconds: remainingSecs,
         endTime: null,
+        remainingSeconds: remainingSecs,
         timeoutId: null,
+        timerState: 'paused',
       },
       false,
       'timer/pause',
@@ -118,7 +118,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
   },
 
   resume: onComplete => {
-    const { timerState, remainingSeconds } = get();
+    const { remainingSeconds, timerState } = get();
 
     if (timerState !== 'paused') {
       return;
@@ -127,7 +127,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
     logger.info(`Timer resumed with ${remainingSeconds}s remaining`);
     set({ onCompleteCallback: onComplete }, false, 'timer/resume');
     const endTime = getDateNow() + remainingSeconds * 1000;
-    set({ timerState: 'running', endTime }, false, 'timer/resume');
+    set({ endTime, timerState: 'running' }, false, 'timer/resume');
 
     typedInvoke('start_timer', {
       durationMs: Math.round(remainingSeconds * 1000),
@@ -138,7 +138,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
   },
 
   cancel: () => {
-    const { plannedSeconds, timerState, timerMode, targetDateTime } = get();
+    const { plannedSeconds, targetDateTime, timerMode, timerState } = get();
 
     typedInvoke('cancel_timer').catch(err => {
       logger.error(`Failed to cancel backend timer: ${err}`);
@@ -157,11 +157,11 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
 
     set(
       {
-        timerState: 'idle',
+        endTime: null,
         plannedSeconds: clampedPlanned,
         remainingSeconds: clampedPlanned,
-        endTime: null,
         timeoutId: null,
+        timerState: 'idle',
       },
       false,
       'timer/cancel',
@@ -173,7 +173,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
       return;
     }
 
-    const { timerState, plannedSeconds, remainingSeconds } = get();
+    const { plannedSeconds, remainingSeconds, timerState } = get();
     const stepSeconds = step ?? DEFAULT_TIMER_STEP_SECONDS;
 
     if (timerState === 'idle') {
@@ -193,7 +193,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
       `Timer remaining duration increased by ${stepSeconds}s. New remaining: ${newRemaining}s`,
     );
     const endTime = timerState === 'running' ? getDateNow() + newRemaining * 1000 : get().endTime;
-    set({ remainingSeconds: newRemaining, endTime }, false, 'timer/increaseTime');
+    set({ endTime, remainingSeconds: newRemaining }, false, 'timer/increaseTime');
 
     if (timerState === 'running') {
       typedInvoke('start_timer', {
@@ -210,7 +210,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
       return;
     }
 
-    const { timerState, plannedSeconds, remainingSeconds } = get();
+    const { plannedSeconds, remainingSeconds, timerState } = get();
     const stepSeconds = step ?? DEFAULT_TIMER_STEP_SECONDS;
 
     if (timerState === 'idle') {
@@ -230,7 +230,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
     logger.info(
       `Timer remaining duration decreased by ${stepSeconds}s. New remaining: ${newRemaining}s`,
     );
-    set({ remainingSeconds: newRemaining, endTime }, false, 'timer/decreaseTime');
+    set({ endTime, remainingSeconds: newRemaining }, false, 'timer/decreaseTime');
 
     if (timerState === 'running') {
       typedInvoke('start_timer', {
@@ -255,10 +255,10 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
 
       set(
         {
-          timerMode: 'duration',
-          targetDateTime: null,
           plannedSeconds: validSeconds,
           remainingSeconds: validSeconds,
+          targetDateTime: null,
+          timerMode: 'duration',
         },
         false,
         'timer/setExactTime',
@@ -268,11 +268,11 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
       const endTime = getDateNow() + validSeconds * 1000;
       set(
         {
-          timerMode: 'duration',
-          targetDateTime: null,
+          endTime,
           plannedSeconds: validSeconds,
           remainingSeconds: validSeconds,
-          endTime,
+          targetDateTime: null,
+          timerMode: 'duration',
         },
         false,
         'timer/setExactTime',
@@ -308,12 +308,12 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
 
     set(
       {
-        timerState: 'running',
-        timerMode: 'timestamp',
-        targetDateTime,
+        endTime: targetDateTime,
         plannedSeconds: actualSeconds,
         remainingSeconds: actualSeconds,
-        endTime: targetDateTime,
+        targetDateTime,
+        timerMode: 'timestamp',
+        timerState: 'running',
       },
       false,
       'timer/restoreScheduledTimer',

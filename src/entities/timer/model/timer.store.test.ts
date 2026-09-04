@@ -1,6 +1,6 @@
 import { DEFAULT_TIMER_SECONDS } from '@/shared/config';
 import { initTimerListeners } from './initTimerListeners';
-import { useTimerStore } from './timerStore';
+import { useTimerStore } from './timer.store';
 
 const mockListeners: Record<string, ((event: { payload: unknown }) => void)[]> = {};
 
@@ -30,13 +30,13 @@ describe('timerStore', () => {
     vi.useFakeTimers();
     // Reset state before each test to initial
     useTimerStore.setState({
-      timerState: 'idle',
+      endTime: null,
+      isListenersInitialized: false,
+      onCompleteCallback: null,
       plannedSeconds: DEFAULT_TIMER_SECONDS,
       remainingSeconds: DEFAULT_TIMER_SECONDS,
-      endTime: null,
       timeoutId: null,
-      onCompleteCallback: null,
-      isListenersInitialized: false,
+      timerState: 'idle',
     });
     initTimerListeners();
   });
@@ -157,17 +157,17 @@ describe('timerStore', () => {
   });
 
   test('should ignore pause when not in running state or no endTime', () => {
-    useTimerStore.setState({ timerState: 'idle', endTime: null });
+    useTimerStore.setState({ endTime: null, timerState: 'idle' });
     useTimerStore.getState().pause();
     expect(useTimerStore.getState().timerState).toBe('idle');
 
-    useTimerStore.setState({ timerState: 'running', endTime: null });
+    useTimerStore.setState({ endTime: null, timerState: 'running' });
     useTimerStore.getState().pause();
     expect(useTimerStore.getState().timerState).toBe('running');
   });
 
   test('should set exact remaining time when not in idle state', () => {
-    useTimerStore.setState({ timerState: 'running', endTime: Date.now() });
+    useTimerStore.setState({ endTime: Date.now(), timerState: 'running' });
     useTimerStore.getState().setExactTime(60);
 
     expect(useTimerStore.getState().remainingSeconds).toBe(60);

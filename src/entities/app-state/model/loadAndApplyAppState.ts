@@ -1,6 +1,6 @@
 import { typedInvoke } from '@/shared/api';
 import { logger } from '@/shared/lib';
-import { useAppStateStore } from './appStateStore';
+import { useAppStateStore } from './appState.store';
 import { deserializeAppState } from './deserialize';
 import { CURRENT_APP_STATE_VERSION, migrateAppState } from './migrate';
 

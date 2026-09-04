@@ -2,7 +2,7 @@ import { typedInvoke, typedListen } from '@/shared/api';
 import { logger } from '@/shared/lib';
 import { loadAndApplySettings } from './loadAndApplySettings';
 import { serializeSettings } from './serialize';
-import { useSettingsStore } from './settingsStore';
+import { useSettingsStore } from './settings.store';
 
 export const initializeSettings = async () => {
   let isUpdatingFromDisk = false;

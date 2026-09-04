@@ -1,7 +1,7 @@
 import { type NotificationSound, type TimerAction, type UpdateInterval } from '@/shared/config';
 import { CURRENT_SETTINGS_VERSION } from './migrate';
 import { serializeNotificationTimes } from './notificationTime';
-import { type useSettingsStore } from './settingsStore';
+import { type useSettingsStore } from './settings.store';
 import { serializeCustomTimerPresets } from './timerPreset';
 
 export interface SerializedSettings {

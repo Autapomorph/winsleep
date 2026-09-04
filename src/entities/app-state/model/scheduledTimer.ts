@@ -1,5 +1,5 @@
 import { isValidTimerAction } from '@/shared/lib';
-import { type ActiveScheduledTimerState } from './appStateStore';
+import { type ActiveScheduledTimerState } from './appState.store';
 
 export const sanitizeScheduledTimer = (raw: unknown): ActiveScheduledTimerState | null => {
   if (!raw || typeof raw !== 'object') {

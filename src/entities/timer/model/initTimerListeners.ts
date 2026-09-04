@@ -1,6 +1,6 @@
 import { typedListen } from '@/shared/api';
 import { logger } from '@/shared/lib';
-import { useTimerStore } from './timerStore';
+import { useTimerStore } from './timer.store';
 
 export const initTimerListeners = () => {
   const isInitialized = useTimerStore.getState().isListenersInitialized;

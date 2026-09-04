@@ -31,9 +31,13 @@ const sessionSlice: StateCreator<
   SessionStore
 > = set => ({
   ...initialState,
+
   setIsInitialized: isInitialized => set({ isInitialized }, false, 'session/setIsInitialized'),
+
   setTimerAction: timerAction => set({ timerAction }, false, 'session/setTimerAction'),
+
   setIsLocked: isLocked => set({ isLocked }, false, 'session/setIsLocked'),
+
   toggleLock: () => set(state => ({ isLocked: !state.isLocked }), false, 'session/toggleLock'),
 });
 

@@ -1,18 +1,18 @@
-import { type ActiveScheduledTimerState, useAppStateStore } from './appStateStore';
+import { type ActiveScheduledTimerState, useAppStateStore } from './appState.store';
 
 describe('useAppStateStore', () => {
   beforeEach(() => {
     useAppStateStore.setState({
-      scheduledTimer: null,
       lastUpdateCheckAt: null,
+      scheduledTimer: null,
     });
   });
 
   test('sets active scheduled timer correctly', () => {
     const scheduledTimer: ActiveScheduledTimerState = {
+      armedAt: 1699990000000,
       targetDateTime: 1700000000000,
       timerAction: 'sleep',
-      armedAt: 1699990000000,
     };
 
     useAppStateStore.getState().setScheduledTimer(scheduledTimer);
@@ -21,9 +21,9 @@ describe('useAppStateStore', () => {
 
   test('clears scheduled timer correctly', () => {
     const scheduledTimer: ActiveScheduledTimerState = {
+      armedAt: 1699990000000,
       targetDateTime: 1700000000000,
       timerAction: 'sleep',
-      armedAt: 1699990000000,
     };
 
     useAppStateStore.getState().setScheduledTimer(scheduledTimer);

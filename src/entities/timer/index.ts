@@ -1,4 +1,4 @@
-export { useTimerStore } from './model/timerStore';
+export { useTimerStore } from './model/timer.store';
 export { useTimerListeners } from './model/useTimerListeners';
 export {
   type TimerMode,

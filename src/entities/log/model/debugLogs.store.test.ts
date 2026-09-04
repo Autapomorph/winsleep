@@ -1,5 +1,5 @@
 import { typedInvoke } from '@/shared/api';
-import { useDebugLogsStore } from './debugLogsStore';
+import { useDebugLogsStore } from './debugLogs.store';
 
 vi.mock(import('@/shared/api'), () => ({
   typedInvoke: vi.fn().mockResolvedValue(undefined),
@@ -8,10 +8,10 @@ vi.mock(import('@/shared/api'), () => ({
 describe('debugLogsStore', () => {
   beforeEach(() => {
     useDebugLogsStore.setState({
-      rawLogs: '',
-      parsedEntries: [],
-      isLoading: false,
       error: null,
+      isLoading: false,
+      parsedEntries: [],
+      rawLogs: '',
       searchQuery: '',
       selectedLevel: 'ALL',
     });
@@ -42,9 +42,9 @@ describe('debugLogsStore', () => {
     expect(state.parsedEntries).toHaveLength(2);
     expect(state.parsedEntries[0]).toEqual({
       id: '1970-01-01T00:00:00Z-0',
-      timestamp: '1970-01-01T00:00:00Z',
       level: 'INFO',
       message: 'Tauri started',
+      timestamp: '1970-01-01T00:00:00Z',
     });
     expect(state.parsedEntries[1]).toEqual({
       id: 'raw-1',
@@ -64,8 +64,8 @@ describe('debugLogsStore', () => {
 
   test('should clear logs and reset state', async () => {
     useDebugLogsStore.setState({
-      rawLogs: 'some logs',
       parsedEntries: [{ id: '1', message: 'test' }],
+      rawLogs: 'some logs',
       searchQuery: 'test',
       selectedLevel: 'INFO',
     });
