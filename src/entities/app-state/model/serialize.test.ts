@@ -1,4 +1,4 @@
-import { type ActiveScheduledTimerState } from './appStateStore';
+import { type ActiveScheduledTimerState } from './appState.store';
 import { CURRENT_APP_STATE_VERSION } from './migrate';
 import { serializeAppState } from './serialize';
 

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 
 import { logger, showErrorToast, showInfoToast } from '@/shared/lib';
-import { useUpdateStore } from '../model/updateStore';
+import { useUpdateStore } from '../model/update.store';
 
 export const useUpdater = () => {
   const { t } = useTranslation();

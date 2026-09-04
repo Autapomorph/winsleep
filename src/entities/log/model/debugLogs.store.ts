@@ -4,8 +4,6 @@ import { devtools } from 'zustand/middleware';
 import { typedInvoke } from '@/shared/api';
 import { type LogEntry, type LogLevel, logger, parseLogLine } from '@/shared/lib';
 
-export type LogLevelFilter = 'ALL' | LogLevel;
-
 export type DebugLogsStore = DebugLogsState & DebugLogsActions;
 
 interface DebugLogsState {
@@ -17,6 +15,8 @@ interface DebugLogsState {
   selectedLevel: LogLevelFilter;
 }
 
+export type LogLevelFilter = 'ALL' | LogLevel;
+
 interface DebugLogsActions {
   fetchLogs: () => Promise<void>;
   setSearchQuery: (query: string) => void;
@@ -26,10 +26,10 @@ interface DebugLogsActions {
 }
 
 const initialState: DebugLogsState = {
-  rawLogs: '',
-  parsedEntries: [],
-  isLoading: false,
   error: null,
+  isLoading: false,
+  parsedEntries: [],
+  rawLogs: '',
   searchQuery: '',
   selectedLevel: 'ALL',
 };
@@ -47,7 +47,7 @@ const debugLogsSlice: StateCreator<
     const hasLogs = get().rawLogs.length > 0;
 
     if (!hasLogs) {
-      set({ isLoading: true, error: null }, false, 'debugLogs/fetchLogs/pending');
+      set({ error: null, isLoading: true }, false, 'debugLogs/fetchLogs/pending');
     }
 
     try {
@@ -62,7 +62,7 @@ const debugLogsSlice: StateCreator<
           .map((line, index) => parseLogLine(line, index));
 
         set(
-          { rawLogs: content, parsedEntries: parsed, error: null },
+          { error: null, parsedEntries: parsed, rawLogs: content },
           false,
           'debugLogs/fetchLogs/fulfilled',
         );
@@ -86,16 +86,21 @@ const debugLogsSlice: StateCreator<
     }
   },
 
-  setSearchQuery: searchQuery => set({ searchQuery }, false, 'debugLogs/setSearchQuery'),
-  setSelectedLevel: selectedLevel => set({ selectedLevel }, false, 'debugLogs/setSelectedLevel'),
+  setSearchQuery: searchQuery => {
+    set({ searchQuery }, false, 'debugLogs/setSearchQuery');
+  },
+
+  setSelectedLevel: selectedLevel => {
+    set({ selectedLevel }, false, 'debugLogs/setSelectedLevel');
+  },
 
   clearLogs: async () => {
     try {
       await typedInvoke('clear_logs');
       set(
         {
-          rawLogs: '',
           parsedEntries: [],
+          rawLogs: '',
           searchQuery: '',
           selectedLevel: 'ALL',
         },
@@ -108,7 +113,7 @@ const debugLogsSlice: StateCreator<
     }
   },
 
-  resetFilters: () =>
+  resetFilters: () => {
     set(
       {
         searchQuery: '',
@@ -116,7 +121,8 @@ const debugLogsSlice: StateCreator<
       },
       false,
       'debugLogs/resetFilters',
-    ),
+    );
+  },
 });
 
 export const useDebugLogsStore = create<DebugLogsStore>()(

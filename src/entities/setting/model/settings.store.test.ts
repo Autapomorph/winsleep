@@ -4,11 +4,11 @@ import {
 } from '@tauri-apps/plugin-autostart';
 
 import { typedInvoke } from '@/shared/api';
-import { useSettingsStore } from './settingsStore';
+import { useSettingsStore } from './settings.store';
 
 vi.mock(import('@tauri-apps/plugin-autostart'), () => ({
-  enable: vi.fn().mockResolvedValue(undefined),
   disable: vi.fn().mockResolvedValue(undefined),
+  enable: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock(import('@/shared/api'), () => ({
@@ -62,7 +62,7 @@ describe('settingsStore', () => {
     // Add preset
     store.addCustomTimerPreset(900);
 
-    let currentPresets = useSettingsStore.getState().customTimerPresets;
+    const currentPresets = useSettingsStore.getState().customTimerPresets;
     const addedPreset = currentPresets[currentPresets.length - 1];
 
     expect(currentPresets.length).toBe(initialPresetCount + 1);
@@ -71,14 +71,16 @@ describe('settingsStore', () => {
 
     // Update preset
     store.updateCustomTimerPreset(addedPreset.id, { seconds: 1200 });
-    currentPresets = useSettingsStore.getState().customTimerPresets;
-    expect(currentPresets.find(p => p.id === addedPreset.id)?.seconds).toBe(1200);
+    expect(
+      useSettingsStore.getState().customTimerPresets.find(p => p.id === addedPreset.id)?.seconds,
+    ).toBe(1200);
 
     // Remove preset
     store.removeCustomTimerPreset(addedPreset.id);
-    currentPresets = useSettingsStore.getState().customTimerPresets;
-    expect(currentPresets.length).toBe(initialPresetCount);
-    expect(currentPresets.find(p => p.id === addedPreset.id)).toBeUndefined();
+    expect(useSettingsStore.getState().customTimerPresets.length).toBe(initialPresetCount);
+    expect(
+      useSettingsStore.getState().customTimerPresets.find(p => p.id === addedPreset.id),
+    ).toBeUndefined();
   });
 
   test('handles NotificationSlice actions: notifications toggle, times list, sound settings', () => {

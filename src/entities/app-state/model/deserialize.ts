@@ -1,4 +1,4 @@
-import { type AppStateState } from './appStateStore';
+import { type AppStateState } from './appState.store';
 import { sanitizeAppState } from './sanitize';
 
 export const deserializeAppState = (rawState: Record<string, unknown>): AppStateState => {

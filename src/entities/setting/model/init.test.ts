@@ -1,7 +1,7 @@
 import { typedInvoke, typedListen } from '@/shared/api';
 import { initializeSettings } from './init';
 import { loadAndApplySettings } from './loadAndApplySettings';
-import { useSettingsStore } from './settingsStore';
+import { useSettingsStore } from './settings.store';
 
 vi.mock(import('@/shared/api'), () => ({
   typedInvoke: vi.fn().mockResolvedValue(undefined),

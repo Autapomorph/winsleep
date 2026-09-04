@@ -1,5 +1,5 @@
 import { serializeSettings } from './serialize';
-import { type SettingsState, type useSettingsStore } from './settingsStore';
+import { type SettingsState, type useSettingsStore } from './settings.store';
 
 describe('serializeSettings', () => {
   test('correctly serializes settings state into a JSON object', () => {

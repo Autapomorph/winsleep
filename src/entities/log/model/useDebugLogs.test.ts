@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { useDebugLogsStore } from './debugLogsStore';
+import { useDebugLogsStore } from './debugLogs.store';
 import { useDebugLogs } from './useDebugLogs';
 
 describe('useDebugLogs polling hook', () => {

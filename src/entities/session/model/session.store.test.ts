@@ -1,12 +1,12 @@
 import { DEFAULT_TIMER_ACTION } from '@/shared/config';
-import { useSessionStore } from './sessionStore';
+import { useSessionStore } from './session.store';
 
 describe('sessionStore', () => {
   beforeEach(() => {
     useSessionStore.setState({
       isInitialized: false,
-      timerAction: DEFAULT_TIMER_ACTION,
       isLocked: false,
+      timerAction: DEFAULT_TIMER_ACTION,
     });
   });
 

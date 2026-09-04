@@ -2,7 +2,7 @@ import { typedInvoke } from '@/shared/api';
 import { logger } from '@/shared/lib';
 import { deserializeSettings } from './deserialize';
 import { CURRENT_SETTINGS_VERSION, migrateSettings } from './migrate';
-import { useSettingsStore } from './settingsStore';
+import { useSettingsStore } from './settings.store';
 
 export const loadAndApplySettings = async (
   onLoadingChange: (isLoading: boolean) => void,

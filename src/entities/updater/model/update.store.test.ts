@@ -2,7 +2,7 @@ import { relaunch } from '@tauri-apps/plugin-process';
 import { type Update, check } from '@tauri-apps/plugin-updater';
 
 import { MOCK_CHANGELOG, MOCK_VERSION } from './mockUpdate';
-import { useUpdateStore } from './updateStore';
+import { useUpdateStore } from './update.store';
 
 let mockIsDev = false;
 
@@ -15,8 +15,8 @@ vi.mock(import('@tauri-apps/plugin-updater'), () => ({
 }));
 
 vi.mock(import('@tauri-apps/plugin-os'), () => ({
-  platform: vi.fn((): import('@tauri-apps/plugin-os').Platform => 'windows'),
   arch: vi.fn((): import('@tauri-apps/plugin-os').Arch => 'x86_64'),
+  platform: vi.fn((): import('@tauri-apps/plugin-os').Platform => 'windows'),
 }));
 
 vi.mock(import('@/shared/config'), async importOriginal => {
@@ -36,7 +36,6 @@ vi.mock(import('@/shared/lib'), async importOriginal => {
   const original = await importOriginal();
   return {
     ...original,
-    showErrorToast: vi.fn(),
     delay: (ms: number, signal?: AbortSignal) => {
       if (ms === 25) {
         return Promise.resolve();
@@ -56,6 +55,7 @@ vi.mock(import('@/shared/lib'), async importOriginal => {
         throw err;
       });
     },
+    showErrorToast: vi.fn(),
   };
 });
 
@@ -115,18 +115,18 @@ describe('updateStore', () => {
   test('should run download during checkUpdates and reach readyToRestart', async () => {
     const mockDownload = vi.fn(async onEvent => {
       if (onEvent) {
-        onEvent({ event: 'Started', data: { contentLength: 100 } });
-        onEvent({ event: 'Progress', data: { chunkLength: 50 } });
-        onEvent({ event: 'Finished', data: {} });
+        onEvent({ data: { contentLength: 100 }, event: 'Started' });
+        onEvent({ data: { chunkLength: 50 }, event: 'Progress' });
+        onEvent({ data: {}, event: 'Finished' });
         // Cover fallback branch
-        onEvent({ event: 'UnknownEvent', data: {} });
+        onEvent({ data: {}, event: 'UnknownEvent' });
       }
     });
 
     const mockUpdate = {
-      version: '2.1.0',
       download: mockDownload,
       install: vi.fn(),
+      version: '2.1.0',
     };
 
     vi.mocked(check).mockResolvedValueOnce(
@@ -145,11 +145,11 @@ describe('updateStore', () => {
   });
 
   test('should ignore downloadUpdate if no updateInfo or already downloading', async () => {
-    useUpdateStore.setState({ updateInfo: null, status: 'idle' });
+    useUpdateStore.setState({ status: 'idle', updateInfo: null });
     await useUpdateStore.getState().downloadUpdate();
     expect(useUpdateStore.getState().status).toBe('idle');
 
-    useUpdateStore.setState({ updateInfo: {} as unknown as Update, status: 'downloading' });
+    useUpdateStore.setState({ status: 'downloading', updateInfo: {} as unknown as Update });
     await useUpdateStore.getState().downloadUpdate();
     expect(useUpdateStore.getState().status).toBe('downloading');
   });
@@ -160,11 +160,11 @@ describe('updateStore', () => {
     });
 
     const mockUpdate = {
-      version: '2.1.0',
       download: mockDownload,
+      version: '2.1.0',
     };
 
-    useUpdateStore.setState({ updateInfo: mockUpdate as unknown as Update, status: 'idle' });
+    useUpdateStore.setState({ status: 'idle', updateInfo: mockUpdate as unknown as Update });
     await useUpdateStore.getState().downloadUpdate();
 
     const state = useUpdateStore.getState();
@@ -175,14 +175,14 @@ describe('updateStore', () => {
   test('should run install during installUpdate when status is readyToRestart', async () => {
     const mockInstall = vi.fn(async () => {});
     const mockUpdate = {
-      version: '2.1.0',
-      install: mockInstall,
       download: vi.fn(),
+      install: mockInstall,
+      version: '2.1.0',
     };
 
     useUpdateStore.setState({
-      updateInfo: mockUpdate as unknown as Update,
       status: 'readyToRestart',
+      updateInfo: mockUpdate as unknown as Update,
     });
     await useUpdateStore.getState().installUpdate();
 
@@ -194,14 +194,14 @@ describe('updateStore', () => {
       throw new Error('Install error');
     });
     const mockUpdate = {
-      version: '2.1.0',
-      install: mockInstall,
       download: vi.fn(),
+      install: mockInstall,
+      version: '2.1.0',
     };
 
     useUpdateStore.setState({
-      updateInfo: mockUpdate as unknown as Update,
       status: 'readyToRestart',
+      updateInfo: mockUpdate as unknown as Update,
     });
     await useUpdateStore.getState().installUpdate();
 
@@ -231,9 +231,9 @@ describe('updateStore', () => {
     const originalLocation = window.location;
     const mockReload = vi.fn();
     Object.defineProperty(window, 'location', {
-      writable: true,
       configurable: true,
       value: { reload: mockReload },
+      writable: true,
     });
 
     try {
@@ -242,9 +242,9 @@ describe('updateStore', () => {
       expect(mockReload).toHaveBeenCalled();
     } finally {
       Object.defineProperty(window, 'location', {
-        writable: true,
         configurable: true,
         value: originalLocation,
+        writable: true,
       });
     }
   });

@@ -1,5 +1,5 @@
 import { loadAndApplySettings } from './loadAndApplySettings';
-import { useSettingsStore } from './settingsStore';
+import { useSettingsStore } from './settings.store';
 
 const { mockLoadSettings, mockSetIsTrayModeEnabled } = vi.hoisted(() => ({
   mockLoadSettings: vi.fn(),

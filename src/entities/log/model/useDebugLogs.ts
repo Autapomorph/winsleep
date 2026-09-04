@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { useDebugLogsStore } from './debugLogsStore';
+import { useDebugLogsStore } from './debugLogs.store';
 
 const DEFAULT_POLL_INTERVAL_MS = 2000;
 const DEFAULT_INITIAL_DELAY_MS = 200;

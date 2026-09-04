@@ -1,6 +1,6 @@
 import { deserializeNotificationTimes } from './notificationTime';
 import { sanitizeSettings } from './sanitize';
-import { type SettingsState } from './settingsStore';
+import { type SettingsState } from './settings.store';
 import { deserializeCustomTimerPresets } from './timerPreset';
 
 export const deserializeSettings = (rawSettings: Record<string, unknown>): SettingsState => {
