@@ -14,6 +14,12 @@ import {
 import { delay, logger, showErrorToast } from '@/shared/lib';
 import { MOCK_CHANGELOG, MOCK_VERSION } from './mockUpdate';
 
+export type UpdateStore = UpdateSlice & ChangelogSlice;
+
+export type UpdateStoreState = UpdateState & ChangelogState;
+
+export type UpdateSlice = UpdateState & UpdateActions;
+
 export type UpdateStatus =
   'idle' | 'checking' | 'upToDate' | 'available' | 'downloading' | 'readyToRestart' | 'error';
 
@@ -34,7 +40,7 @@ export interface UpdateActions {
   triggerMockUpdate: () => Promise<void>;
 }
 
-export type UpdateSlice = UpdateState & UpdateActions;
+export type ChangelogSlice = ChangelogState & ChangelogActions;
 
 export interface ChangelogMeta {
   releasedAt?: string;
@@ -58,11 +64,6 @@ export interface ChangelogActions {
   fetchChangelog: (version: string) => Promise<void>;
   fetchAvailableVersions: () => Promise<void>;
 }
-
-export type ChangelogSlice = ChangelogState & ChangelogActions;
-
-export type UpdateStore = UpdateSlice & ChangelogSlice;
-export type UpdateStoreState = UpdateState & ChangelogState;
 
 export const STORAGE_HAS_UPDATED_TO_KEY = 'hasUpdatedTo';
 

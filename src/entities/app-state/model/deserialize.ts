@@ -6,5 +6,6 @@ export const deserializeAppState = (rawState: Record<string, unknown>): AppState
 
   return {
     scheduledTimer: cleanState.scheduledTimer,
+    lastUpdateCheckAt: cleanState.lastUpdateCheckAt,
   };
 };

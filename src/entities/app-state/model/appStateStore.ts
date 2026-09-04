@@ -3,9 +3,9 @@ import { devtools } from 'zustand/middleware';
 
 import { type TimerAction } from '@/shared/config';
 
-export type AppStateStore = ScheduledTimerSlice;
+export type AppStateStore = ScheduledTimerSlice & UpdaterAppStateSlice;
 
-export type AppStateState = ScheduledTimerState;
+export type AppStateState = ScheduledTimerState & UpdaterAppState;
 
 export type ScheduledTimerSlice = ScheduledTimerState & ScheduledTimerActions;
 
@@ -24,12 +24,22 @@ export interface ScheduledTimerActions {
   clearScheduledTimer: () => void;
 }
 
+export type UpdaterAppStateSlice = UpdaterAppState & UpdaterAppActions;
+
+export interface UpdaterAppState {
+  lastUpdateCheckAt: number | null;
+}
+
+export interface UpdaterAppActions {
+  setLastUpdateCheckAt: (lastUpdateCheckAt: number | null) => void;
+}
+
 const initialScheduledTimerState: ScheduledTimerState = {
   scheduledTimer: null,
 };
 
-const initialState: AppStateState = {
-  ...initialScheduledTimerState,
+const initialUpdaterAppState: UpdaterAppState = {
+  lastUpdateCheckAt: null,
 };
 
 const createScheduledTimerSlice: StateCreator<
@@ -38,16 +48,28 @@ const createScheduledTimerSlice: StateCreator<
   [],
   ScheduledTimerSlice
 > = set => ({
-  ...initialState,
+  ...initialScheduledTimerState,
   setScheduledTimer: scheduledTimer =>
     set({ scheduledTimer }, false, 'app-state/setScheduledTimer'),
   clearScheduledTimer: () => set({ scheduledTimer: null }, false, 'app-state/clearScheduledTimer'),
+});
+
+const createUpdaterAppSlice: StateCreator<
+  AppStateStore,
+  [['zustand/devtools', never]],
+  [],
+  UpdaterAppStateSlice
+> = set => ({
+  ...initialUpdaterAppState,
+  setLastUpdateCheckAt: lastUpdateCheckAt =>
+    set({ lastUpdateCheckAt }, false, 'app-state/setLastUpdateCheckAt'),
 });
 
 export const useAppStateStore = create<AppStateStore>()(
   devtools(
     (...a) => ({
       ...createScheduledTimerSlice(...a),
+      ...createUpdaterAppSlice(...a),
     }),
     {
       name: 'app-state',
