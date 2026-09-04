@@ -1,7 +1,7 @@
 import { DEFAULT_SERIALIZED_APP_STATE, sanitizeAppState } from './sanitize';
 
 describe('sanitizeAppState', () => {
-  test('sanitizes valid active scheduled timer and version', () => {
+  test('sanitizes valid active scheduled timer, lastUpdateCheckAt and version', () => {
     const raw = {
       version: 0,
       scheduledTimer: {
@@ -9,6 +9,7 @@ describe('sanitizeAppState', () => {
         timerAction: 'sleep',
         armedAt: 1699990000000,
       },
+      lastUpdateCheckAt: 1699995000000,
     };
 
     const result = sanitizeAppState(raw);
@@ -19,10 +20,11 @@ describe('sanitizeAppState', () => {
         timerAction: 'sleep',
         armedAt: 1699990000000,
       },
+      lastUpdateCheckAt: 1699995000000,
     });
   });
 
-  test('falls back to default version when version is missing or invalid', () => {
+  test('falls back to default version and null lastUpdateCheckAt when missing', () => {
     const raw = {
       scheduledTimer: null,
     };
@@ -53,6 +55,24 @@ describe('sanitizeAppState', () => {
         },
       }),
     ).toEqual(DEFAULT_SERIALIZED_APP_STATE);
+  });
+
+  test('handles invalid lastUpdateCheckAt values', () => {
+    expect(sanitizeAppState({ scheduledTimer: null, lastUpdateCheckAt: -1 })).toEqual(
+      DEFAULT_SERIALIZED_APP_STATE,
+    );
+    expect(sanitizeAppState({ scheduledTimer: null, lastUpdateCheckAt: 0 })).toEqual(
+      DEFAULT_SERIALIZED_APP_STATE,
+    );
+    expect(sanitizeAppState({ scheduledTimer: null, lastUpdateCheckAt: Number.NaN })).toEqual(
+      DEFAULT_SERIALIZED_APP_STATE,
+    );
+    expect(
+      sanitizeAppState({ scheduledTimer: null, lastUpdateCheckAt: Number.POSITIVE_INFINITY }),
+    ).toEqual(DEFAULT_SERIALIZED_APP_STATE);
+    expect(sanitizeAppState({ scheduledTimer: null, lastUpdateCheckAt: 'invalid' })).toEqual(
+      DEFAULT_SERIALIZED_APP_STATE,
+    );
   });
 
   test('handles null or non-object input', () => {

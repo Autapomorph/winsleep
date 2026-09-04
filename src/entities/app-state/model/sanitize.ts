@@ -5,6 +5,7 @@ import { type SerializedAppState } from './serialize';
 export const DEFAULT_SERIALIZED_APP_STATE: SerializedAppState = {
   version: CURRENT_APP_STATE_VERSION,
   scheduledTimer: null,
+  lastUpdateCheckAt: null,
 };
 
 export const sanitizeAppState = (rawState: Record<string, unknown>): SerializedAppState => {
@@ -19,8 +20,17 @@ export const sanitizeAppState = (rawState: Record<string, unknown>): SerializedA
   // Sanitize scheduledTimer
   const scheduledTimer = sanitizeScheduledTimer(rawState.scheduledTimer);
 
+  // Sanitize lastUpdateCheckAt
+  const lastUpdateCheckAt =
+    typeof rawState.lastUpdateCheckAt === 'number' &&
+    Number.isFinite(rawState.lastUpdateCheckAt) &&
+    rawState.lastUpdateCheckAt > 0
+      ? rawState.lastUpdateCheckAt
+      : null;
+
   return {
     version,
     scheduledTimer,
+    lastUpdateCheckAt,
   };
 };

@@ -78,14 +78,14 @@ interface TimerActions {
   removeCustomTimerPreset: (id: string) => void;
 }
 
+type NotificationSlice = NotificationState & NotificationActions;
+
 interface NotificationState {
   isNotificationsEnabled: boolean;
   notificationTimes: NotificationTime[];
   isNotificationSoundEnabled: boolean;
   notificationSoundType: NotificationSound;
 }
-
-type NotificationSlice = NotificationState & NotificationActions;
 
 interface NotificationActions {
   setIsNotificationsEnabled: (isNotificationsEnabled: boolean) => void;
@@ -96,6 +96,8 @@ interface NotificationActions {
   setIsNotificationSoundEnabled: (isNotificationSoundEnabled: boolean) => void;
   setNotificationSoundType: (notificationSoundType: NotificationSound) => void;
 }
+
+type SystemSlice = SystemState & SystemActions;
 
 interface SystemState {
   isTrayModeEnabled: boolean;
@@ -114,8 +116,6 @@ interface SystemActions {
   setUpdateInterval: (updateInterval: UpdateInterval) => void;
   setHasSeenTrayNotification: (hasSeenTrayNotification: boolean) => void;
 }
-
-type SystemSlice = SystemState & SystemActions;
 
 interface GeneralActions {
   resetToDefaults: () => void;
