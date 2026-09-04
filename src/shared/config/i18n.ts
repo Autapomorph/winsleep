@@ -17,6 +17,8 @@ export const LOCAL_STORAGE_LOCALE_KEY = 'locale';
 export const ns = ['translation'] as const;
 export const defaultNS = 'translation' as const;
 
+export const DEFAULT_LOCALE = 'en-US' as const;
+
 export const resources = {
   'en-US': { translation: translationENUS },
   'ru-RU': { translation: translationRURU },
@@ -39,7 +41,7 @@ export const initializeI18n = () => {
       resources,
 
       fallbackLng: {
-        default: ['en-US'],
+        default: [DEFAULT_LOCALE],
         en: ['en-US'],
         ru: ['ru-RU'],
       },
