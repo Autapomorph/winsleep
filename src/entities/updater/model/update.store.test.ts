@@ -210,6 +210,23 @@ describe('updateStore', () => {
     expect(state.errorMessage).toBe('Install error');
   });
 
+  test('should pass options to updateInfo.install during installUpdate', async () => {
+    const mockInstall = vi.fn().mockResolvedValue(undefined);
+    const mockUpdate = {
+      download: vi.fn(),
+      install: mockInstall,
+      version: '2.1.0',
+    };
+
+    useUpdateStore.setState({
+      status: 'readyToRestart',
+      updateInfo: mockUpdate as unknown as Update,
+    });
+    await useUpdateStore.getState().installUpdate({ restartAfterInstall: false });
+
+    expect(mockInstall).toHaveBeenCalledWith({ restartAfterInstall: false });
+  });
+
   test('should open and close changelog', () => {
     useUpdateStore.getState().openChangelog('2.0.0');
     expect(useUpdateStore.getState().isChangelogOpen).toBe(true);

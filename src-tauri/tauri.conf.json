@@ -58,9 +58,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": [
-      "nsis"
-    ],
+    "targets": ["nsis"],
     "category": "Utility",
     "shortDescription": "WinSleep",
     "longDescription": "Windows utility for scheduled system actions (Sleep, Hibernate, Shutdown, Restart, Lock, Sign Out)",
@@ -81,10 +79,7 @@
       "nsis": {
         "installMode": "both",
         "installerIcon": "icons/icon.ico",
-        "languages": [
-          "English",
-          "Russian"
-        ],
+        "languages": ["English", "Russian"],
         "displayLanguageSelector": true
       }
     }
