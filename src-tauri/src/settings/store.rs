@@ -19,14 +19,7 @@ impl Default for AppSettings {
 
 impl AppSettings {
     pub fn get_settings_path(app_handle: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
-        let mut path = app_handle
-            .path()
-            .app_config_dir()
-            .map_err(|e| format!("Failed to get config directory path: {e}"))?;
-
-        path.push("settings.json");
-
-        Ok(path)
+        crate::paths::get_settings_path(app_handle)
     }
 
     pub fn load_initial_tray_mode(app_handle: &tauri::AppHandle) -> bool {

@@ -1,5 +1,4 @@
 use std::fmt as std_fmt;
-use tauri::Manager;
 use tracing::{Event, Subscriber};
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{
@@ -87,7 +86,7 @@ where
 }
 
 pub fn init(app_handle: &tauri::AppHandle) -> Result<WorkerGuard, Box<dyn std::error::Error>> {
-    let log_dir = app_handle.path().app_log_dir()?;
+    let log_dir = crate::paths::get_log_dir(app_handle)?;
 
     std::fs::create_dir_all(&log_dir)?;
 

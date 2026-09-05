@@ -32,4 +32,5 @@ export type Commands = CommandsShape<{
   read_logs: CommandDef<string>;
   clear_logs: CommandDef<void>;
   open_log_dir: CommandDef<void>;
+  is_portable: CommandDef<boolean>;
 }>;

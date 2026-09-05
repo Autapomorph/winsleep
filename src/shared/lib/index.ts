@@ -49,3 +49,5 @@ export { isChangelogTag } from './updates/isChangelogTag';
 export { isValidUpdateInterval } from './updates/isValidUpdateInterval';
 
 export { isMainWindow } from './window/isMainWindow';
+
+export { initializePortable } from './system/initializePortable';

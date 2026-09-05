@@ -386,7 +386,8 @@
         "upToDate": "Обновлений нет",
         "checkFailed": "Не удалось проверить обновления",
         "installFailed": "Не удалось загрузить обновление",
-        "relaunchFailed": "Не удалось перезапустить приложение"
+        "relaunchFailed": "Не удалось перезапустить приложение",
+        "portableDownload": "Обновление доступно на GitHub"
       }
     },
     "minimizeBtn": {
