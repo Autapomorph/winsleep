@@ -8,7 +8,7 @@ import { FaGithub, FaTriangleExclamation } from 'react-icons/fa6';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-import { MOCK_VERSION, STORAGE_HAS_UPDATED_TO_KEY, useUpdateStore } from '@/entities/updater';
+import { MOCK_VERSION, STORAGE_LAST_SEEN_VERSION_KEY, useUpdateStore } from '@/entities/updater';
 import { CHANGELOG_TAGS, config, DEFAULT_LOCALE, GITHUB_REPO_URL } from '@/shared/config';
 import {
   compareSemver,
@@ -127,20 +127,17 @@ export const ChangelogModal = () => {
     const init = async () => {
       try {
         const currentVersion = await getVersion();
-        const pendingVersion = localStorage.getItem(STORAGE_HAS_UPDATED_TO_KEY);
+        const lastSeenVersion = localStorage.getItem(STORAGE_LAST_SEEN_VERSION_KEY);
 
-        if (pendingVersion) {
-          localStorage.removeItem(STORAGE_HAS_UPDATED_TO_KEY);
+        const normalizedCurrent = currentVersion.replace(/^v/, '');
+        const normalizedLastSeen = lastSeenVersion ? lastSeenVersion.replace(/^v/, '') : null;
 
-          const normalizedPending = pendingVersion.replace(/^v/, '');
-          const normalizedCurrent = currentVersion.replace(/^v/, '');
-
-          if (normalizedPending === normalizedCurrent || pendingVersion === MOCK_VERSION) {
-            openChangelog(pendingVersion);
-          }
+        if (normalizedLastSeen && compareSemver(normalizedCurrent, normalizedLastSeen, 'asc') > 0) {
+          openChangelog(normalizedCurrent);
+        } else if (!lastSeenVersion) {
+          localStorage.setItem(STORAGE_LAST_SEEN_VERSION_KEY, normalizedCurrent);
         }
       } catch (err) {
-        localStorage.removeItem(STORAGE_HAS_UPDATED_TO_KEY);
         logger.error(`Initialization error: ${err}`);
       }
     };
@@ -205,6 +202,12 @@ export const ChangelogModal = () => {
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       closeChangelog();
+
+      getVersion()
+        .then(currentVersion => {
+          localStorage.setItem(STORAGE_LAST_SEEN_VERSION_KEY, currentVersion.replace(/^v/, ''));
+        })
+        .catch(() => {});
     }
   };
 

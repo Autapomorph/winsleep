@@ -29,7 +29,7 @@ export const useAutoInstallOnExit = () => {
         logger.info('Auto-installing downloaded update on application exit...');
 
         try {
-          await installUpdate();
+          await installUpdate({ restartAfterInstall: false });
         } catch (error) {
           logger.error(`Failed to install update on exit: ${error}`);
         }

@@ -16,7 +16,7 @@ import {
   type UpdateStatus,
   createUpdateSlice,
   initialUpdateState,
-  STORAGE_HAS_UPDATED_TO_KEY,
+  STORAGE_LAST_SEEN_VERSION_KEY,
 } from './slices/update.slice';
 
 export type {
@@ -34,7 +34,7 @@ export type UpdateStore = UpdateSlice & ChangelogSlice;
 
 export type UpdateStoreState = UpdateState & ChangelogState;
 
-export { STORAGE_HAS_UPDATED_TO_KEY };
+export { STORAGE_LAST_SEEN_VERSION_KEY };
 
 export const initialUpdateStoreState: UpdateStoreState = {
   ...initialUpdateState,

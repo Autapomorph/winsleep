@@ -93,7 +93,7 @@ describe('useAutoInstallOnExit', () => {
 
     await mockListeners['app-exit-requested']({ payload: undefined });
 
-    expect(installUpdateMock).toHaveBeenCalledTimes(1);
+    expect(installUpdateMock).toHaveBeenCalledWith({ restartAfterInstall: false });
     expect(typedInvoke).toHaveBeenCalledWith('quit_app');
   });
 
@@ -111,7 +111,7 @@ describe('useAutoInstallOnExit', () => {
 
     await mockListeners['app-exit-requested']({ payload: undefined });
 
-    expect(installUpdateMock).toHaveBeenCalledTimes(1);
+    expect(installUpdateMock).toHaveBeenCalledWith({ restartAfterInstall: false });
     expect(typedInvoke).toHaveBeenCalledWith('quit_app');
   });
 

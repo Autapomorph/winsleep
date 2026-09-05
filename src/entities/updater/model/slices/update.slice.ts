@@ -24,13 +24,13 @@ export type UpdateStatus =
 export interface UpdateActions {
   checkUpdates: (options?: { isManual?: boolean }) => Promise<void>;
   downloadUpdate: () => Promise<void>;
-  installUpdate: () => Promise<void>;
+  installUpdate: (options?: { restartAfterInstall?: boolean }) => Promise<void>;
   relaunchApp: () => Promise<void>;
   resetStore: () => void;
   triggerMockUpdate: () => Promise<void>;
 }
 
-export const STORAGE_HAS_UPDATED_TO_KEY = 'hasUpdatedTo';
+export const STORAGE_LAST_SEEN_VERSION_KEY = 'lastSeenChangelogVersion';
 
 export const initialUpdateState: UpdateState = {
   downloadProgress: 0,
@@ -144,8 +144,6 @@ export const createUpdateSlice: StateCreator<
         logger.info('Update downloaded successfully. Ready to install.');
         set({ status: 'readyToRestart' }, false, 'updater/downloadReadyToRestart');
       } catch (error) {
-        localStorage.removeItem(STORAGE_HAS_UPDATED_TO_KEY);
-
         const message = error instanceof Error ? error.message : String(error);
         logger.error(`Download failed: ${message}`);
 
@@ -154,7 +152,7 @@ export const createUpdateSlice: StateCreator<
       }
     },
 
-    installUpdate: async () => {
+    installUpdate: async options => {
       const { status, updateInfo } = get();
 
       if (config.isPortable || !updateInfo) {
@@ -173,12 +171,9 @@ export const createUpdateSlice: StateCreator<
       logger.info('Starting update install...');
 
       try {
-        localStorage.setItem(STORAGE_HAS_UPDATED_TO_KEY, updateInfo.version);
-        await updateInfo.install();
+        await updateInfo.install(options);
         logger.info('Update installed');
       } catch (error) {
-        localStorage.removeItem(STORAGE_HAS_UPDATED_TO_KEY);
-
         const message = error instanceof Error ? error.message : String(error);
         logger.error(`Installation failed: ${message}`);
 
