@@ -2,8 +2,10 @@ mod app;
 mod app_state;
 mod logging;
 mod notifications;
+mod paths;
 mod pc_management;
 mod settings;
+mod system;
 mod timer;
 mod tray;
 
@@ -12,6 +14,15 @@ use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    if system::is_portable() {
+        if let Ok(exe_dir) = paths::get_exe_dir() {
+            if std::env::var("WEBVIEW2_USER_DATA_FOLDER").is_err() {
+                let webview_dir = exe_dir.join("data").join("webview");
+                std::env::set_var("WEBVIEW2_USER_DATA_FOLDER", webview_dir);
+            }
+        }
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
@@ -55,7 +66,8 @@ pub fn run() {
             logging::commands::log_message,
             logging::commands::read_logs,
             logging::commands::clear_logs,
-            logging::commands::open_log_dir
+            logging::commands::open_log_dir,
+            system::commands::is_portable
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

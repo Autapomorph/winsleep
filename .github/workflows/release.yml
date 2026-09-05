@@ -151,6 +151,25 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           TAURI_CI: "1"
 
+      - name: Package Portable archive (${{ matrix.arch }})
+        shell: pwsh
+        run: |
+          $Version = "${{ needs.validate_version.outputs.new_version }}"
+          $Arch = "${{ matrix.arch }}"
+          $Target = "${{ matrix.target }}"
+          $ExePath = "./src-tauri/target/$Target/release/WinSleep.exe"
+          $PortableDir = "./src-tauri/target/$Target/release/portable"
+
+          New-Item -ItemType Directory -Force -Path $PortableDir | Out-Null
+          Copy-Item -Path $ExePath -Destination "$PortableDir/WinSleep.exe"
+          New-Item -ItemType File -Force -Path "$PortableDir/.portable" | Out-Null
+          Copy-Item -Path "./LICENSE" -Destination "$PortableDir/LICENSE"
+
+          $BundleDir = "./src-tauri/target/$Target/release/bundle/nsis"
+          New-Item -ItemType Directory -Force -Path $BundleDir | Out-Null
+          $ZipPath = "$BundleDir/WinSleep_${Version}_${Arch}-portable.zip"
+          Compress-Archive -Path "$PortableDir/*" -DestinationPath $ZipPath -Force
+
       - name: Upload artifacts (${{ matrix.arch }})
         uses: actions/upload-artifact@v7
         with:
@@ -158,6 +177,7 @@ jobs:
           path: |
             ./src-tauri/target/${{ matrix.target }}/release/bundle/nsis/WinSleep_${{ needs.validate_version.outputs.new_version }}_${{ matrix.arch }}-setup.exe
             ./src-tauri/target/${{ matrix.target }}/release/bundle/nsis/WinSleep_${{ needs.validate_version.outputs.new_version }}_${{ matrix.arch }}-setup.exe.sig
+            ./src-tauri/target/${{ matrix.target }}/release/bundle/nsis/WinSleep_${{ needs.validate_version.outputs.new_version }}_${{ matrix.arch }}-portable.zip
           if-no-files-found: error
 
   publish_release:
@@ -176,6 +196,12 @@ jobs:
         with:
           path: ./release-bundles
           merge-multiple: true
+
+      - name: Organize bundles
+        run: |
+          find ./release-bundles -mindepth 2 -type f -exec mv -t ./release-bundles {} +
+          find ./release-bundles -mindepth 1 -type d -empty -delete
+          ls -la ./release-bundles
 
       - name: Update repository version numbers
         run: |
@@ -241,6 +267,8 @@ jobs:
             ./release-bundles/WinSleep_${{ needs.validate_version.outputs.new_version }}_x64-setup.exe.sig
             ./release-bundles/WinSleep_${{ needs.validate_version.outputs.new_version }}_arm64-setup.exe
             ./release-bundles/WinSleep_${{ needs.validate_version.outputs.new_version }}_arm64-setup.exe.sig
+            ./release-bundles/WinSleep_${{ needs.validate_version.outputs.new_version }}_x64-portable.zip
+            ./release-bundles/WinSleep_${{ needs.validate_version.outputs.new_version }}_arm64-portable.zip
 
       - name: Cleanup bundle-x64 artifact
         if: always() && needs.build_release_bundle.result == 'success'

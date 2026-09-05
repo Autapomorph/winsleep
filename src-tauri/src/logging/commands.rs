@@ -1,6 +1,5 @@
 use std::fs;
 use std::path::PathBuf;
-use tauri::Manager;
 use tauri_plugin_opener::OpenerExt;
 
 fn is_valid_log_file(name: &str) -> bool {
@@ -32,10 +31,7 @@ fn is_valid_log_file(name: &str) -> bool {
 }
 
 fn get_sorted_log_files(app_handle: &tauri::AppHandle) -> Result<Vec<PathBuf>, String> {
-    let log_dir = app_handle
-        .path()
-        .app_log_dir()
-        .map_err(|e| format!("Failed to get log directory path: {e}"))?;
+    let log_dir = crate::paths::get_log_dir(app_handle)?;
 
     if !log_dir.exists() {
         return Ok(Vec::new());
@@ -68,10 +64,7 @@ fn get_sorted_log_files(app_handle: &tauri::AppHandle) -> Result<Vec<PathBuf>, S
 
 #[tauri::command]
 pub fn open_log_dir(app_handle: tauri::AppHandle) -> Result<(), String> {
-    let log_dir = app_handle
-        .path()
-        .app_log_dir()
-        .map_err(|e| format!("Failed to get log directory path: {e}"))?;
+    let log_dir = crate::paths::get_log_dir(&app_handle)?;
 
     if !log_dir.exists() {
         fs::create_dir_all(&log_dir).map_err(|e| format!("Failed to create log directory: {e}"))?;

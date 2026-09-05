@@ -73,9 +73,12 @@ export const createUpdateSlice: StateCreator<
           logger.info(`Update available: v${update.version}`);
 
           set({ status: 'available', updateInfo: update }, false, 'updater/updateAvailable');
-          get()
-            .downloadUpdate()
-            .catch(() => {});
+
+          if (!config.isPortable) {
+            get()
+              .downloadUpdate()
+              .catch(() => {});
+          }
         } else {
           logger.info('Application is up-to-date.');
           set({ status: 'upToDate', updateInfo: null }, false, 'updater/upToDate');
@@ -96,7 +99,7 @@ export const createUpdateSlice: StateCreator<
     downloadUpdate: async () => {
       const { status, updateInfo } = get();
 
-      if (!updateInfo || status === 'downloading') {
+      if (config.isPortable || !updateInfo || status === 'downloading') {
         return;
       }
 
@@ -154,7 +157,7 @@ export const createUpdateSlice: StateCreator<
     installUpdate: async () => {
       const { status, updateInfo } = get();
 
-      if (!updateInfo) {
+      if (config.isPortable || !updateInfo) {
         return;
       }
 

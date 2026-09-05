@@ -17,12 +17,18 @@ const x64SigPath = path.join(bundlesDir, `WinSleep_${newVersion}_x64-setup.exe.s
 const arm64SigPath = path.join(bundlesDir, `WinSleep_${newVersion}_arm64-setup.exe.sig`);
 
 if (!fs.existsSync(x64SigPath)) {
-  console.error(`Error: Signature file not found at ${x64SigPath}`);
+  const existingFiles = fs.existsSync(bundlesDir) ? fs.readdirSync(bundlesDir) : [];
+  console.error(
+    `Error: Signature file not found at ${x64SigPath}. Available files in ${bundlesDir}: ${existingFiles.join(', ')}`,
+  );
   process.exit(1);
 }
 
 if (!fs.existsSync(arm64SigPath)) {
-  console.error(`Error: Signature file not found at ${arm64SigPath}`);
+  const existingFiles = fs.existsSync(bundlesDir) ? fs.readdirSync(bundlesDir) : [];
+  console.error(
+    `Error: Signature file not found at ${arm64SigPath}. Available files in ${bundlesDir}: ${existingFiles.join(', ')}`,
+  );
   process.exit(1);
 }
 
