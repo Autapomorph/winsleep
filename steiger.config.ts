@@ -9,6 +9,12 @@ export default defineConfig([
     },
   },
   {
+    files: ['./src/app/providers/**'],
+    rules: {
+      'fsd/segments-by-purpose': 'off',
+    },
+  },
+  {
     files: ['./src/shared/locales/**'],
     rules: {
       'fsd/public-api': 'off',
