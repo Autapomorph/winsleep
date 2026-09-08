@@ -73,7 +73,8 @@ export const Timer = () => {
 
   const execute = useCallback(async () => {
     const currentTimerAction = useSessionStore.getState().timerAction;
-    logger.info(`Executing action: ${currentTimerAction}`);
+    const isForce = useSettingsStore.getState().isForceActionEnabled;
+    logger.info(`Executing action: ${currentTimerAction}, isForce: ${isForce}`);
 
     try {
       if (currentTimerAction === 'sleep') {
@@ -102,7 +103,7 @@ export const Timer = () => {
           return;
         }
 
-        await pcShutdown();
+        await pcShutdown({ isForce });
         return;
       }
 
@@ -112,7 +113,7 @@ export const Timer = () => {
           return;
         }
 
-        await pcReboot();
+        await pcReboot({ isForce });
         return;
       }
 
@@ -132,7 +133,7 @@ export const Timer = () => {
           return;
         }
 
-        await pcSignout();
+        await pcSignout({ isForce });
       }
     } catch (error) {
       logger.error(`Action failed: ${currentTimerAction}. Error: ${error}`);

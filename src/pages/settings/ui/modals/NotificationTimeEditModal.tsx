@@ -59,8 +59,8 @@ export const NotificationTimeEditModal = ({
             <Modal.Heading>
               {t(
                 $ =>
-                  $.settings.sections.notifications.groups.timePoints.notificationTime.editModal
-                    .title,
+                  $.settings.sections.notifications.groups.basic.timePoints.notificationTime
+                    .editModal.title,
               )}
             </Modal.Heading>
           </Modal.Header>
@@ -128,8 +128,8 @@ export const NotificationTimeEditModal = ({
             <Button type="submit" form="edit-notification-time-form" variant="primary">
               {t(
                 $ =>
-                  $.settings.sections.notifications.groups.timePoints.notificationTime.editModal
-                    .submitBtn.text,
+                  $.settings.sections.notifications.groups.basic.timePoints.notificationTime
+                    .editModal.submitBtn.text,
               )}
             </Button>
           </Modal.Footer>

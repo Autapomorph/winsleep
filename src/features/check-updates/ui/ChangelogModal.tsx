@@ -220,6 +220,7 @@ export const ChangelogModal = () => {
         value={version}
         placeholder={t($ => $.changelogModal.selectVersion)}
         onChange={handleVersionChange}
+        aria-label={t($ => $.changelogModal.selectVersion)}
       >
         <Select.Trigger className="font-mono text-xs font-semibold">
           <Select.Value />

@@ -314,16 +314,6 @@
     "signoutLabel": {
       "text": "Sign Out"
     },
-    "timerActionSwitch": {
-      "aria": {
-        "sleepLabel": "Current timer action: Sleep",
-        "hibernateLabel": "Current timer action: Hibernate",
-        "shutdownLabel": "Current timer action: Shutdown",
-        "rebootLabel": "Current timer action: Restart",
-        "lockLabel": "Current timer action: Screen Lock",
-        "signoutLabel": "Current timer action: Sign Out"
-      }
-    },
     "notifications": {
       "planned": {
         "sleep": "Putting PC to sleep",
@@ -424,18 +414,26 @@
         "groups": {
           "basic": {
             "title": "Basic settings",
-            "defaultTimerAction": {
-              "select": {
-                "label": "Default timer action",
-                "placeholder": "Default timer action"
-              }
-            },
             "rememberSelectedTimerAction": {
               "switch": {
                 "label": "Remember selected timer action"
               },
               "tooltip": {
                 "text": "Restore last selected timer action on launch"
+              }
+            },
+            "defaultTimerAction": {
+              "select": {
+                "label": "Default timer action",
+                "placeholder": "Default timer action"
+              }
+            },
+            "forceAction": {
+              "switch": {
+                "label": "Force close applications"
+              },
+              "tooltip": {
+                "text": "Forces running applications to close without prompting to save unsaved documents during shutdown, restart, and sign out"
               }
             }
           }
@@ -547,30 +545,29 @@
               "switch": {
                 "label": "Enable notification before timer ends"
               }
-            }
-          },
-          "timePoints": {
-            "title": "Warning points",
-            "notificationTime": {
-              "label": {
-                "text": "Notification time before timer ends"
-              },
-              "editBtn": {
-                "text": "Change"
-              },
-              "editModal": {
-                "title": "Notification Time",
-                "submitBtn": {
-                  "text": "Set"
+            },
+            "timePoints": {
+              "notificationTime": {
+                "label": {
+                  "text": "Notification time before timer ends"
+                },
+                "editBtn": {
+                  "text": "Change"
+                },
+                "editModal": {
+                  "title": "Notification Time",
+                  "submitBtn": {
+                    "text": "Set"
+                  }
                 }
-              }
-            },
-            "addNotificationTimeBtn": {
-              "label": "Add notification"
-            },
-            "removeNotificationTimeBtn": {
-              "aria": {
-                "label": "Remove notification"
+              },
+              "addNotificationTimeBtn": {
+                "label": "Add notification"
+              },
+              "removeNotificationTimeBtn": {
+                "aria": {
+                  "label": "Remove notification"
+                }
               }
             }
           },

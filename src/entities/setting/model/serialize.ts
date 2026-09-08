@@ -9,6 +9,7 @@ export interface SerializedSettings {
   version: number;
   defaultTimerAction: TimerAction;
   shouldRememberSelectedTimerAction: boolean;
+  isForceActionEnabled: boolean;
   defaultTimerSeconds: number;
   shouldRememberConfiguredTime: boolean;
   isLockedByDefault: boolean;
@@ -36,6 +37,7 @@ export const serializeSettings = (
     version: CURRENT_SETTINGS_VERSION,
     defaultTimerAction: state.defaultTimerAction,
     shouldRememberSelectedTimerAction: state.shouldRememberSelectedTimerAction,
+    isForceActionEnabled: state.isForceActionEnabled,
     defaultTimerSeconds: state.defaultTimerSeconds,
     shouldRememberConfiguredTime: state.shouldRememberConfiguredTime,
     isLockedByDefault: state.isLockedByDefault,

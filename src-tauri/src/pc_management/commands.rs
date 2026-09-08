@@ -30,9 +30,15 @@ pub fn pc_hibernate() -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn pc_shutdown() -> Result<(), String> {
-    let status = Command::new("shutdown")
-        .args(["/s", "/t", "0"])
+pub fn pc_shutdown(is_force: Option<bool>) -> Result<(), String> {
+    let mut cmd = Command::new("shutdown");
+    cmd.args(["/s", "/t", "0"]);
+
+    if is_force.unwrap_or(false) {
+        cmd.arg("/f");
+    }
+
+    let status = cmd
         .status()
         .map_err(|e| format!("Failed to initiate system shutdown process: {e}"))?;
 
@@ -47,9 +53,15 @@ pub fn pc_shutdown() -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn pc_reboot() -> Result<(), String> {
-    let status = Command::new("shutdown")
-        .args(["/r", "/t", "0"])
+pub fn pc_reboot(is_force: Option<bool>) -> Result<(), String> {
+    let mut cmd = Command::new("shutdown");
+    cmd.args(["/r", "/t", "0"]);
+
+    if is_force.unwrap_or(false) {
+        cmd.arg("/f");
+    }
+
+    let status = cmd
         .status()
         .map_err(|e| format!("Failed to initiate system restart process: {e}"))?;
 
@@ -77,9 +89,15 @@ pub fn pc_lock() -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn pc_signout() -> Result<(), String> {
-    let status = Command::new("shutdown")
-        .args(["/l"])
+pub fn pc_signout(is_force: Option<bool>) -> Result<(), String> {
+    let mut cmd = Command::new("shutdown");
+    cmd.arg("/l");
+    
+    if is_force.unwrap_or(false) {
+        cmd.arg("/f");
+    }
+
+    let status = cmd
         .status()
         .map_err(|e| format!("Failed to initiate user logoff process: {e}"))?;
 

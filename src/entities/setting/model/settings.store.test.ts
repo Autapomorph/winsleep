@@ -28,6 +28,9 @@ describe('settingsStore', () => {
 
     store.setShouldRememberSelectedTimerAction(true);
     expect(useSettingsStore.getState().shouldRememberSelectedTimerAction).toBe(true);
+
+    store.setIsForceActionEnabled(true);
+    expect(useSettingsStore.getState().isForceActionEnabled).toBe(true);
   });
 
   test('handles TimerSlice actions', () => {

@@ -1,4 +1,9 @@
-import { DEFAULT_TIMER_ACTION, DEFAULT_TIMER_SECONDS } from '@/shared/config';
+import {
+  DEFAULT_IS_FORCE_ACTION_ENABLED,
+  DEFAULT_IS_NOTIFICATIONS_ENABLED,
+  DEFAULT_TIMER_ACTION,
+  DEFAULT_TIMER_SECONDS,
+} from '@/shared/config';
 import { CURRENT_SETTINGS_VERSION } from './migrate';
 import { DEFAULT_SERIALIZED_SETTINGS, sanitizeSettings } from './sanitize';
 
@@ -21,6 +26,7 @@ describe('sanitizeSettings', () => {
     expect(sanitized.version).toBe(CURRENT_SETTINGS_VERSION);
     expect(sanitized.defaultTimerAction).toBe(DEFAULT_TIMER_ACTION);
     expect(sanitized.defaultTimerSeconds).toBe(DEFAULT_TIMER_SECONDS);
+    expect(sanitized.isForceActionEnabled).toBe(DEFAULT_IS_FORCE_ACTION_ENABLED);
   });
 
   test('should preserve valid values', () => {
@@ -29,6 +35,7 @@ describe('sanitizeSettings', () => {
       defaultTimerAction: 'shutdown',
       defaultTimerSeconds: 600,
       isNotificationsEnabled: false,
+      isForceActionEnabled: true,
     };
 
     const sanitized = sanitizeSettings(raw);
@@ -37,6 +44,7 @@ describe('sanitizeSettings', () => {
     expect(sanitized.defaultTimerAction).toBe('shutdown');
     expect(sanitized.defaultTimerSeconds).toBe(600);
     expect(sanitized.isNotificationsEnabled).toBe(false);
+    expect(sanitized.isForceActionEnabled).toBe(true);
   });
 
   test('should fallback to defaults when values are invalid types', () => {
@@ -50,7 +58,7 @@ describe('sanitizeSettings', () => {
 
     expect(sanitized.defaultTimerAction).toBe(DEFAULT_TIMER_ACTION);
     expect(sanitized.defaultTimerSeconds).toBe(DEFAULT_TIMER_SECONDS);
-    expect(sanitized.isNotificationsEnabled).toBe(true);
+    expect(sanitized.isNotificationsEnabled).toBe(DEFAULT_IS_NOTIFICATIONS_ENABLED);
   });
 
   test('should sanitize notificationTimes array', () => {

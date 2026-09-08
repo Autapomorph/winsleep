@@ -314,16 +314,6 @@
     "signoutLabel": {
       "text": "Выход из системы"
     },
-    "timerActionSwitch": {
-      "aria": {
-        "sleepLabel": "Текущее действие таймера: Сон",
-        "hibernateLabel": "Текущее действие таймера: Гибернация",
-        "shutdownLabel": "Текущее действие таймера: Выключение",
-        "rebootLabel": "Текущее действие таймера: Перезагрузка",
-        "lockLabel": "Текущее действие таймера: Блокировка",
-        "signoutLabel": "Текущее действие таймера: Выход из системы"
-      }
-    },
     "notifications": {
       "planned": {
         "sleep": "Перевод ПК в спящий режим",
@@ -424,18 +414,26 @@
         "groups": {
           "basic": {
             "title": "Основные настройки",
-            "defaultTimerAction": {
-              "select": {
-                "label": "Действие таймера по умолчанию",
-                "placeholder": "Действие таймера по умолчанию"
-              }
-            },
             "rememberSelectedTimerAction": {
               "switch": {
                 "label": "Запоминать выбранное действие таймера"
               },
               "tooltip": {
                 "text": "Сохранять выбранное действие таймера между перезапусками приложения"
+              }
+            },
+            "defaultTimerAction": {
+              "select": {
+                "label": "Действие таймера по умолчанию",
+                "placeholder": "Действие таймера по умолчанию"
+              }
+            },
+            "forceAction": {
+              "switch": {
+                "label": "Принудительное завершение программ"
+              },
+              "tooltip": {
+                "text": "Принудительно закрывать все запущенные программы без запроса на сохранение файлов при выключении, перезагрузке и выходе из системы"
               }
             }
           }
@@ -547,30 +545,29 @@
               "switch": {
                 "label": "Включить уведомление о скором завершении таймера"
               }
-            }
-          },
-          "timePoints": {
-            "title": "Точки предупреждения",
-            "notificationTime": {
-              "label": {
-                "text": "Время уведомления до окончания таймера"
-              },
-              "editBtn": {
-                "text": "Изменить"
-              },
-              "editModal": {
-                "title": "Время уведомления",
-                "submitBtn": {
-                  "text": "Установить"
+            },
+            "timePoints": {
+              "notificationTime": {
+                "label": {
+                  "text": "Время уведомления до окончания таймера"
+                },
+                "editBtn": {
+                  "text": "Изменить"
+                },
+                "editModal": {
+                  "title": "Время уведомления",
+                  "submitBtn": {
+                    "text": "Установить"
+                  }
                 }
-              }
-            },
-            "addNotificationTimeBtn": {
-              "label": "Добавить уведомление"
-            },
-            "removeNotificationTimeBtn": {
-              "aria": {
-                "label": "Удалить уведомление"
+              },
+              "addNotificationTimeBtn": {
+                "label": "Добавить уведомление"
+              },
+              "removeNotificationTimeBtn": {
+                "aria": {
+                  "label": "Удалить уведомление"
+                }
               }
             }
           },
