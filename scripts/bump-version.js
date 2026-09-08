@@ -27,9 +27,9 @@ try {
 // 2. tauri.conf.json
 const tauriConfPath = 'src-tauri/tauri.conf.json';
 if (fs.existsSync(tauriConfPath)) {
-  const tauriConf = JSON.parse(fs.readFileSync(tauriConfPath, 'utf8'));
-  tauriConf.version = newVersion;
-  fs.writeFileSync(tauriConfPath, `${JSON.stringify(tauriConf, null, 2)}\n`, 'utf8');
+  let tauriConf = fs.readFileSync(tauriConfPath, 'utf8');
+  tauriConf = tauriConf.replace(/(^\s*"version"\s*:\s*")[^"]+(")/m, `$1${newVersion}$2`);
+  fs.writeFileSync(tauriConfPath, tauriConf, 'utf8');
   console.log('✓ Updated tauri.conf.json');
 }
 
