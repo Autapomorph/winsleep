@@ -1,5 +1,6 @@
 import type { InvokeArgs } from '@tauri-apps/api/core';
 
+import type { RebootCommandArgs, ShutdownCommandArgs, SignoutCommandArgs } from './actions';
 import type { LogMessageCommandArgs } from './logs';
 import type { SetIsTrayModeEnabledCommandArgs, TrayMenuState } from './tray-menu';
 
@@ -15,10 +16,10 @@ export type Commands = CommandsShape<{
   cancel_timer: CommandDef<void>;
   pc_sleep: CommandDef<void>;
   pc_hibernate: CommandDef<void>;
-  pc_shutdown: CommandDef<void>;
-  pc_reboot: CommandDef<void>;
+  pc_shutdown: CommandDef<void, ShutdownCommandArgs | undefined>;
+  pc_reboot: CommandDef<void, RebootCommandArgs | undefined>;
   pc_lock: CommandDef<void>;
-  pc_signout: CommandDef<void>;
+  pc_signout: CommandDef<void, SignoutCommandArgs | undefined>;
   play_notification_sound: CommandDef<void>;
   quit_app: CommandDef<void>;
   set_is_tray_mode_enabled: CommandDef<void, SetIsTrayModeEnabledCommandArgs>;

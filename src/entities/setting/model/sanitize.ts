@@ -6,6 +6,7 @@ import {
   DEFAULT_IS_AUTO_UPDATE_ENABLED,
   DEFAULT_IS_AUTOSTART_ENABLED,
   DEFAULT_IS_CUSTOM_TIMER_STEPS_ENABLED,
+  DEFAULT_IS_FORCE_ACTION_ENABLED,
   DEFAULT_IS_LOCKED_BY_DEFAULT,
   DEFAULT_IS_NOTIFICATION_SOUND_ENABLED,
   DEFAULT_IS_NOTIFICATIONS_ENABLED,
@@ -30,6 +31,7 @@ export const DEFAULT_SERIALIZED_SETTINGS: SerializedSettings = {
   version: CURRENT_SETTINGS_VERSION,
   defaultTimerAction: DEFAULT_TIMER_ACTION,
   shouldRememberSelectedTimerAction: DEFAULT_SHOULD_REMEMBER_SELECTED_TIMER_ACTION,
+  isForceActionEnabled: DEFAULT_IS_FORCE_ACTION_ENABLED,
   defaultTimerSeconds: DEFAULT_TIMER_SECONDS,
   shouldRememberConfiguredTime: DEFAULT_SHOULD_REMEMBER_CONFIGURED_TIME,
   isLockedByDefault: DEFAULT_IS_LOCKED_BY_DEFAULT,
@@ -69,6 +71,12 @@ export const sanitizeSettings = (rawSettings: Record<string, unknown>): Serializ
     typeof rawSettings.shouldRememberSelectedTimerAction === 'boolean'
       ? rawSettings.shouldRememberSelectedTimerAction
       : DEFAULT_SHOULD_REMEMBER_SELECTED_TIMER_ACTION;
+
+  // Sanitize isForceActionEnabled
+  const isForceActionEnabled =
+    typeof rawSettings.isForceActionEnabled === 'boolean'
+      ? rawSettings.isForceActionEnabled
+      : DEFAULT_IS_FORCE_ACTION_ENABLED;
 
   // Sanitize defaultTimerSeconds
   const defaultTimerSeconds =
@@ -194,6 +202,7 @@ export const sanitizeSettings = (rawSettings: Record<string, unknown>): Serializ
     version,
     defaultTimerAction,
     shouldRememberSelectedTimerAction,
+    isForceActionEnabled,
     defaultTimerSeconds,
     shouldRememberConfiguredTime,
     isLockedByDefault,

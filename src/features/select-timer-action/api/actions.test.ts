@@ -18,12 +18,18 @@ describe('timer action API', () => {
 
   test('calls pc_shutdown', async () => {
     await pcShutdown();
-    expect(typedInvoke).toHaveBeenCalledWith('pc_shutdown');
+    expect(typedInvoke).toHaveBeenCalledWith('pc_shutdown', undefined);
+
+    await pcShutdown({ isForce: true });
+    expect(typedInvoke).toHaveBeenCalledWith('pc_shutdown', { isForce: true });
   });
 
   test('calls pc_reboot', async () => {
     await pcReboot();
-    expect(typedInvoke).toHaveBeenCalledWith('pc_reboot');
+    expect(typedInvoke).toHaveBeenCalledWith('pc_reboot', undefined);
+
+    await pcReboot({ isForce: true });
+    expect(typedInvoke).toHaveBeenCalledWith('pc_reboot', { isForce: true });
   });
 
   test('calls pc_lock', async () => {
@@ -33,6 +39,9 @@ describe('timer action API', () => {
 
   test('calls pc_signout', async () => {
     await pcSignout();
-    expect(typedInvoke).toHaveBeenCalledWith('pc_signout');
+    expect(typedInvoke).toHaveBeenCalledWith('pc_signout', undefined);
+
+    await pcSignout({ isForce: true });
+    expect(typedInvoke).toHaveBeenCalledWith('pc_signout', { isForce: true });
   });
 });

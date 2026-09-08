@@ -131,29 +131,35 @@ describe('useAutoUpdater', () => {
     expect(checkUpdatesMock).toHaveBeenCalledTimes(1);
   });
 
-  test('updates lastUpdateCheckAt in app-state store when check finishes with upToDate', async () => {
+  test('updates lastUpdateCheckAt in app-state store when check finishes with upToDate', () => {
     renderHook(() => useAutoUpdater());
 
-    useUpdateStore.setState({ status: 'checking' });
-    useUpdateStore.setState({ status: 'upToDate' });
+    act(() => {
+      useUpdateStore.setState({ status: 'checking' });
+      useUpdateStore.setState({ status: 'upToDate' });
+    });
 
     expect(useAppStateStore.getState().lastUpdateCheckAt).not.toBeNull();
   });
 
-  test('updates lastUpdateCheckAt in app-state store when check finishes with available', async () => {
+  test('updates lastUpdateCheckAt in app-state store when check finishes with available', () => {
     renderHook(() => useAutoUpdater());
 
-    useUpdateStore.setState({ status: 'checking' });
-    useUpdateStore.setState({ status: 'available' });
+    act(() => {
+      useUpdateStore.setState({ status: 'checking' });
+      useUpdateStore.setState({ status: 'available' });
+    });
 
     expect(useAppStateStore.getState().lastUpdateCheckAt).not.toBeNull();
   });
 
-  test('does not update lastUpdateCheckAt when check fails with error', async () => {
+  test('does not update lastUpdateCheckAt when check fails with error', () => {
     renderHook(() => useAutoUpdater());
 
-    useUpdateStore.setState({ status: 'checking' });
-    useUpdateStore.setState({ status: 'error' });
+    act(() => {
+      useUpdateStore.setState({ status: 'checking' });
+      useUpdateStore.setState({ status: 'error' });
+    });
 
     expect(useAppStateStore.getState().lastUpdateCheckAt).toBeNull();
   });
@@ -166,13 +172,14 @@ describe('useAutoUpdater', () => {
 
     // Fast-forward system time to simulate 2 hours sleep
     const sevenHoursAgo = Date.now() - 7 * 60 * 60 * 1000;
-    useAppStateStore.setState({ lastUpdateCheckAt: sevenHoursAgo });
+    act(() => {
+      useAppStateStore.setState({ lastUpdateCheckAt: sevenHoursAgo });
+    });
 
     // Trigger system-resume
     expect(mockListeners['system-resume']).toBeDefined();
-    mockListeners['system-resume']();
-
     await act(async () => {
+      mockListeners['system-resume']();
       vi.advanceTimersByTime(3000);
     });
 

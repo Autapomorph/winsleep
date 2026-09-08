@@ -6,6 +6,7 @@ describe('serializeSettings', () => {
     const mockState: SettingsState = {
       defaultTimerAction: 'sleep',
       shouldRememberSelectedTimerAction: false,
+      isForceActionEnabled: true,
       defaultTimerSeconds: 120,
       shouldRememberConfiguredTime: false,
       isLockedByDefault: false,
@@ -31,6 +32,7 @@ describe('serializeSettings', () => {
     );
 
     expect(serialized.version).toBeDefined();
+    expect(serialized.isForceActionEnabled).toBe(true);
     expect(serialized.defaultTimerSeconds).toBe(120);
     expect(serialized.customTimerPresets).toEqual([60]);
     expect(serialized.notificationTimes).toEqual([60]);
