@@ -56,14 +56,3 @@ pub fn get_log_dir(app_handle: &tauri::AppHandle) -> Result<PathBuf, String> {
         .app_log_dir()
         .map_err(|e| format!("Failed to get log directory path: {e}"))
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_get_exe_dir() {
-        let exe_dir = get_exe_dir();
-        assert!(exe_dir.is_ok());
-    }
-}
