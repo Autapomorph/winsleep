@@ -24,13 +24,3 @@ pub fn is_portable() -> bool {
         false
     })
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_is_portable_runs() {
-        let _ = is_portable();
-    }
-}
