@@ -2,11 +2,12 @@
   "auto-format-file": {
     "PostToolUse": [
       {
-        "matcher": "replace_file_content|multi_replace_file_content|write_to_file",
+        "matcher": "replace_file_content|write_to_file",
         "hooks": [
           {
             "type": "command",
-            "command": "node .agents/scripts/format-file.cjs"
+            "command": "node .agents/scripts/format-file.cjs",
+            "timeout": 600
           }
         ]
       }
@@ -15,12 +16,9 @@
   "pre-completion-checks": {
     "Stop": [
       {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .agents/scripts/verify-changes.cjs"
-          }
-        ]
+        "type": "command",
+        "command": "node .agents/scripts/verify-changes.cjs",
+        "timeout": 600
       }
     ]
   }

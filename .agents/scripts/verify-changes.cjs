@@ -1,20 +1,32 @@
 const { execSync } = require('child_process');
 
+const isClaude =
+  process.argv.includes('--claude') ||
+  process.argv.includes('--agent=claude') ||
+  Boolean(process.env.CLAUDE_CODE || process.env.CLAUDE_PROJECT_DIR);
+
+function runCommand(cmd) {
+  try {
+    return { ok: true, output: execSync(cmd, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }) };
+  } catch (err) {
+    const errorOutput = (err.stdout || '') + '\n' + (err.stderr || '') + '\n' + err.message;
+    return { ok: false, output: errorOutput.trim() };
+  }
+}
+
 try {
-  // Get list of changed files from git status (staged and unstaged)
-  const output = execSync('git status --porcelain', { encoding: 'utf8' });
-  const files = output
+  const statusOutput = execSync('git status --porcelain', { encoding: 'utf8' });
+
+  const files = statusOutput
     .split('\n')
     .map(line => {
-      const cleanLine = line.trim();
-
-      if (!cleanLine) {
+      const clean = line.trim();
+      if (!clean) {
         return null;
       }
 
-      const parts = cleanLine.split(/\s+/);
-
-      return parts[parts.length - 1];
+      const rawPath = clean.slice(3).trim();
+      return rawPath.includes(' -> ') ? rawPath.split(' -> ')[1] : rawPath;
     })
     .filter(Boolean);
 
@@ -22,31 +34,77 @@ try {
   let hasRustChanges = false;
 
   for (const file of files) {
-    if (/\.(js|jsx|ts|tsx)$/.test(file)) {
+    if (/\.(js|jsx|ts|tsx|json|css|html)$/.test(file)) {
       hasFrontendChanges = true;
     }
-    
+
     if (/\.rs$/.test(file) || file.includes('src-tauri/')) {
       hasRustChanges = true;
     }
   }
 
+  const failures = [];
+
   if (hasFrontendChanges) {
-    console.log('Detected JS/TS changes. Running frontend checks...');
-    execSync('npm run format', { stdio: 'inherit' });
-    execSync('npm run typecheck', { stdio: 'inherit' });
-    execSync('npm run lint', { stdio: 'inherit' });
-  } else {
-    console.log('No JS/TS changes detected. Skipping frontend checks.');
+    const fmt = runCommand('npm run format');
+    if (!fmt.ok) {
+      failures.push(`Format check failed:\n${fmt.output}`);
+    }
+
+    const tc = runCommand('npm run typecheck');
+    if (!tc.ok) {
+      failures.push(`Typecheck failed:\n${tc.output}`);
+    }
+
+    const lint = runCommand('npm run lint');
+    if (!lint.ok) {
+      failures.push(`Lint failed:\n${lint.output}`);
+    }
   }
 
   if (hasRustChanges) {
-    console.log('Detected Rust/Tauri changes. Running cargo check...');
-    execSync('cargo check --manifest-path src-tauri/Cargo.toml', { stdio: 'inherit' });
+    const cargo = runCommand('cargo check --manifest-path src-tauri/Cargo.toml');
+    if (!cargo.ok) {
+      failures.push(`Cargo check failed:\n${cargo.output}`);
+    }
+  }
+
+  if (failures.length > 0) {
+    const errorMsg = `Pre-completion verification checks failed. Please fix the following issues before finishing:\n\n${failures.join('\n\n')}`;
+
+    if (isClaude) {
+      console.error(errorMsg);
+      process.exit(1);
+    } else {
+      process.stdout.write(
+        JSON.stringify({
+          decision: 'continue',
+          reason: errorMsg
+        })
+      );
+      process.exit(0);
+    }
   } else {
-    console.log('No Rust changes detected. Skipping cargo check.');
+    process.stdout.write(
+      JSON.stringify({
+        decision: 'approve'
+      })
+    );
+    process.exit(0);
   }
 } catch (err) {
-  console.error('Verification hook failed:', err.message);
-  process.exit(1);
+  const errorMsg = `Verification hook script encountered an unexpected error: ${err.message}`;
+  
+  if (isClaude) {
+    console.error(errorMsg);
+    process.exit(1);
+  } else {
+    process.stdout.write(
+      JSON.stringify({
+        decision: 'continue',
+        reason: errorMsg
+      })
+    );
+    process.exit(0);
+  }
 }

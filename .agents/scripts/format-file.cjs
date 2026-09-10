@@ -13,24 +13,18 @@ process.stdin.on('end', () => {
     }
 
     const payload = JSON.parse(data);
-    const toolName = payload.tool_name;
-    const toolInput = payload.tool_input || {};
-    
-    const targetTools = [
-      'replace_file_content', 
-      'multi_replace_file_content', 
-      'write_to_file',
-      'EditFile',
-      'WriteFile'
-    ];
+    const input = payload.tool_input || payload.toolCall?.args || {};
+    const filePath =
+      input.file_path ||
+      input.TargetFile ||
+      input.filePath ||
+      input.path;
 
-    if (targetTools.includes(toolName)) {
-      const filePath = toolInput.TargetFile || toolInput.filePath || toolInput.path;
-      if (filePath && fs.existsSync(filePath)) {
-        execSync(`npx prettier --write "${filePath}"`, { stdio: 'ignore' });
-      }
+    if (filePath && fs.existsSync(filePath)) {
+      execSync(`npx prettier --write "${filePath}"`, { stdio: 'ignore' });
     }
   } catch {
-    // Fail silently to avoid breaking tool execution loop
+  } finally {
+    process.stdout.write(JSON.stringify({}));
   }
 });

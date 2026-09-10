@@ -2,11 +2,12 @@
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": "EditFile|WriteFile",
+        "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",
-            "command": "node .agents/scripts/format-file.cjs"
+            "command": "node .agents/scripts/format-file.cjs",
+            "timeout": 600
           }
         ]
       }
@@ -16,7 +17,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .agents/scripts/verify-changes.cjs"
+            "command": "node .agents/scripts/verify-changes.cjs --claude",
+            "timeout": 600
           }
         ]
       }
