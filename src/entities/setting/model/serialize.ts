@@ -14,6 +14,8 @@ export interface SerializedSettings {
   shouldRememberConfiguredTime: boolean;
   isLockedByDefault: boolean;
   isRestoreScheduledTimerOnStartupEnabled: boolean;
+  isPreventPCSleepDuringTimerEnabled: boolean;
+  isPreventDisplaySleepDuringTimerEnabled: boolean;
   isCustomTimerStepsEnabled: boolean;
   timerStepIncrease: number;
   timerStepDecrease: number;
@@ -42,6 +44,8 @@ export const serializeSettings = (
     shouldRememberConfiguredTime: state.shouldRememberConfiguredTime,
     isLockedByDefault: state.isLockedByDefault,
     isRestoreScheduledTimerOnStartupEnabled: state.isRestoreScheduledTimerOnStartupEnabled,
+    isPreventPCSleepDuringTimerEnabled: state.isPreventPCSleepDuringTimerEnabled,
+    isPreventDisplaySleepDuringTimerEnabled: state.isPreventDisplaySleepDuringTimerEnabled,
     isCustomTimerStepsEnabled: state.isCustomTimerStepsEnabled,
     timerStepIncrease: state.timerStepIncrease,
     timerStepDecrease: state.timerStepDecrease,

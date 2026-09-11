@@ -11,6 +11,8 @@ describe('serializeSettings', () => {
       shouldRememberConfiguredTime: false,
       isLockedByDefault: false,
       isRestoreScheduledTimerOnStartupEnabled: true,
+      isPreventPCSleepDuringTimerEnabled: true,
+      isPreventDisplaySleepDuringTimerEnabled: false,
       isCustomTimerStepsEnabled: false,
       timerStepIncrease: 30,
       timerStepDecrease: 30,
@@ -33,6 +35,8 @@ describe('serializeSettings', () => {
 
     expect(serialized.version).toBeDefined();
     expect(serialized.isForceActionEnabled).toBe(true);
+    expect(serialized.isPreventPCSleepDuringTimerEnabled).toBe(true);
+    expect(serialized.isPreventDisplaySleepDuringTimerEnabled).toBe(false);
     expect(serialized.defaultTimerSeconds).toBe(120);
     expect(serialized.customTimerPresets).toEqual([60]);
     expect(serialized.notificationTimes).toEqual([60]);

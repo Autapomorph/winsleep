@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next';
 
-import { DefaultTimerSetting } from './basic/DefaultTimerSetting';
+import { DefaultTimePicker } from './basic/DefaultTimePicker';
+import { PreventDisplaySleepSwitch } from './basic/PreventDisplaySleepSwitch';
+import { PreventPCSleepSwitch } from './basic/PreventPCSleepSwitch';
 import { RememberConfiguredTimeSwitch } from './basic/RememberConfiguredTimeSwitch';
 import { RestoreScheduledTimerSwitch } from './basic/RestoreScheduledTimerSwitch';
 import { CustomTimerStepsSwitch } from './custom-steps/CustomTimerStepsSwitch';
@@ -26,7 +28,9 @@ export const TimerSettings = () => {
         <div className="flex flex-col gap-4">
           <RememberConfiguredTimeSwitch />
           <RestoreScheduledTimerSwitch />
-          <DefaultTimerSetting />
+          <PreventPCSleepSwitch />
+          <PreventDisplaySleepSwitch />
+          <DefaultTimePicker />
         </div>
       </SettingsGroup>
 

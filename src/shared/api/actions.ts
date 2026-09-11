@@ -12,3 +12,9 @@ export type RebootCommandArgs = {
 export type SignoutCommandArgs = {
   isForce?: boolean;
 };
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type SetKeepAwakeCommandArgs = {
+  isEnabled: boolean;
+  keepDisplayAwake?: boolean;
+};

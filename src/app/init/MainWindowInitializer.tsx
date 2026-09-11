@@ -1,5 +1,6 @@
 import { useAutoInstallOnExit, useAutoUpdater, useMockUpdater } from '@/features/check-updates';
 import {
+  useKeepAwakeTimerSync,
   usePowerSystemEvents,
   useScheduledTimerRestore,
   useScheduledTimerStateSync,
@@ -16,6 +17,7 @@ export const MainWindowInitializer = () => {
   useDevThemeShortcut();
   useDevLanguageShortcut();
   usePowerSystemEvents();
+  useKeepAwakeTimerSync();
   useTimerNotification();
   useScheduledTimerStateSync();
   useScheduledTimerRestore();

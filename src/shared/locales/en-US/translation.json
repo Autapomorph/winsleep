@@ -473,6 +473,22 @@
               "tooltip": {
                 "text": "Automatically restore active scheduled timer when WinSleep starts"
               }
+            },
+            "preventPCSleepDuringTimer": {
+              "switch": {
+                "label": "Prevent PC sleep while timer is running"
+              },
+              "tooltip": {
+                "text": "Prevents PC from automatically sleeping due to idle timeout during countdown"
+              }
+            },
+            "preventDisplaySleepDuringTimer": {
+              "switch": {
+                "label": "Prevent display sleep"
+              },
+              "tooltip": {
+                "text": "Keeps the screen turned on during timer countdown"
+              }
             }
           },
           "security": {

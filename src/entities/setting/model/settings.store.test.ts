@@ -48,6 +48,12 @@ describe('settingsStore', () => {
     store.setIsRestoreScheduledTimerOnStartupEnabled(false);
     expect(useSettingsStore.getState().isRestoreScheduledTimerOnStartupEnabled).toBe(false);
 
+    store.setIsPreventPCSleepDuringTimerEnabled(false);
+    expect(useSettingsStore.getState().isPreventPCSleepDuringTimerEnabled).toBe(false);
+
+    store.setIsPreventDisplaySleepDuringTimerEnabled(true);
+    expect(useSettingsStore.getState().isPreventDisplaySleepDuringTimerEnabled).toBe(true);
+
     store.setIsCustomTimerStepsEnabled(true);
     expect(useSettingsStore.getState().isCustomTimerStepsEnabled).toBe(true);
 

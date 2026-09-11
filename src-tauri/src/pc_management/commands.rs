@@ -1,10 +1,36 @@
 use std::process::Command;
+use tauri::State;
 use windows_sys::Win32::Foundation::GetLastError;
 use windows_sys::Win32::System::Power::SetSuspendState;
 use windows_sys::Win32::System::Shutdown::LockWorkStation;
 
+use crate::pc_management::KeepAwakeManager;
+
 #[tauri::command]
-pub fn pc_sleep() -> Result<(), String> {
+pub fn set_keep_awake(
+    state: State<'_, KeepAwakeManager>,
+    is_enabled: bool,
+    keep_display_awake: Option<bool>,
+) -> Result<(), String> {
+    if is_enabled {
+        state.acquire(
+            keep_display_awake.unwrap_or(false),
+            "WinSleep: Active timer running",
+        )
+    } else {
+        state.release()
+    }
+}
+
+#[tauri::command]
+pub fn get_keep_awake_status(state: State<'_, KeepAwakeManager>) -> Result<bool, String> {
+    Ok(state.is_active())
+}
+
+#[tauri::command]
+pub fn pc_sleep(keep_awake: State<'_, KeepAwakeManager>) -> Result<(), String> {
+    let _ = keep_awake.release();
+
     let res = unsafe { SetSuspendState(0, 1, 0) };
     if res == 0 {
         let error_code = unsafe { GetLastError() };
@@ -17,7 +43,9 @@ pub fn pc_sleep() -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn pc_hibernate() -> Result<(), String> {
+pub fn pc_hibernate(keep_awake: State<'_, KeepAwakeManager>) -> Result<(), String> {
+    let _ = keep_awake.release();
+
     let res = unsafe { SetSuspendState(1, 1, 0) };
     if res == 0 {
         let error_code = unsafe { GetLastError() };
@@ -30,7 +58,12 @@ pub fn pc_hibernate() -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn pc_shutdown(is_force: Option<bool>) -> Result<(), String> {
+pub fn pc_shutdown(
+    keep_awake: State<'_, KeepAwakeManager>,
+    is_force: Option<bool>,
+) -> Result<(), String> {
+    let _ = keep_awake.release();
+
     let mut cmd = Command::new("shutdown");
     cmd.args(["/s", "/t", "0"]);
 
@@ -53,7 +86,12 @@ pub fn pc_shutdown(is_force: Option<bool>) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn pc_reboot(is_force: Option<bool>) -> Result<(), String> {
+pub fn pc_reboot(
+    keep_awake: State<'_, KeepAwakeManager>,
+    is_force: Option<bool>,
+) -> Result<(), String> {
+    let _ = keep_awake.release();
+
     let mut cmd = Command::new("shutdown");
     cmd.args(["/r", "/t", "0"]);
 
@@ -92,7 +130,7 @@ pub fn pc_lock() -> Result<(), String> {
 pub fn pc_signout(is_force: Option<bool>) -> Result<(), String> {
     let mut cmd = Command::new("shutdown");
     cmd.arg("/l");
-    
+
     if is_force.unwrap_or(false) {
         cmd.arg("/f");
     }
@@ -110,3 +148,4 @@ pub fn pc_signout(is_force: Option<bool>) -> Result<(), String> {
 
     Ok(())
 }
+
