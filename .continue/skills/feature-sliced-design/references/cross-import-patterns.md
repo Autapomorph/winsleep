@@ -1,172 +1,71 @@
 # Cross-Import Resolution Patterns
 
-Detailed strategies and code examples for resolving cross-imports between
-slices on the same layer. Includes the @x pattern and guidance on avoiding
-excessive entity coupling.
+How to resolve cross-imports between slices on the same layer. Rule 4-3
+disallows them by default, so the first move is always to remove the
+dependency by changing a boundary or a composition. Strategies A to C do
+that. Strategy D and `@x` are the documented exceptions for a dependency
+that cannot reasonably be removed, not a second way of working.
 
----
+Treat a cross-import as a code smell rather than an impossible state:
+some are deliberate, and those should be explicit and rare.
 
-## The Problem
+## What is a cross-import?
 
-Cross-imports occur when two slices on the same layer need to reference each
-other's code. This violates FSD's core import rule. The resolution strategies
-below must be tried **in order** — always attempt earlier strategies first.
+A cross-import is an import between different slices within the same layer.
+For example:
 
----
+- importing `features/apply-coupon` from `features/add-to-cart`
+- importing `widgets/sidebar` from `widgets/header`
 
-## Strategy 1: Merge Slices
+The `shared` and `app` layers do not have slices, so imports within those
+layers are not cross-imports.
 
-If two slices always change together, they likely represent a single concept
-and should be merged.
+## Why is this a code smell?
 
-**Indicators for merging:**
+Cross-imports blur domain boundaries and introduce implicit dependencies.
+Four concrete problems:
 
-- Changes to one slice almost always require changes to the other
-- The two slices share most of their dependencies
-- Developers frequently confuse which slice owns which responsibility
+1. **Unclear ownership and responsibility.** When `cart` imports from
+   `product`, it becomes unclear which slice owns the shared logic. A
+   change to `product`'s public contract now forces a change in `cart`,
+   and a deep import couples `cart` to `product`'s internals as well.
+   This makes bugs harder to localize and code harder to reason about.
+2. **Reduced isolation and testability.** A core benefit of sliced
+   architecture is that a slice can be read, changed, and tested with
+   little knowledge of its siblings. Cross-imports break that. Testing
+   `cart` now requires setting up `product`, and a change in one slice
+   can fail tests in another.
+3. **Increased cognitive load.** Working on `cart` now requires accounting
+   for how `product` is structured. As cross-imports accumulate, tracing
+   the impact of a change requires following more code across slice
+   boundaries.
+4. **Path to circular dependencies.** Cross-imports often start as one-way
+   dependencies but evolve into bidirectional ones (A imports B, B imports
+   A). This locks slices together and makes refactoring increasingly costly.
 
-```text
-// Before: two features that always change together
-features/send-message/
-  ui/MessageInput.tsx
-  model/message-draft.ts
-features/message-list/
-  ui/MessageList.tsx
-  model/messages.ts
+## Entities layer: prefer boundary merge over @x
 
-// After: one cohesive feature
-features/messaging/
-  ui/
-    MessageInput.tsx
-    MessageList.tsx
-  model/
-    message-draft.ts
-    messages.ts
-  index.ts
-```
+Cross-imports in `entities` are usually caused by splitting entities too
+granularly. Before reaching for `@x`, consider whether the boundaries should
+be merged instead.
 
-**When to use:** The two slices have overlapping responsibilities and always
-evolve together.
+The `@x` notation is available as a dedicated cross-import surface for
+`entities`, but it should be treated as a **last resort**, a **necessary
+compromise**, not a recommended approach. Think of `@x` as an explicit
+gateway for unavoidable domain references, not a general-purpose reuse
+mechanism. Overuse locks entity boundaries together and makes refactoring
+more costly over time.
 
-**When NOT to use:** The slices are genuinely independent concepts that happen
-to share a small piece of logic.
+### How @x works (when boundary merge is genuinely impossible)
 
----
+Each entity exposes a special `@x/` directory containing files named after
+the consuming entity. This makes the cross-import explicit and auditable.
 
-## Strategy 2: Extract Shared Logic to Entities
-
-When multiple features or widgets share the same domain logic, extract that
-logic to the entities layer. Keep UI and interaction-specific code in the
-higher layer.
-
-```text
-// Before: two features duplicate order logic
-features/order-create/
-  model/order.ts        ← Order types + validation (duplicated)
-  ui/OrderForm.tsx
-features/order-history/
-  model/order.ts        ← Order types + formatting (duplicated)
-  ui/OrderList.tsx
-
-// After: shared domain logic in entities, UI stays in features
-entities/order/
-  model/
-    order.ts            ← Shared types + domain logic
-  index.ts              ← Public API
-
-features/order-create/
-  ui/
-    OrderForm.tsx       ← UI remains in feature
-  model/
-    order-form.ts       ← Feature-specific form logic
-  index.ts
-features/order-history/
-  ui/
-    OrderList.tsx       ← UI remains in feature
-  model/
-    order-display.ts    ← Feature-specific display logic
-  index.ts
-```
-
-**Key principle:** Extract only the genuinely shared domain logic (types,
-validation rules, business calculations). Feature-specific UI, state
-management, and API calls stay in the feature.
-
----
-
-## Strategy 3: Compose in a Higher Layer (Inversion of Control)
-
-Use inversion of control — the parent layer (pages or app) imports both slices
-and connects them. The slices never reference each other directly.
-
-### React: Render Props / Children
-
-```typescript
-// Problem: features/comment-list wants to show user avatars from
-// features/user-profile — but same-layer import is forbidden.
-
-// Solution: pages/post composes both and passes data down.
-
-// pages/post/ui/PostPage.tsx
-import { CommentList } from '@/features/comments';
-import { UserAvatar } from '@/entities/user';
-
-const PostPage = ({ post }) => (
-  <CommentList
-    comments={post.comments}
-    renderAuthor={(userId) => <UserAvatar userId={userId} />}
-  />
-);
-```
-
-### Vue: Named Slots
-
-```vue
-<!-- pages/post/ui/PostPage.vue -->
-<template>
-  <CommentList :comments="post.comments">
-    <template #author="{ userId }">
-      <UserAvatar :userId="userId" />
-    </template>
-  </CommentList>
-</template>
-```
-
-### Any Framework: Dependency Injection
-
-```typescript
-// features/notifications/model/notifications.ts
-// Instead of importing from features/user directly, accept a callback:
-interface NotificationDeps {
-  getUserName: (userId: string) => string;
-}
-
-export const createNotificationService = (deps: NotificationDeps) => ({
-  formatNotification: (notification) =>
-    `${deps.getUserName(notification.userId)}: ${notification.message}`,
-});
-
-// pages/dashboard/model/setup.ts — wire dependencies here
-import { createNotificationService } from "@/features/notifications";
-import { getUserName } from "@/entities/user";
-
-export const notificationService = createNotificationService({ getUserName });
-```
-
-**When to use:** The slices are genuinely independent concepts, and the
-connection between them is a composition concern, not a shared domain concern.
-
----
-
-## Strategy 4: @x Notation (Last Resort)
-
-When none of the above strategies apply, use `@x` to create explicit,
-controlled cross-imports **between entities only**.
-
-### How @x works
-
-Each entity can expose a special `@x/` directory that contains files named
-after the consuming entity. This makes the cross-import explicit and auditable.
+**Direction rule:** in the path `entities/A/@x/B`, **A is the producer and
+B is the consumer**. Read it as "A crossed with B": the file `A/@x/B.ts`
+is the public API that A exposes specifically for B. So in the example
+below, `entities/user/@x/order.ts` is what `user` exposes to `order`, and
+`order` imports from it.
 
 ```text
 entities/
@@ -183,99 +82,324 @@ entities/
 ```
 
 ```typescript
-// entities/user/@x/order.ts — exposes only what order needs
+// entities/user/@x/order.ts: exposes only what order needs
 export { getUserDisplayName } from "../model/user";
 
 // entities/order/model/order-summary.ts
 import { getUserDisplayName } from "@/entities/user/@x/order";
+```
 
-export const formatOrderSummary = (order, userId) => {
-  const name = getUserDisplayName(userId);
-  return `${name}'s order #${order.id}`;
+### Rules when using @x
+
+1. Document why `@x` is needed and why merging boundaries does not apply.
+2. Review periodically. Requirements change and `@x` may become unnecessary.
+3. Minimize the surface area of `@x` exports.
+4. Only between entities. Features and widgets should use Strategy C or D
+   below, not `@x`.
+
+## Features and widgets: four strategies
+
+In `features` and `widgets`, multiple strategies are available depending on
+project context. Cross-imports here are not always forbidden; they are
+dependencies that should be deliberate. The four strategies below are
+listed in preferred order, but each fits different situations.
+
+### Strategy A: slice merge
+
+If two slices are not truly independent and always change together, merge
+them into a single larger slice.
+
+```text
+// Before: two features that always change together
+features/edit-profile/
+features/edit-profile-privacy/
+
+// After: one cohesive feature
+features/edit-profile/
+  ui/
+    EditProfileForm.tsx
+    PrivacyFields.tsx
+  model/
+    edit-profile.ts
+    privacy.ts
+  index.ts
+```
+
+If two slices keep cross-importing each other and effectively move as one
+unit, they are likely one feature in practice. Merging is often the simpler
+and cleaner choice.
+
+### Strategy B: move a shared domain responsibility into an entity
+
+If multiple features share a domain rule or domain state, move that
+responsibility into the entity that owns it. Key principles:
+
+- What moves down is an established domain responsibility, not feature UI
+  or user-flow orchestration.
+- Interaction-specific UI and workflow logic stay in `features`.
+- Features import that responsibility through the entity's public API.
+
+For example, if `features/add-to-cart` and `features/buy-now` both need
+the rule for whether a product can be purchased, that rule belongs to the
+product domain, while each button remains its own user action.
+
+```text
+entities/
+  product/
+    model/
+      can-purchase.ts     ← the shared domain rule
+    index.ts
+
+features/
+  add-to-cart/
+    ui/AddToCartButton.tsx
+    model/add-to-cart.ts  ← imports canPurchase from @/entities/product
+    index.ts
+  buy-now/
+    ui/BuyNowButton.tsx
+    model/buy-now.ts      ← imports the same canPurchase
+    index.ts
+```
+
+### Strategy C: compose from an upper layer (IoC)
+
+When several lower-layer modules have to take part in one composition,
+assemble them in a layer above all of them. A page can import multiple
+features and entities to compose a screen, and components can be passed
+through props or children where that helps. By default one feature does
+not import another; Strategy D below is the documented exception when
+that dependency cannot be removed.
+
+Instead of connecting slices within the same layer via cross-imports,
+compose them at a higher level (`pages` or `app`). The upper layer assembles
+and connects the slices; the slices themselves do not know about each other.
+
+Common Inversion of Control techniques:
+
+- **Render props (React)**: pass components or render functions as props.
+- **Slots (Vue)**: use named slots to inject content from parent components.
+- **Dependency injection**: pass dependencies through props or context.
+
+#### Basic composition (React)
+
+```typescript
+// features/follow-user/index.ts
+export { FollowButton } from "./ui/FollowButton";
+
+// features/report-user/index.ts
+export { ReportUserButton } from "./ui/ReportUserButton";
+
+// pages/profile/ui/ProfilePage.tsx
+import { FollowButton } from "@/features/follow-user";
+import { ReportUserButton } from "@/features/report-user";
+
+export const ProfilePage = ({ userId }) => (
+  <div>
+    <FollowButton userId={userId} />
+    <ReportUserButton userId={userId} />
+  </div>
+);
+```
+
+Following and reporting are two user actions that happen to sit on one
+screen. Neither knows the other exists; the page puts them there.
+
+#### Render props (React)
+
+When one feature's UI has to place another feature's control inside it,
+use a render prop to invert the dependency:
+
+```typescript
+// features/manage-wishlist/ui/WishlistItems.tsx
+// RemoveButton is this feature's own ui/, not a cross-import.
+interface WishlistItemsProps {
+  items: WishlistItem[];
+  renderAddToCart?: (productId: string) => React.ReactNode;
+}
+
+export const WishlistItems = ({ items, renderAddToCart }: WishlistItemsProps) => (
+  <ul>
+    {items.map((item) => (
+      <li key={item.id}>
+        <span>{item.title}</span>
+        <RemoveButton itemId={item.id} />
+        {renderAddToCart?.(item.productId)}
+      </li>
+    ))}
+  </ul>
+);
+
+// pages/wishlist/ui/WishlistPage.tsx
+import { WishlistItems } from "@/features/manage-wishlist";
+import { AddToCartButton } from "@/features/add-to-cart";
+
+export const WishlistPage = () => (
+  <WishlistItems
+    items={items}
+    renderAddToCart={(productId) => <AddToCartButton productId={productId} />}
+  />
+);
+```
+
+`manage-wishlist` never imports `add-to-cart`. It leaves a hole per row,
+and the page fills it.
+
+#### Slots (Vue)
+
+Vue's slot system provides a natural way to compose features without
+cross-imports:
+
+```vue
+<!-- features/manage-wishlist/ui/WishlistItems.vue -->
+<script setup lang="ts">
+defineProps<{ items: WishlistItem[] }>();
+</script>
+
+<template>
+  <ul>
+    <li v-for="item in items" :key="item.id">
+      <span>{{ item.title }}</span>
+      <slot name="add-to-cart" :productId="item.productId" />
+    </li>
+  </ul>
+</template>
+
+<!-- pages/wishlist/ui/WishlistPage.vue -->
+<script setup lang="ts">
+import { WishlistItems } from "@/features/manage-wishlist";
+import { AddToCartButton } from "@/features/add-to-cart";
+</script>
+
+<template>
+  <WishlistItems :items="items">
+    <template #add-to-cart="{ productId }">
+      <AddToCartButton :productId="productId" />
+    </template>
+  </WishlistItems>
+</template>
+```
+
+### Strategy D: cross-feature reuse only via Public API
+
+If strategies A through C do not fit and cross-feature reuse is
+genuinely unavoidable, allow it only through an explicit Public API
+(exported hooks or UI components). Do not access another slice's
+`store`, `model`, or internal implementation.
+
+Unlike strategies A through C, which aim to eliminate cross-imports,
+this strategy accepts them while minimizing risk through strict
+boundaries.
+
+```typescript
+// features/auth/index.ts
+export { useAuth } from "./model/use-auth";
+export { AuthButton } from "./ui/AuthButton";
+
+// features/edit-profile/ui/ProfileMenu.tsx
+import { useAuth, AuthButton } from "@/features/auth";
+
+export const ProfileMenu = () => {
+  const { user } = useAuth();
+  if (!user) return <AuthButton />;
+  return <div>{user.name}</div>;
 };
 ```
 
-### @x Rules
+The boundary holds: `features/edit-profile` cannot import from
+`@/features/auth/model/internal/*`. Only what `features/auth` explicitly
+exposes through `index.ts` is reachable.
 
-1. **Document why @x is needed** and why other strategies do not apply.
-2. **Review periodically** — requirements change and @x may become unnecessary.
-3. **@x creates coupling between entities.** Overuse increases refactoring
-   cost. Minimize the surface area of @x exports.
-4. **Only use @x between entities.** Features, widgets, and pages should use
-   Strategy 3 (composition) instead.
-5. **Regular cross-imports (without @x) remain forbidden.** @x is the only
-   sanctioned way to cross-import between entities.
+The `@x` notation is for the entities layer only. Features and widgets use
+strategies A through D above; their access path is the standard public API
+(`index.ts`), not a dedicated cross-import surface.
 
----
+## When to treat a cross-import as a problem
 
-## Excessive Entities — A Common Root Cause
+After reviewing these strategies, the question is: when is a cross-import
+acceptable to keep, and when should it be treated as a code smell and
+refactored?
 
-Many cross-import problems originate from creating too many entities too early.
-When entities are prematurely extracted, they often need to reference each
-other, leading to cascading @x dependencies.
+Common warning signs:
 
-### Signs of excessive entities
+- Directly depending on another slice's `store`, `model`, or business logic
+- Deep imports into another slice's internal files (bypassing the public API)
+- Bidirectional dependencies (A imports B, and B imports A)
+- Changes in one slice frequently breaking another slice
+- Flows that should be composed in `pages` or `app`, but are forced into
+  cross-imports within the same layer
 
-- Multiple entities with @x dependencies on each other
-- Entities that are only used by one page or feature
-- Entity slices that are very thin (just a type + re-export)
-- Frequent need to update multiple entities for a single feature change
+When these signals appear, treat the cross-import as a code smell and apply
+one of the strategies above.
 
-### Resolution
+## Strictness depends on project context
 
-1. **Audit entity usage.** Identify entities used in only one place.
-2. **Move single-use entities back to their consuming page or feature.**
-   Use Steiger's `insignificant-slice` rule to detect these.
-3. **Merge closely related entities.** If `order` and `order-item` always
-   change together, merge them into one `order` entity.
-4. **Keep types in `shared/api/` instead of creating entities.** If all you
-   need is a TypeScript interface for API responses, `shared/api/` is
-   sufficient. An entity is warranted only when there is reusable domain
-   logic attached to the data.
+The strictness of cross-import enforcement depends on the project:
 
-### Before and After
+- In **early-stage products** with heavy experimentation, allowing some
+  cross-imports may be a pragmatic speed trade-off.
+- In **long-lived or regulated systems** (fintech, large-scale services),
+  stricter boundaries pay off in maintainability and stability.
 
-```text
-// Before: excessive entities with @x dependencies
-entities/user/
-  @x/order.ts
-  @x/notification.ts
-entities/order/
-  @x/user.ts           ← Circular @x!
-entities/notification/
-  model/notification.ts ← Used only in pages/dashboard
+Cross-imports are not an absolute prohibition. They are dependencies that
+are generally best avoided, but sometimes used intentionally. If a
+cross-import is introduced:
 
-// After: simplified
-entities/user/
-  model/user.ts         ← Kept because genuinely reused
-entities/order/
-  model/order.ts        ← Kept, no longer needs @x
-pages/dashboard/
-  model/notification.ts ← Moved back — single use
-shared/api/
-  types.ts              ← Shared API response types
-```
+- Treat it as a deliberate architectural choice.
+- Document the reasoning in code (a comment explaining why other
+  strategies do not apply).
+- Revisit it periodically as the system evolves; if requirements change,
+  the cross-import may no longer be needed.
 
----
-
-## Decision Flowchart
-
-When you encounter a cross-import need:
+## Decision flow for AI agents
 
 ```text
-Two slices on the same layer need to share code
+Two slices on the same layer need to share code.
   │
-  ├─ Do they always change together?
-  │   └─ YES → Strategy 1: Merge slices
+  ├─ ENTITIES layer?
+  │   ├─ Are they one cohesive domain boundary?
+  │   │   └─ YES → Merge. Stop.
+  │   ├─ Does either entity really need to know the other, or can a
+  │   │  page or feature hold both?
+  │   │   └─ Compose above them. Stop.
+  │   ├─ Is the shared part business-neutral infrastructure?
+  │   │   └─ YES → Move that part to shared/. Stop.
+  │   └─ Boundaries must stay separate and the domain dependency is real?
+  │       └─ Use @x as last resort. Document why merge is not possible.
   │
-  ├─ Is the shared part domain logic (types, validation, business rules)?
-  │   └─ YES → Strategy 2: Extract to entities
-  │
-  ├─ Is the connection a composition concern (UI assembly, data wiring)?
-  │   └─ YES → Strategy 3: Compose in higher layer (IoC)
-  │
-  └─ None of the above apply, and both are entities?
-      └─ YES → Strategy 4: @x notation
-      └─ NO  → Reconsider your slice boundaries. The need for cross-import
-               often signals that the slices are not properly decomposed.
+  └─ FEATURES or WIDGETS layer?
+      ├─ Strategy A: Do they always change together?
+      │   └─ YES → Merge slices.
+      │
+      ├─ Strategy B: Is the shared part domain-only logic?
+      │   └─ YES → Push down to entities. Keep UI in features.
+      │
+      ├─ Strategy C: Can the connection be assembled by a higher layer?
+      │   └─ YES → Compose in pages or app via render props, slots, or DI.
+      │
+      └─ Strategy D: Is reuse genuinely unavoidable and the access surface
+                     limited to a Public API?
+          └─ YES → Allow, but only through index.ts. Never reach into
+                   model/, store/, or internal files. Do not use @x in
+                   features or widgets.
 ```
+
+## Anti-patterns
+
+- **Reaching for `@x` in features or widgets.** `@x` is for entities only.
+  Use Strategy C (compose) or D (Public API) instead.
+- **Treating `@x` as a clean solution.** It is a compromise. If you find
+  yourself adding multiple `@x` files between the same entities, the
+  boundaries are probably wrong. Merge them.
+- **Bypassing the Public API to access internals.** Even when Strategy D is
+  in use, importing from `@/features/auth/model/internal/*` defeats the
+  purpose. Restrict yourself to what `index.ts` exports.
+- **Bidirectional cross-imports.** A imports B and B imports A says the
+  boundaries or the composition are wrong. Re-check whether the slices are
+  one boundary, whether the shared part belongs lower, or whether the
+  composition should move up.
+
+## See also
+
+- `references/excessive-entities.md`: prevent the conditions that lead to
+  entity-layer cross-imports in the first place.
+- `references/layer-structure.md`: layer rules and import directions.
