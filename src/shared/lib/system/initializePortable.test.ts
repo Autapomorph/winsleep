@@ -10,7 +10,6 @@ vi.mock('@/shared/api', () => ({
 
 describe('initializePortable', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     config.isPortable = false;
   });
 

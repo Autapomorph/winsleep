@@ -4,6 +4,8 @@ import {
   DEFAULT_CUSTOM_TIMER_PRESETS,
   DEFAULT_IS_CUSTOM_TIMER_STEPS_ENABLED,
   DEFAULT_IS_LOCKED_BY_DEFAULT,
+  DEFAULT_IS_PREVENT_DISPLAY_SLEEP_DURING_TIMER_ENABLED,
+  DEFAULT_IS_PREVENT_PC_SLEEP_DURING_TIMER_ENABLED,
   DEFAULT_IS_RESTORE_SCHEDULED_TIMER_ON_STARTUP_ENABLED,
   DEFAULT_SHOULD_REMEMBER_CONFIGURED_TIME,
   DEFAULT_TIMER_SECONDS,
@@ -19,6 +21,8 @@ export interface TimerState {
   shouldRememberConfiguredTime: boolean;
   isLockedByDefault: boolean;
   isRestoreScheduledTimerOnStartupEnabled: boolean;
+  isPreventPCSleepDuringTimerEnabled: boolean;
+  isPreventDisplaySleepDuringTimerEnabled: boolean;
   isCustomTimerStepsEnabled: boolean;
   timerStepIncrease: number;
   timerStepDecrease: number;
@@ -31,6 +35,10 @@ export interface TimerActions {
   setIsLockedByDefault: (isLockedByDefault: boolean) => void;
   setIsRestoreScheduledTimerOnStartupEnabled: (
     isRestoreScheduledTimerOnStartupEnabled: boolean,
+  ) => void;
+  setIsPreventPCSleepDuringTimerEnabled: (isPreventPCSleepDuringTimerEnabled: boolean) => void;
+  setIsPreventDisplaySleepDuringTimerEnabled: (
+    isPreventDisplaySleepDuringTimerEnabled: boolean,
   ) => void;
   setIsCustomTimerStepsEnabled: (isCustomTimerStepsEnabled: boolean) => void;
   setTimerStepIncrease: (timerStepIncrease: number) => void;
@@ -48,6 +56,8 @@ export const initialTimerState: TimerState = {
   defaultTimerSeconds: DEFAULT_TIMER_SECONDS,
   isCustomTimerStepsEnabled: DEFAULT_IS_CUSTOM_TIMER_STEPS_ENABLED,
   isLockedByDefault: DEFAULT_IS_LOCKED_BY_DEFAULT,
+  isPreventDisplaySleepDuringTimerEnabled: DEFAULT_IS_PREVENT_DISPLAY_SLEEP_DURING_TIMER_ENABLED,
+  isPreventPCSleepDuringTimerEnabled: DEFAULT_IS_PREVENT_PC_SLEEP_DURING_TIMER_ENABLED,
   isRestoreScheduledTimerOnStartupEnabled: DEFAULT_IS_RESTORE_SCHEDULED_TIMER_ON_STARTUP_ENABLED,
   shouldRememberConfiguredTime: DEFAULT_SHOULD_REMEMBER_CONFIGURED_TIME,
   timerStepDecrease: DEFAULT_TIMER_STEP_SECONDS,
@@ -91,6 +101,20 @@ export const createTimerSlice: StateCreator<
 
   setIsLockedByDefault: isLockedByDefault =>
     set({ isLockedByDefault }, false, 'settings/setIsLockedByDefault'),
+
+  setIsPreventDisplaySleepDuringTimerEnabled: isPreventDisplaySleepDuringTimerEnabled =>
+    set(
+      { isPreventDisplaySleepDuringTimerEnabled },
+      false,
+      'settings/setIsPreventDisplaySleepDuringTimerEnabled',
+    ),
+
+  setIsPreventPCSleepDuringTimerEnabled: isPreventPCSleepDuringTimerEnabled =>
+    set(
+      { isPreventPCSleepDuringTimerEnabled },
+      false,
+      'settings/setIsPreventPCSleepDuringTimerEnabled',
+    ),
 
   setIsRestoreScheduledTimerOnStartupEnabled: isRestoreScheduledTimerOnStartupEnabled =>
     set(

@@ -1,6 +1,8 @@
 import {
   DEFAULT_IS_FORCE_ACTION_ENABLED,
   DEFAULT_IS_NOTIFICATIONS_ENABLED,
+  DEFAULT_IS_PREVENT_DISPLAY_SLEEP_DURING_TIMER_ENABLED,
+  DEFAULT_IS_PREVENT_PC_SLEEP_DURING_TIMER_ENABLED,
   DEFAULT_TIMER_ACTION,
   DEFAULT_TIMER_SECONDS,
 } from '@/shared/config';
@@ -27,6 +29,12 @@ describe('sanitizeSettings', () => {
     expect(sanitized.defaultTimerAction).toBe(DEFAULT_TIMER_ACTION);
     expect(sanitized.defaultTimerSeconds).toBe(DEFAULT_TIMER_SECONDS);
     expect(sanitized.isForceActionEnabled).toBe(DEFAULT_IS_FORCE_ACTION_ENABLED);
+    expect(sanitized.isPreventPCSleepDuringTimerEnabled).toBe(
+      DEFAULT_IS_PREVENT_PC_SLEEP_DURING_TIMER_ENABLED,
+    );
+    expect(sanitized.isPreventDisplaySleepDuringTimerEnabled).toBe(
+      DEFAULT_IS_PREVENT_DISPLAY_SLEEP_DURING_TIMER_ENABLED,
+    );
   });
 
   test('should preserve valid values', () => {
@@ -36,6 +44,8 @@ describe('sanitizeSettings', () => {
       defaultTimerSeconds: 600,
       isNotificationsEnabled: false,
       isForceActionEnabled: true,
+      isPreventPCSleepDuringTimerEnabled: false,
+      isPreventDisplaySleepDuringTimerEnabled: true,
     };
 
     const sanitized = sanitizeSettings(raw);
@@ -45,6 +55,8 @@ describe('sanitizeSettings', () => {
     expect(sanitized.defaultTimerSeconds).toBe(600);
     expect(sanitized.isNotificationsEnabled).toBe(false);
     expect(sanitized.isForceActionEnabled).toBe(true);
+    expect(sanitized.isPreventPCSleepDuringTimerEnabled).toBe(false);
+    expect(sanitized.isPreventDisplaySleepDuringTimerEnabled).toBe(true);
   });
 
   test('should fallback to defaults when values are invalid types', () => {

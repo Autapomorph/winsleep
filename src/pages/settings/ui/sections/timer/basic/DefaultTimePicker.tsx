@@ -7,7 +7,7 @@ import { useSettingsStore } from '@/entities/setting';
 import { formatDurationFull } from '@/shared/lib';
 import { DefaultTimerEditModal } from '../../../modals/DefaultTimerEditModal';
 
-export const DefaultTimerSetting = () => {
+export const DefaultTimePicker = () => {
   const { t } = useTranslation();
   const [isDefaultTimerModalOpen, setIsDefaultTimerModalOpen] = useState(false);
 

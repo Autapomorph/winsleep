@@ -10,6 +10,8 @@ import {
   DEFAULT_IS_LOCKED_BY_DEFAULT,
   DEFAULT_IS_NOTIFICATION_SOUND_ENABLED,
   DEFAULT_IS_NOTIFICATIONS_ENABLED,
+  DEFAULT_IS_PREVENT_DISPLAY_SLEEP_DURING_TIMER_ENABLED,
+  DEFAULT_IS_PREVENT_PC_SLEEP_DURING_TIMER_ENABLED,
   DEFAULT_IS_RESTORE_SCHEDULED_TIMER_ON_STARTUP_ENABLED,
   DEFAULT_IS_START_MINIMIZED_ENABLED,
   DEFAULT_IS_TRAY_MODE_ENABLED,
@@ -36,6 +38,8 @@ export const DEFAULT_SERIALIZED_SETTINGS: SerializedSettings = {
   shouldRememberConfiguredTime: DEFAULT_SHOULD_REMEMBER_CONFIGURED_TIME,
   isLockedByDefault: DEFAULT_IS_LOCKED_BY_DEFAULT,
   isRestoreScheduledTimerOnStartupEnabled: DEFAULT_IS_RESTORE_SCHEDULED_TIMER_ON_STARTUP_ENABLED,
+  isPreventPCSleepDuringTimerEnabled: DEFAULT_IS_PREVENT_PC_SLEEP_DURING_TIMER_ENABLED,
+  isPreventDisplaySleepDuringTimerEnabled: DEFAULT_IS_PREVENT_DISPLAY_SLEEP_DURING_TIMER_ENABLED,
   isCustomTimerStepsEnabled: DEFAULT_IS_CUSTOM_TIMER_STEPS_ENABLED,
   timerStepIncrease: DEFAULT_TIMER_STEP_SECONDS,
   timerStepDecrease: DEFAULT_TIMER_STEP_SECONDS,
@@ -119,6 +123,18 @@ export const sanitizeSettings = (rawSettings: Record<string, unknown>): Serializ
     typeof rawSettings.isRestoreScheduledTimerOnStartupEnabled === 'boolean'
       ? rawSettings.isRestoreScheduledTimerOnStartupEnabled
       : DEFAULT_IS_RESTORE_SCHEDULED_TIMER_ON_STARTUP_ENABLED;
+
+  // Sanitize isPreventPCSleepDuringTimerEnabled
+  const isPreventPCSleepDuringTimerEnabled =
+    typeof rawSettings.isPreventPCSleepDuringTimerEnabled === 'boolean'
+      ? rawSettings.isPreventPCSleepDuringTimerEnabled
+      : DEFAULT_IS_PREVENT_PC_SLEEP_DURING_TIMER_ENABLED;
+
+  // Sanitize isPreventDisplaySleepDuringTimerEnabled
+  const isPreventDisplaySleepDuringTimerEnabled =
+    typeof rawSettings.isPreventDisplaySleepDuringTimerEnabled === 'boolean'
+      ? rawSettings.isPreventDisplaySleepDuringTimerEnabled
+      : DEFAULT_IS_PREVENT_DISPLAY_SLEEP_DURING_TIMER_ENABLED;
 
   // Sanitize isNotificationsEnabled
   const isNotificationsEnabled =
@@ -207,6 +223,8 @@ export const sanitizeSettings = (rawSettings: Record<string, unknown>): Serializ
     shouldRememberConfiguredTime,
     isLockedByDefault,
     isRestoreScheduledTimerOnStartupEnabled,
+    isPreventPCSleepDuringTimerEnabled,
+    isPreventDisplaySleepDuringTimerEnabled,
     isCustomTimerStepsEnabled,
     timerStepIncrease,
     timerStepDecrease,
