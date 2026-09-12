@@ -30,4 +30,8 @@ export const useTimerActionHotkeys = ({ onActionChange, isLocked = false }: Para
   useAppHotkey(SHORTCUTS.ACTION.SIGN_OUT, () => onActionChange('signout'), {
     enabled: !isLocked,
   });
+
+  useAppHotkey(SHORTCUTS.ACTION.KEEP_AWAKE, () => onActionChange('keep-awake'), {
+    enabled: !isLocked,
+  });
 };

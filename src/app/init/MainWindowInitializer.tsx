@@ -1,6 +1,6 @@
 import { useAutoInstallOnExit, useAutoUpdater, useMockUpdater } from '@/features/check-updates';
+import { useKeepAwakeTimerSync } from '@/features/keep-awake';
 import {
-  useKeepAwakeTimerSync,
   usePowerSystemEvents,
   useScheduledTimerRestore,
   useScheduledTimerStateSync,

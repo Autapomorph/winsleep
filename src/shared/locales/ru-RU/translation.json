@@ -158,7 +158,8 @@
         "shutdown": "Выключение",
         "reboot": "Перезагрузка",
         "lock": "Блокировка",
-        "signout": "Выход из системы"
+        "signout": "Выход из системы",
+        "keepAwake": "Бодрствование"
       }
     },
     "notifications": {
@@ -252,7 +253,18 @@
       "default": "Сработает: {{date}} в {{time}}",
       "now": "Сработает сразу",
       "today": "Сработает сегодня в {{time}}",
-      "tomorrow": "Сработает завтра в {{time}}"
+      "tomorrow": "Сработает завтра в {{time}}",
+      "keepAwakeIndefiniteIdle": "Будет бодрствовать до отключения",
+      "keepAwakeIndefiniteRunning": "Компьютер не уснёт",
+      "keepAwakeToday": "Будет бодрствовать до {{time}}",
+      "keepAwakeTomorrow": "Будет бодрствовать до завтра, {{time}}",
+      "keepAwakeDefault": "Будет бодрствовать до {{date}}, {{time}}"
+    },
+    "indefiniteLabel": {
+      "text": "Бессрочно"
+    },
+    "keepAwakeDisplay": {
+      "text": "Бодрствование"
     },
     "decreaseTimeBtn": {
       "aria": {
@@ -272,6 +284,9 @@
       },
       "scheduledTimerRestored": {
         "title": "Таймер восстановлен"
+      },
+      "keepAwakeRestored": {
+        "title": "Режим бодрствования восстановлен"
       },
       "scheduledTimerExpiredWhileOffline": {
         "title": "Время таймера истекло, пока WinSleep был закрыт"
@@ -314,6 +329,9 @@
     "signoutLabel": {
       "text": "Выход из системы"
     },
+    "keepAwakeLabel": {
+      "text": "Бодрствование"
+    },
     "notifications": {
       "planned": {
         "sleep": "Перевод ПК в спящий режим",
@@ -321,7 +339,8 @@
         "shutdown": "Выключение ПК",
         "reboot": "Перезагрузка ПК",
         "lock": "Блокировка ПК",
-        "signout": "Выход из системы"
+        "signout": "Выход из системы",
+        "keepAwake": "Включение режима бодрствования"
       },
       "failed": {
         "sleep": "Не удалось перевести ПК в спящий режим",
@@ -329,7 +348,11 @@
         "shutdown": "Не удалось выключить ПК",
         "reboot": "Не удалось перезагрузить ПК",
         "lock": "Не удалось заблокировать ПК",
-        "signout": "Не удалось выйти из системы"
+        "signout": "Не удалось выйти из системы",
+        "keepAwake": "Не удалось переключить режим бодрствования"
+      },
+      "finished": {
+        "keepAwake": "Время бодрствования истекло"
       }
     }
   },

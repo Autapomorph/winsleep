@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button, Disclosure, Toolbar } from '@heroui/react';
+import { FaCoffee } from 'react-icons/fa';
 import {
   FaArrowsRotate,
   FaLock,
@@ -38,6 +39,7 @@ export const TimerActionSelector = ({ timerAction, isSettingsLocked }: Props) =>
     { id: 'reboot', label: timerAction.rebootLabel },
     { id: 'lock', label: timerAction.lockLabel },
     { id: 'signout', label: timerAction.signoutLabel },
+    { id: 'keep-awake', label: timerAction.keepAwakeLabel },
   ];
 
   const actionIcons = {
@@ -47,6 +49,7 @@ export const TimerActionSelector = ({ timerAction, isSettingsLocked }: Props) =>
     reboot: <FaArrowsRotate />,
     lock: <FaLock />,
     signout: <FaRightFromBracket />,
+    'keep-awake': <FaCoffee />,
   };
 
   return (

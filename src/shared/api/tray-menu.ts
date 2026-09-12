@@ -20,6 +20,7 @@ export type TrayMenuState = {
     rebootLabel: string;
     lockLabel: string;
     signoutLabel: string;
+    keepAwakeLabel: string;
   };
   timerStatusLabel: string;
   startResumePauseTimerLabel: string;

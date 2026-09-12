@@ -3,17 +3,20 @@ import { useTranslation } from 'react-i18next';
 import { Button, cn, Kbd, Tooltip, useOverlayState } from '@heroui/react';
 import { FaMinus, FaPlus } from 'react-icons/fa6';
 
+import { useKeepAwakeStore } from '@/entities/keep-awake';
+import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import {
   DANGER_THRESHOLD_SECONDS,
   DEFAULT_TIMER_STEP_SECONDS,
   useTimerStore,
 } from '@/entities/timer';
-import { TOOLTIP_CLOSE_DELAY_DEFAULT, TOOLTIP_DELAY_LONG } from '@/shared/config';
+import { type TimerAction, TOOLTIP_CLOSE_DELAY_DEFAULT, TOOLTIP_DELAY_LONG } from '@/shared/config';
 import { formatDurationShort, useLongPress } from '@/shared/lib';
 import { TimerEditModal } from './TimerEditModal';
 
 interface Props {
+  action?: TimerAction;
   currentSeconds: number;
   formattedTime: string;
   increaseTime: () => void;
@@ -25,6 +28,7 @@ interface Props {
 }
 
 export const TimerDisplay = ({
+  action,
   currentSeconds,
   formattedTime,
   increaseTime,
@@ -38,6 +42,12 @@ export const TimerDisplay = ({
   const modalState = useOverlayState();
   const decreaseTimeBtnLongPressProps = useLongPress(decreaseTime);
   const increaseTimeBtnLongPressProps = useLongPress(increaseTime);
+  const sessionAction = useSessionStore(state => state.timerAction);
+  const isIndefiniteActive = useKeepAwakeStore(state => state.isIndefiniteActive);
+
+  const currentAction = action ?? sessionAction;
+  const isIndefiniteMode =
+    currentAction === 'keep-awake' && (isIndefiniteActive || currentSeconds === 0);
 
   const { timerState, timerMode } = useTimerStore(
     useShallow(state => ({
@@ -45,8 +55,9 @@ export const TimerDisplay = ({
       timerMode: state.timerMode,
     })),
   );
-  const isPaused = timerState === 'paused';
-  const isExpiring = timerState === 'running' && currentSeconds <= DANGER_THRESHOLD_SECONDS;
+  const isPaused = !isIndefiniteMode && timerState === 'paused';
+  const isExpiring =
+    !isIndefiniteMode && timerState === 'running' && currentSeconds <= DANGER_THRESHOLD_SECONDS;
   const isTimestampMode = timerMode === 'timestamp';
 
   const { isCustomTimerStepsEnabled, timerStepIncrease, timerStepDecrease } = useSettingsStore(
@@ -67,7 +78,7 @@ export const TimerDisplay = ({
       {/* Decrease time button */}
       <Tooltip delay={TOOLTIP_DELAY_LONG} closeDelay={TOOLTIP_CLOSE_DELAY_DEFAULT}>
         <Button
-          isDisabled={!isDecreaseAllowed || isLocked || isTimestampMode}
+          isDisabled={!isDecreaseAllowed || isLocked || isTimestampMode || isIndefiniteMode}
           isIconOnly
           {...decreaseTimeBtnLongPressProps}
           aria-label={t($ => $.timer.decreaseTimeBtn.aria.label, {
@@ -92,7 +103,7 @@ export const TimerDisplay = ({
       {/* Time display */}
       <span
         className={cn(
-          'w-24 rounded-3xl py-1 text-center text-xl font-bold tabular-nums transition-opacity',
+          'min-w-24 rounded-3xl px-3 py-1 text-center text-xl font-bold tabular-nums transition-opacity',
           isPaused && 'bg-warning-soft text-warning-soft-foreground',
           isExpiring && 'bg-danger-soft text-danger-soft-foreground',
           isLocked ? 'cursor-default' : 'cursor-pointer hover:opacity-80',
@@ -115,7 +126,7 @@ export const TimerDisplay = ({
         aria-disabled={isLocked}
         aria-expanded={modalState.isOpen}
       >
-        {formattedTime}
+        {isIndefiniteMode ? t($ => $.timer.keepAwakeDisplay.text) : formattedTime}
       </span>
 
       <TimerEditModal
@@ -128,7 +139,7 @@ export const TimerDisplay = ({
       {/* Increase time button */}
       <Tooltip delay={TOOLTIP_DELAY_LONG} closeDelay={TOOLTIP_CLOSE_DELAY_DEFAULT}>
         <Button
-          isDisabled={!isIncreaseAllowed || isLocked || isTimestampMode}
+          isDisabled={!isIncreaseAllowed || isLocked || isTimestampMode || isIndefiniteMode}
           isIconOnly
           {...increaseTimeBtnLongPressProps}
           aria-label={t($ => $.timer.increaseTimeBtn.aria.label, {

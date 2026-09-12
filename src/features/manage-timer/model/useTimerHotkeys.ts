@@ -40,6 +40,10 @@ export const useTimerHotkeys = ({
     }
 
     if (timerState === 'running') {
+      if (timerMode === 'timestamp') {
+        return;
+      }
+
       pause();
       return;
     }

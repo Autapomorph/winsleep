@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import { useAppStateStore } from '@/entities/app-state';
+import { useKeepAwakeStore } from '@/entities/keep-awake';
 import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import { useTimerStore } from '@/entities/timer';
@@ -23,6 +24,26 @@ export const useScheduledTimerRestore = () => {
 
     const { scheduledTimer } = useAppStateStore.getState();
     if (!scheduledTimer) {
+      return;
+    }
+
+    if (scheduledTimer.targetDateTime === null) {
+      const rawAction = (scheduledTimer as { timerAction: unknown }).timerAction;
+      if (rawAction === 'keep-awake') {
+        logger.info('Restoring saved indefinite keep-awake from disk');
+
+        useSessionStore.getState().setTimerAction('keep-awake');
+        useKeepAwakeStore.getState().startIndefinite();
+        useTimerStore.getState().setExactTime(0);
+
+        showInfoToast($ => $.timer.notifications.keepAwakeRestored.title);
+      } else {
+        logger.warn(
+          `Unexpected null targetDateTime for action ${String(rawAction)}. Clearing state.`,
+        );
+        useAppStateStore.getState().clearScheduledTimer();
+      }
+
       return;
     }
 

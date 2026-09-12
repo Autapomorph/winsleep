@@ -46,8 +46,8 @@ Always structure and assign files according to the FSD v2.1 specifications:
 ## AI Agent Hooks (Pre-completion Verification)
 Before declaring any task complete, the AI agent MUST run the following command sequence depending on the files modified:
 - **If frontend files (e.g., in `src/`, `package.json`, `vite.config.ts`, etc.) are modified**:
-  1. Format all code: `npm run format`
-  2. Run TypeScript typecheck: `npm run typecheck`
+  1. Run TypeScript typecheck: `npm run typecheck`
+  2. Format all code: `npm run format`
   3. Run JS linting with auto-fix:
    - **Windows PowerShell**: `npm run lint:js -- -- --fix`
    - **All other shells (cmd.exe, Git Bash, WSL, macOS/Linux terminals)** `npm run lint:js -- --fix`

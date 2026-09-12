@@ -3,8 +3,12 @@ import { isValidTimerAction } from './isValidTimerAction';
 describe('isValidTimerAction', () => {
   test('should return true for valid action names', () => {
     expect(isValidTimerAction('sleep')).toBe(true);
-    expect(isValidTimerAction('shutdown')).toBe(true);
     expect(isValidTimerAction('hibernate')).toBe(true);
+    expect(isValidTimerAction('shutdown')).toBe(true);
+    expect(isValidTimerAction('reboot')).toBe(true);
+    expect(isValidTimerAction('lock')).toBe(true);
+    expect(isValidTimerAction('signout')).toBe(true);
+    expect(isValidTimerAction('keep-awake')).toBe(true);
   });
 
   test('should return false for invalid action names', () => {

@@ -8,23 +8,35 @@ export const sanitizeScheduledTimer = (raw: unknown): ActiveScheduledTimerState 
 
   const timerObj = raw as Record<string, unknown>;
 
-  const targetDateTime =
-    typeof timerObj.targetDateTime === 'number' && timerObj.targetDateTime > 0
-      ? timerObj.targetDateTime
+  const timerAction = isValidTimerAction(timerObj.timerAction) ? timerObj.timerAction : null;
+  const armedAt =
+    typeof timerObj.armedAt === 'number' && Number.isFinite(timerObj.armedAt)
+      ? timerObj.armedAt
       : null;
 
-  const timerAction = isValidTimerAction(timerObj.timerAction) ? timerObj.timerAction : null;
+  if (timerAction === null || armedAt === null) {
+    return null;
+  }
 
-  const armedAt =
-    typeof timerObj.armedAt === 'number' && timerObj.armedAt > 0 ? timerObj.armedAt : null;
+  if (timerObj.targetDateTime === null) {
+    if (timerAction !== 'keep-awake') {
+      return null;
+    }
 
-  if (targetDateTime === null || timerAction === null || armedAt === null) {
+    return {
+      armedAt,
+      timerAction: 'keep-awake',
+      targetDateTime: null,
+    };
+  }
+
+  if (typeof timerObj.targetDateTime !== 'number' || !Number.isFinite(timerObj.targetDateTime)) {
     return null;
   }
 
   return {
-    targetDateTime,
-    timerAction,
     armedAt,
+    timerAction,
+    targetDateTime: timerObj.targetDateTime,
   };
 };

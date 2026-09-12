@@ -84,4 +84,20 @@ describe('TimerDisplay', () => {
 
     expect(screen.queryByTestId('timer-edit-modal')).not.toBeInTheDocument();
   });
+
+  test('displays Keep Awake and disables +/- buttons when action is keep-awake and currentSeconds is 0', async () => {
+    render(<TimerDisplay {...baseProps} currentSeconds={0} action="keep-awake" />);
+
+    expect(screen.getByText('timer.keepAwakeDisplay.text')).toBeInTheDocument();
+
+    expect(
+      screen.getByRole('button', { name: /timer\.decreaseTimeBtn\.aria\.label/ }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: /timer\.increaseTimeBtn\.aria\.label/ }),
+    ).toBeDisabled();
+
+    await userEvent.click(screen.getByRole('button', { name: /timer\.editTimeBtn\.aria\.label/ }));
+    expect(screen.getByTestId('timer-edit-modal')).toBeInTheDocument();
+  });
 });

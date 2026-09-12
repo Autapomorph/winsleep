@@ -9,11 +9,17 @@ export interface ScheduledTimerState {
   scheduledTimer: ActiveScheduledTimerState | null;
 }
 
-export interface ActiveScheduledTimerState {
-  armedAt: number;
-  targetDateTime: number;
-  timerAction: TimerAction;
-}
+export type ActiveScheduledTimerState =
+  | {
+      armedAt: number;
+      targetDateTime: null;
+      timerAction: 'keep-awake';
+    }
+  | {
+      armedAt: number;
+      targetDateTime: number;
+      timerAction: TimerAction;
+    };
 
 export interface ScheduledTimerActions {
   clearScheduledTimer: () => void;

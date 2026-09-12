@@ -158,7 +158,8 @@
         "shutdown": "Shutdown",
         "reboot": "Restart",
         "lock": "Screen Lock",
-        "signout": "Sign Out"
+        "signout": "Sign Out",
+        "keepAwake": "Keep awake"
       }
     },
     "notifications": {
@@ -252,7 +253,18 @@
       "default": "Trigger time: {{date}} at {{time}}",
       "now": "Triggers immediately",
       "today": "Trigger time: today at {{time}}",
-      "tomorrow": "Trigger time: tomorrow at {{time}}"
+      "tomorrow": "Trigger time: tomorrow at {{time}}",
+      "keepAwakeIndefiniteIdle": "Will keep awake until stopped",
+      "keepAwakeIndefiniteRunning": "PC will stay awake",
+      "keepAwakeToday": "Will keep awake until {{time}}",
+      "keepAwakeTomorrow": "Will keep awake until tomorrow, {{time}}",
+      "keepAwakeDefault": "Will keep awake until {{date}}, {{time}}"
+    },
+    "indefiniteLabel": {
+      "text": "Indefinite"
+    },
+    "keepAwakeDisplay": {
+      "text": "Keep Awake"
     },
     "decreaseTimeBtn": {
       "aria": {
@@ -272,6 +284,9 @@
       },
       "scheduledTimerRestored": {
         "title": "Scheduled timer restored"
+      },
+      "keepAwakeRestored": {
+        "title": "Keep awake restored"
       },
       "scheduledTimerExpiredWhileOffline": {
         "title": "Scheduled timer expired while WinSleep was closed"
@@ -314,6 +329,9 @@
     "signoutLabel": {
       "text": "Sign Out"
     },
+    "keepAwakeLabel": {
+      "text": "Keep awake"
+    },
     "notifications": {
       "planned": {
         "sleep": "Putting PC to sleep",
@@ -321,7 +339,8 @@
         "shutdown": "Shutting down PC",
         "reboot": "Rebooting PC",
         "lock": "Locking PC",
-        "signout": "Signing Out"
+        "signout": "Signing Out",
+        "keepAwake": "Enabling keep-awake mode"
       },
       "failed": {
         "sleep": "Failed to put PC to sleep",
@@ -329,7 +348,11 @@
         "shutdown": "Failed to shut down PC",
         "reboot": "Failed to reboot PC",
         "lock": "Failed to lock PC",
-        "signout": "Failed to sign out"
+        "signout": "Failed to sign out",
+        "keepAwake": "Failed to toggle keep-awake mode"
+      },
+      "finished": {
+        "keepAwake": "Keep awake session ended"
       }
     }
   },

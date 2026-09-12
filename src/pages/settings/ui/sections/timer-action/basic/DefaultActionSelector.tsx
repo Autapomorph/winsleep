@@ -70,6 +70,11 @@ export const DefaultActionSelector = () => {
             {t($ => $.timerAction.signoutLabel.text)}
             <ListBox.ItemIndicator />
           </ListBox.Item>
+
+          <ListBox.Item id="keep-awake" textValue={t($ => $.timerAction.keepAwakeLabel.text)}>
+            {t($ => $.timerAction.keepAwakeLabel.text)}
+            <ListBox.ItemIndicator />
+          </ListBox.Item>
         </ListBox>
       </Select.Popover>
     </Select>

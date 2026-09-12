@@ -11,6 +11,7 @@ pub enum TimerAction {
     SelectTimerActionReboot,
     SelectTimerActionLock,
     SelectTimerActionSignout,
+    SelectTimerActionKeepAwake,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -42,6 +43,7 @@ impl TrayMenuItems {
                 TimerAction::SelectTimerActionReboot => "action_reboot",
                 TimerAction::SelectTimerActionLock => "action_lock",
                 TimerAction::SelectTimerActionSignout => "action_signout",
+                TimerAction::SelectTimerActionKeepAwake => "action_keep_awake",
             },
             TrayMenuItems::TimerStartResumePause => "timer_start_resume_pause",
             TrayMenuItems::TimerCancel => "timer_cancel",
@@ -108,6 +110,13 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     .checked(false)
     .build(app)?;
 
+    let action_keep_awake = CheckMenuItemBuilder::with_id(
+        TrayMenuItems::TimerAction(TimerAction::SelectTimerActionKeepAwake).as_str(),
+        "Keep Awake",
+    )
+    .checked(false)
+    .build(app)?;
+
     let timer_action_submenu = SubmenuBuilder::with_id(
         app,
         TrayMenuItems::TimerAction(TimerAction::SelectedTimerAction).as_str(),
@@ -120,6 +129,7 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         &action_reboot,
         &action_lock,
         &action_signout,
+        &action_keep_awake,
     ])
     .build()?;
 

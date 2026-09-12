@@ -91,6 +91,7 @@ pub struct TimerActionMenuArgs {
     pub reboot_label: String,
     pub lock_label: String,
     pub signout_label: String,
+    pub keep_awake_label: String,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Clone)]
@@ -274,6 +275,11 @@ pub fn update_tray_menu(
             TrayMenuItems::TimerAction(TimerAction::SelectTimerActionSignout).as_str(),
             timer_action.signout_label.clone(),
             "signout",
+        ),
+        (
+            TrayMenuItems::TimerAction(TimerAction::SelectTimerActionKeepAwake).as_str(),
+            timer_action.keep_awake_label.clone(),
+            "keep-awake",
         ),
     ];
 

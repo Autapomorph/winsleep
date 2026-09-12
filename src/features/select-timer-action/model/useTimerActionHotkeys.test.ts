@@ -29,6 +29,7 @@ describe('useTimerActionHotkeys hook', () => {
       { shortcut: SHORTCUTS.ACTION.REBOOT, actionName: 'reboot' },
       { shortcut: SHORTCUTS.ACTION.LOCK, actionName: 'lock' },
       { shortcut: SHORTCUTS.ACTION.SIGN_OUT, actionName: 'signout' },
+      { shortcut: SHORTCUTS.ACTION.KEEP_AWAKE, actionName: 'keep-awake' },
     ];
 
     expectedActions.forEach(({ shortcut, actionName }) => {

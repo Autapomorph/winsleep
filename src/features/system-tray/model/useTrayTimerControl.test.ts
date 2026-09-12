@@ -1,5 +1,6 @@
 import { renderHook } from '@testing-library/react';
 
+import { useKeepAwakeStore } from '@/entities/keep-awake';
 import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import { useTimerStore } from '@/entities/timer';
@@ -166,5 +167,119 @@ describe('useTrayTimerControl', () => {
     mockListeners['tray-settings-lock-toggle-clicked']({ payload: null });
 
     expect(useSessionStore.getState().isLocked).toBe(true);
+  });
+
+  describe('keep-awake indefinite mode', () => {
+    beforeEach(() => {
+      useKeepAwakeStore.setState({ isIndefiniteActive: false });
+      useSessionStore.setState({ timerAction: 'keep-awake' });
+      useTimerStore.setState({
+        timerState: 'idle',
+        plannedSeconds: 0,
+        remainingSeconds: 0,
+        timerMode: 'duration',
+      });
+    });
+
+    test('starts indefinite keep-awake instead of 0s timer when action is keep-awake and plannedSeconds is 0', () => {
+      const onComplete = vi.fn();
+      useTimerStore.setState({ onCompleteCallback: onComplete });
+
+      renderHook(() => useTrayTimerControl());
+
+      mockListeners['tray-timer-start-resume-pause-clicked']({ payload: null });
+
+      expect(useKeepAwakeStore.getState().isIndefiniteActive).toBe(true);
+      expect(useTimerStore.getState().timerState).toBe('idle');
+      expect(onComplete).not.toHaveBeenCalled();
+    });
+
+    test('ignores start/resume/pause click while indefinite is active since pause is disabled', () => {
+      useKeepAwakeStore.setState({ isIndefiniteActive: true });
+
+      renderHook(() => useTrayTimerControl());
+
+      mockListeners['tray-timer-start-resume-pause-clicked']({ payload: null });
+
+      expect(useKeepAwakeStore.getState().isIndefiniteActive).toBe(true);
+    });
+
+    test('stops indefinite keep-awake when cancel is clicked', () => {
+      useKeepAwakeStore.setState({ isIndefiniteActive: true });
+
+      renderHook(() => useTrayTimerControl());
+
+      mockListeners['tray-timer-cancel-clicked']({ payload: null });
+
+      expect(useKeepAwakeStore.getState().isIndefiniteActive).toBe(false);
+    });
+
+    test('stops indefinite keep-awake and starts timer when a positive preset is selected', () => {
+      const onComplete = vi.fn();
+      useTimerStore.setState({ onCompleteCallback: onComplete });
+      useKeepAwakeStore.setState({ isIndefiniteActive: true });
+
+      renderHook(() => useTrayTimerControl());
+
+      mockListeners['tray-preset-selected']({ payload: 600 });
+
+      expect(useKeepAwakeStore.getState().isIndefiniteActive).toBe(false);
+      expect(useTimerStore.getState().plannedSeconds).toBe(600);
+      expect(useTimerStore.getState().timerState).toBe('running');
+    });
+
+    test('switches running countdown to indefinite keep-awake when preset 0 is selected', () => {
+      const onComplete = vi.fn();
+      useTimerStore.setState({
+        timerState: 'running',
+        plannedSeconds: 600,
+        remainingSeconds: 300,
+        onCompleteCallback: onComplete,
+      });
+      useKeepAwakeStore.setState({ isIndefiniteActive: false });
+
+      renderHook(() => useTrayTimerControl());
+
+      mockListeners['tray-preset-selected']({ payload: 0 });
+
+      expect(useKeepAwakeStore.getState().isIndefiniteActive).toBe(true);
+      expect(useTimerStore.getState().timerState).toBe('idle');
+      expect(useTimerStore.getState().plannedSeconds).toBe(0);
+      expect(onComplete).not.toHaveBeenCalled();
+    });
+
+    test('cancels paused countdown and sets idle when preset 0 is selected in keep-awake', () => {
+      const onComplete = vi.fn();
+      useSessionStore.setState({ timerAction: 'keep-awake' });
+      useTimerStore.setState({
+        timerState: 'paused',
+        plannedSeconds: 600,
+        remainingSeconds: 300,
+        onCompleteCallback: onComplete,
+      });
+      useKeepAwakeStore.setState({ isIndefiniteActive: false });
+
+      renderHook(() => useTrayTimerControl());
+
+      mockListeners['tray-preset-selected']({ payload: 0 });
+
+      expect(useKeepAwakeStore.getState().isIndefiniteActive).toBe(false);
+      expect(useTimerStore.getState().timerState).toBe('idle');
+      expect(useTimerStore.getState().plannedSeconds).toBe(0);
+      expect(onComplete).not.toHaveBeenCalled();
+    });
+
+    test('ignores increase and decrease clicks while indefinite is active', () => {
+      useKeepAwakeStore.setState({ isIndefiniteActive: true });
+      useTimerStore.setState({ plannedSeconds: 0 });
+
+      renderHook(() => useTrayTimerControl());
+
+      mockListeners['tray-timer-increase-clicked']({ payload: null });
+      expect(useTimerStore.getState().plannedSeconds).toBe(0);
+
+      mockListeners['tray-timer-decrease-clicked']({ payload: null });
+      expect(useTimerStore.getState().plannedSeconds).toBe(0);
+    });
   });
 });

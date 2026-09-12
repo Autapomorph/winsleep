@@ -79,4 +79,10 @@ describe('TimerPresets', () => {
 
     expect(setExactTime).toHaveBeenCalledWith(0);
   });
+
+  test('renders indefinite label when action is keep-awake', () => {
+    render(<TimerPresets setExactTime={vi.fn()} action="keep-awake" />);
+
+    expect(screen.getAllByRole('button')[0]).toHaveTextContent('timer.indefiniteLabel.text');
+  });
 });

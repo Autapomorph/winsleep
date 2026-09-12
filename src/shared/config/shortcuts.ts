@@ -71,6 +71,10 @@ export const SHORTCUTS = {
       keys: ['q'],
       scopes: SHORTCUT_SCOPES.TIMER,
     },
+    KEEP_AWAKE: {
+      keys: ['a'],
+      scopes: SHORTCUT_SCOPES.TIMER,
+    },
   },
   DEV: {
     TOGGLE_THEME: {
