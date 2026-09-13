@@ -62,9 +62,7 @@ export const TimerActionSelector = ({ timerAction, isSettingsLocked }: Props) =>
       <Disclosure.Heading>
         <TrayMenuButton className="flex justify-between" onPress={() => setIsExpanded(!isExpanded)}>
           <span className="flex items-center gap-3">
-            <span className="text-muted">
-              {actionIcons[timerAction.selectedTimerAction as TimerAction]}
-            </span>
+            <span className="text-muted">{actionIcons[timerAction.selectedTimerAction]}</span>
             <span>{timerAction.selectedTimerActionLabel}</span>
           </span>
 

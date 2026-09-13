@@ -1,3 +1,5 @@
+import type { TimerAction } from '../config';
+
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type SetIsTrayModeEnabledCommandArgs = {
   isEnabled: boolean;
@@ -13,7 +15,7 @@ export type TrayMenuState = {
   isExpiring: boolean;
   timerAction: {
     selectedTimerActionLabel: string;
-    selectedTimerAction: string;
+    selectedTimerAction: TimerAction;
     sleepLabel: string;
     hibernateLabel: string;
     shutdownLabel: string;
