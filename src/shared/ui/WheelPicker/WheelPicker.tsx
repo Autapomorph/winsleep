@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@heroui/react';
 
 import { useLongPress } from '@/shared/lib';
+import { useWheelScroll } from './useWheelScroll';
+import { WheelPickerInput } from './WheelPickerInput';
 
 interface Props {
   className?: string;
@@ -26,140 +28,18 @@ export const WheelPicker = ({
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [isScrolling, setIsScrolling] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [inputValue, setInputValue] = useState(value.toString());
-  const itemHeight = 40; // px
 
-  const baseItems = Array.from({ length: max - min + 1 }, (_, i) => min + i);
-  const items = isInfinite ? [...baseItems, ...baseItems, ...baseItems] : baseItems;
-
-  const isProgrammaticScrollRef = useRef(false);
-
-  const scrollToValue = useCallback(
-    (val: number, behavior: ScrollBehavior = 'instant') => {
-      const { current: el } = scrollRef;
-
-      if (!el) {
-        return;
-      }
-
-      const baseIndex = val - min;
-      const blockLength = baseItems.length;
-
-      if (isInfinite && behavior === 'smooth') {
-        // Current index in the items array
-        const currentIndex = value - min + blockLength;
-
-        // Possible target indices (prev, curr, next blocks)
-        const targets = [baseIndex, baseIndex + blockLength, baseIndex + blockLength * 2];
-
-        // Find the target closest to the current scroll position
-        const bestTarget = targets.reduce((prev, curr) =>
-          Math.abs(curr - currentIndex) < Math.abs(prev - currentIndex) ? curr : prev,
-        );
-
-        isProgrammaticScrollRef.current = true;
-        el.scrollTo({ top: bestTarget * itemHeight, behavior: 'smooth' });
-        return;
-      }
-
-      const offset = isInfinite ? blockLength : 0;
-      isProgrammaticScrollRef.current = true;
-      el.scrollTo({ top: (baseIndex + offset) * itemHeight, behavior });
-
-      // For instant scrolls, we can reset almost immediately
-      if (behavior === 'instant') {
-        setTimeout(() => {
-          isProgrammaticScrollRef.current = false;
-        }, 50);
-      }
-    },
-    [min, isInfinite, baseItems.length, value],
-  );
-
-  // Sync scroll position with value
-  useEffect(() => {
-    if (!isScrolling && !isEditing) {
-      scrollToValue(value);
-    }
-  }, [value, isScrolling, isEditing, scrollToValue]);
-
-  const handleScroll = () => {
-    const { current: el } = scrollRef;
-    if (!el || isEditing || isProgrammaticScrollRef.current) {
-      return;
-    }
-
-    setIsScrolling(true);
-
-    const { scrollTop } = el;
-    const index = Math.round(scrollTop / itemHeight);
-    const item = items[index];
-
-    if (item !== undefined && item % (max + 1) !== value % (max + 1)) {
-      let newValue = item;
-
-      if (isInfinite) {
-        newValue = ((item - min) % baseItems.length) + min;
-      }
-      onChange(newValue);
-    }
-  };
-
-  // Handle wheel events on the container
-  useEffect(() => {
-    const { current: el } = containerRef;
-
-    if (el && !isEditing) {
-      const handleWheel = (e: WheelEvent) => {
-        e.preventDefault();
-        const delta = Math.sign(e.deltaY);
-        if (delta === 0) return;
-
-        let newValue = value + delta;
-        if (newValue > max) {
-          newValue = isInfinite ? min : max;
-        } else if (newValue < min) {
-          newValue = isInfinite ? max : min;
-        }
-
-        if (newValue !== value) {
-          onChange(newValue);
-          scrollToValue(newValue, 'smooth');
-        }
-      };
-
-      el.addEventListener('wheel', handleWheel, { passive: false });
-      return () => el.removeEventListener('wheel', handleWheel);
-    }
-    return undefined;
-  }, [value, min, max, isInfinite, onChange, isEditing, scrollToValue]);
-
-  useEffect(() => {
-    const { current: el } = scrollRef;
-
-    if (el) {
-      const handleScrollEnd = () => {
-        setIsScrolling(false);
-        isProgrammaticScrollRef.current = false;
-        if (isInfinite) {
-          const { scrollTop } = el;
-          const totalHeight = baseItems.length * itemHeight;
-          if (scrollTop < totalHeight - 1) {
-            scrollToValue(value, 'instant');
-          } else if (scrollTop >= totalHeight * 2 - 1) {
-            scrollToValue(value, 'instant');
-          }
-        }
-      };
-
-      el.addEventListener('scrollend', handleScrollEnd);
-      return () => el.removeEventListener('scrollend', handleScrollEnd);
-    }
-    return undefined;
-  }, [isInfinite, baseItems.length, value, scrollToValue]);
+  const { displayItems, scrollToValue, handleScroll } = useWheelScroll({
+    value,
+    min,
+    max,
+    isInfinite,
+    isEditing,
+    onChange,
+    containerRef,
+    scrollRef,
+  });
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (isEditing) {
@@ -201,7 +81,6 @@ export const WheelPicker = ({
       case 'Enter':
         e.preventDefault();
         setIsEditing(true);
-        setInputValue(value.toString());
         return;
 
       default:
@@ -218,7 +97,9 @@ export const WheelPicker = ({
     useCallback(() => {
       onChange(prev => {
         let next = prev + 1;
-        if (next > max) next = isInfinite ? min : max;
+        if (next > max) {
+          next = isInfinite ? min : max;
+        }
         return next;
       });
     }, [min, max, isInfinite, onChange]),
@@ -231,7 +112,9 @@ export const WheelPicker = ({
     useCallback(() => {
       onChange(prev => {
         let next = prev - 1;
-        if (next < min) next = isInfinite ? max : min;
+        if (next < min) {
+          next = isInfinite ? max : min;
+        }
         return next;
       });
     }, [min, max, isInfinite, onChange]),
@@ -239,31 +122,6 @@ export const WheelPicker = ({
     350,
     150,
   );
-
-  const handleInputSubmit = () => {
-    let num = parseInt(inputValue, 10);
-    if (Number.isNaN(num)) num = value;
-    num = Math.max(min, Math.min(max, num));
-    onChange(num);
-    setIsEditing(false);
-    // Restore focus to the container
-    setTimeout(() => containerRef.current?.focus(), 0);
-  };
-
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [isEditing]);
-
-  const displayItems = isInfinite
-    ? [
-        ...baseItems.map(item => ({ item, key: `prev-${item}` })),
-        ...baseItems.map(item => ({ item, key: `curr-${item}` })),
-        ...baseItems.map(item => ({ item, key: `next-${item}` })),
-      ]
-    : baseItems.map(item => ({ item, key: `item-${item}` }));
 
   return (
     <div
@@ -312,72 +170,23 @@ export const WheelPicker = ({
       )}
 
       {/* Selection Highlight / Edit Target */}
-      <div
-        className={`pointer-events-auto absolute top-1/2 left-0 z-30 h-10 w-full -translate-y-1/2 border-y border-border/50 ${
-          isEditing ? 'bg-background' : 'bg-default/5'
-        }`}
-      >
-        {isEditing ? (
-          <input
-            ref={inputRef}
-            type="number"
-            className="h-full w-full [appearance:textfield] bg-transparent text-center font-mono text-2xl font-bold outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-            value={inputValue}
-            min={min}
-            max={max}
-            onChange={e => {
-              const val = e.target.value;
-
-              if (val === '') {
-                setInputValue('');
-                return;
-              }
-
-              const num = parseInt(val, 10);
-
-              if (!Number.isNaN(num)) {
-                if (num > max) {
-                  setInputValue(max.toString());
-                } else if (num < min) {
-                  setInputValue(min.toString());
-                } else {
-                  setInputValue(val);
-                }
-              }
-            }}
-            onKeyDown={e => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                e.stopPropagation();
-                handleInputSubmit();
-              }
-              if (e.key === 'Escape') {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsEditing(false);
-                setTimeout(() => containerRef.current?.focus(), 0);
-              }
-            }}
-            onBlur={handleInputSubmit}
-            aria-label={t($ => $.common.wheelPicker.enterValue.aria.label, {
-              label: ariaLabel ?? t($ => $.common.wheelPicker.enterValue.value.text),
-            })}
-          />
-        ) : (
-          <button
-            type="button"
-            className="h-full w-full cursor-pointer border-none bg-transparent outline-none hover:bg-default/10"
-            tabIndex={-1}
-            onClick={() => {
-              setIsEditing(true);
-              setInputValue(value.toString());
-            }}
-            aria-label={t($ => $.common.wheelPicker.editValue.aria.label, {
-              label: ariaLabel ?? t($ => $.common.wheelPicker.editValue.value.text),
-            })}
-          />
-        )}
-      </div>
+      <WheelPickerInput
+        value={value}
+        min={min}
+        max={max}
+        isEditing={isEditing}
+        ariaLabel={ariaLabel}
+        containerRef={containerRef}
+        onStartEditing={() => {
+          setIsEditing(true);
+        }}
+        onFinishEditing={newValue => {
+          setIsEditing(false);
+          if (newValue !== undefined) {
+            onChange(newValue);
+          }
+        }}
+      />
 
       {/* Scrollable Area */}
       <div
