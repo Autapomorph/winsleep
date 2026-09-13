@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { cn, Kbd, ToggleButton, ToggleButtonGroup, Tooltip } from '@heroui/react';
+import { FaCoffee } from 'react-icons/fa';
 import {
   FaArrowsRotate,
   FaLock,
@@ -24,8 +25,6 @@ interface Props {
 
 export const TimerActionSwitch = ({ action, isLocked = false, onActionChange }: Props) => {
   const { t } = useTranslation();
-  const tooltipDelay = TOOLTIP_DELAY_DEFAULT;
-  const tooltipCloseDelay = TOOLTIP_CLOSE_DELAY_DEFAULT;
 
   const getButtonClass = (buttonAction: TimerAction) =>
     cn(
@@ -47,7 +46,7 @@ export const TimerActionSwitch = ({ action, isLocked = false, onActionChange }: 
           }
         }}
       >
-        <Tooltip delay={tooltipDelay} closeDelay={tooltipCloseDelay}>
+        <Tooltip delay={TOOLTIP_DELAY_DEFAULT} closeDelay={TOOLTIP_CLOSE_DELAY_DEFAULT}>
           <ToggleButton id="sleep" className={getButtonClass('sleep')} aria-keyshortcuts="S">
             <FaMoon />
           </ToggleButton>
@@ -61,7 +60,7 @@ export const TimerActionSwitch = ({ action, isLocked = false, onActionChange }: 
           </Tooltip.Content>
         </Tooltip>
 
-        <Tooltip delay={tooltipDelay} closeDelay={tooltipCloseDelay}>
+        <Tooltip delay={TOOLTIP_DELAY_DEFAULT} closeDelay={TOOLTIP_CLOSE_DELAY_DEFAULT}>
           <ToggleButton
             id="hibernate"
             className={getButtonClass('hibernate')}
@@ -79,7 +78,7 @@ export const TimerActionSwitch = ({ action, isLocked = false, onActionChange }: 
           </Tooltip.Content>
         </Tooltip>
 
-        <Tooltip delay={tooltipDelay} closeDelay={tooltipCloseDelay}>
+        <Tooltip delay={TOOLTIP_DELAY_DEFAULT} closeDelay={TOOLTIP_CLOSE_DELAY_DEFAULT}>
           <ToggleButton id="shutdown" className={getButtonClass('shutdown')} aria-keyshortcuts="P">
             <ToggleButtonGroup.Separator />
             <FaPowerOff />
@@ -94,7 +93,7 @@ export const TimerActionSwitch = ({ action, isLocked = false, onActionChange }: 
           </Tooltip.Content>
         </Tooltip>
 
-        <Tooltip delay={tooltipDelay} closeDelay={tooltipCloseDelay}>
+        <Tooltip delay={TOOLTIP_DELAY_DEFAULT} closeDelay={TOOLTIP_CLOSE_DELAY_DEFAULT}>
           <ToggleButton id="reboot" className={getButtonClass('reboot')} aria-keyshortcuts="R">
             <FaArrowsRotate />
           </ToggleButton>
@@ -108,7 +107,7 @@ export const TimerActionSwitch = ({ action, isLocked = false, onActionChange }: 
           </Tooltip.Content>
         </Tooltip>
 
-        <Tooltip delay={tooltipDelay} closeDelay={tooltipCloseDelay}>
+        <Tooltip delay={TOOLTIP_DELAY_DEFAULT} closeDelay={TOOLTIP_CLOSE_DELAY_DEFAULT}>
           <ToggleButton id="lock" className={getButtonClass('lock')} aria-keyshortcuts="L">
             <ToggleButtonGroup.Separator />
             <FaLock />
@@ -123,7 +122,7 @@ export const TimerActionSwitch = ({ action, isLocked = false, onActionChange }: 
           </Tooltip.Content>
         </Tooltip>
 
-        <Tooltip delay={tooltipDelay} closeDelay={tooltipCloseDelay}>
+        <Tooltip delay={TOOLTIP_DELAY_DEFAULT} closeDelay={TOOLTIP_CLOSE_DELAY_DEFAULT}>
           <ToggleButton id="signout" className={getButtonClass('signout')} aria-keyshortcuts="Q">
             <FaRightFromBracket />
           </ToggleButton>
@@ -133,6 +132,25 @@ export const TimerActionSwitch = ({ action, isLocked = false, onActionChange }: 
 
             <Kbd className="ml-2" aria-hidden="true">
               <Kbd.Content>Q</Kbd.Content>
+            </Kbd>
+          </Tooltip.Content>
+        </Tooltip>
+
+        <Tooltip delay={TOOLTIP_DELAY_DEFAULT} closeDelay={TOOLTIP_CLOSE_DELAY_DEFAULT}>
+          <ToggleButton
+            id="keep-awake"
+            className={getButtonClass('keep-awake')}
+            aria-keyshortcuts="A"
+          >
+            <ToggleButtonGroup.Separator />
+            <FaCoffee />
+          </ToggleButton>
+
+          <Tooltip.Content placement="bottom">
+            {t($ => $.timerAction.keepAwakeLabel.text)}
+
+            <Kbd className="ml-2" aria-hidden="true">
+              <Kbd.Content>A</Kbd.Content>
             </Kbd>
           </Tooltip.Content>
         </Tooltip>

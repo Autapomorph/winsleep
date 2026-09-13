@@ -49,7 +49,17 @@ describe('sanitizeAppState', () => {
     expect(
       sanitizeAppState({
         scheduledTimer: {
-          targetDateTime: -100,
+          targetDateTime: Number.NaN,
+          timerAction: 'sleep',
+          armedAt: 1699990000000,
+        },
+      }),
+    ).toEqual(DEFAULT_SERIALIZED_APP_STATE);
+
+    expect(
+      sanitizeAppState({
+        scheduledTimer: {
+          targetDateTime: null,
           timerAction: 'sleep',
           armedAt: 1699990000000,
         },

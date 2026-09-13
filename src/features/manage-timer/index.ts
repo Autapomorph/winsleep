@@ -9,5 +9,3 @@ export { useTimerNotification } from './model/useTimerNotification';
 export { usePowerSystemEvents } from './model/usePowerSystemEvents';
 export { useScheduledTimerRestore } from './model/useScheduledTimerRestore';
 export { useScheduledTimerStateSync } from './model/useScheduledTimerStateSync';
-export { useKeepAwakeTimerSync } from './model/useKeepAwakeTimerSync';
-export { getKeepAwakeStatus, setKeepAwake } from './api/keepAwake';

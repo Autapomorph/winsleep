@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 
+import { useKeepAwakeStore } from '@/entities/keep-awake';
+import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import { useTimerStore } from '@/entities/timer';
 import { logger } from '@/shared/lib';
@@ -7,27 +9,36 @@ import { setKeepAwake } from '../api/keepAwake';
 
 export const useKeepAwakeTimerSync = () => {
   useEffect(() => {
-    let lastKeepAwake = false;
+    let lastKeepPCAwake = false;
     let lastKeepDisplayAwake = false;
 
     const syncKeepAwakeState = () => {
       const { timerState } = useTimerStore.getState();
+      const { isIndefiniteActive } = useKeepAwakeStore.getState();
+      const { timerAction } = useSessionStore.getState();
       const { isPreventPCSleepDuringTimerEnabled, isPreventDisplaySleepDuringTimerEnabled } =
         useSettingsStore.getState();
 
-      const shouldBeEnabled = timerState === 'running' && isPreventPCSleepDuringTimerEnabled;
-      const shouldKeepDisplay = shouldBeEnabled && isPreventDisplaySleepDuringTimerEnabled;
+      const isTimerAwakeActive =
+        timerState === 'running' &&
+        (timerAction === 'keep-awake' || isPreventPCSleepDuringTimerEnabled);
 
-      if (shouldBeEnabled === lastKeepAwake && shouldKeepDisplay === lastKeepDisplayAwake) {
+      const shouldKeepPCAwake = isIndefiniteActive || isTimerAwakeActive;
+      const shouldKeepDisplayAwake = shouldKeepPCAwake && isPreventDisplaySleepDuringTimerEnabled;
+
+      if (
+        shouldKeepPCAwake === lastKeepPCAwake &&
+        shouldKeepDisplayAwake === lastKeepDisplayAwake
+      ) {
         return;
       }
 
-      lastKeepAwake = shouldBeEnabled;
-      lastKeepDisplayAwake = shouldKeepDisplay;
+      lastKeepPCAwake = shouldKeepPCAwake;
+      lastKeepDisplayAwake = shouldKeepDisplayAwake;
 
       setKeepAwake({
-        isEnabled: shouldBeEnabled,
-        keepDisplayAwake: shouldKeepDisplay,
+        isEnabled: shouldKeepPCAwake,
+        keepDisplayAwake: shouldKeepDisplayAwake,
       }).catch(err => {
         logger.error(`Failed to sync keep-awake state: ${err}`);
       });
@@ -37,13 +48,17 @@ export const useKeepAwakeTimerSync = () => {
     syncKeepAwakeState();
 
     const unsubscribeTimer = useTimerStore.subscribe(syncKeepAwakeState);
+    const unsubscribeSession = useSessionStore.subscribe(syncKeepAwakeState);
     const unsubscribeSettings = useSettingsStore.subscribe(syncKeepAwakeState);
+    const unsubscribeKeepAwake = useKeepAwakeStore.subscribe(syncKeepAwakeState);
 
     return () => {
       unsubscribeTimer();
+      unsubscribeSession();
       unsubscribeSettings();
+      unsubscribeKeepAwake();
 
-      if (lastKeepAwake) {
+      if (lastKeepPCAwake) {
         setKeepAwake({ isEnabled: false, keepDisplayAwake: false }).catch(err => {
           logger.error(`Failed to release keep-awake on unmount: ${err}`);
         });

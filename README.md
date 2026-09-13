@@ -33,6 +33,7 @@ Direct native Windows integration for all critical power actions:
 - **Sleep & Hibernate**: Triggered via direct low-level Win32 APIs.
 - **Shutdown & Restart**: Controlled system power-off and reboots.
 - **Lock Workstation & Sign Out**: Instant or scheduled screen locking and user logoff.
+- **Keep Awake**: Prevent PC and display sleep on a countdown timer or run indefinitely until manually stopped.
 
 ### 🛡️ Smart Protection & Customization
 - **Accidental Click Protection (Lock Mode)**: Prevent accidental aborts or modifications while a timer is ticking.
@@ -64,6 +65,7 @@ WinSleep is built for speed and full keyboard accessibility:
 | **`R`** | Select action: **Restart** |
 | **`L`** | Select action: **Lock screen** |
 | **`Q`** | Select action: **Sign out** |
+| **`A`** | Select action: **Keep awake** |
 | **`Ctrl + ,`** | Open / Close Settings |
 
 ---

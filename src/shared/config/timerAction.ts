@@ -1,4 +1,5 @@
-export type TimerAction = 'sleep' | 'hibernate' | 'shutdown' | 'reboot' | 'lock' | 'signout';
+export type TimerAction =
+  'sleep' | 'hibernate' | 'shutdown' | 'reboot' | 'lock' | 'signout' | 'keep-awake';
 
 export const TIMER_ACTIONS: TimerAction[] = [
   'sleep',
@@ -7,6 +8,7 @@ export const TIMER_ACTIONS: TimerAction[] = [
   'reboot',
   'lock',
   'signout',
+  'keep-awake',
 ] as const;
 
 export const FORCE_CAPABLE_TIMER_ACTIONS: readonly TimerAction[] = [

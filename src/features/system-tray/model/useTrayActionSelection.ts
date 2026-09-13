@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 
+import { useKeepAwakeStore } from '@/entities/keep-awake';
 import { useSessionStore } from '@/entities/session';
 import { typedListen } from '@/shared/api';
 import { logger } from '@/shared/lib';
@@ -12,6 +13,10 @@ export const useTrayActionSelection = () => {
       if (isActive) {
         const selectedAction = event.payload;
         logger.info(`Timer action selected from tray menu: ${selectedAction}`);
+
+        if (selectedAction !== 'keep-awake' && useKeepAwakeStore.getState().isIndefiniteActive) {
+          useKeepAwakeStore.getState().stopIndefinite();
+        }
 
         const session = useSessionStore.getState();
         session.setTimerAction(selectedAction);

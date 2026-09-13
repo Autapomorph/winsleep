@@ -1,22 +1,28 @@
 import { useTranslation } from 'react-i18next';
 import { Button, Toolbar } from '@heroui/react';
 
+import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
-import { DEFAULT_TIMER_PRESETS } from '@/shared/config';
+import { type TimerAction, DEFAULT_TIMER_PRESETS } from '@/shared/config';
 import { formatDurationFull, formatDurationShort } from '@/shared/lib';
 
 interface Props {
-  setExactTime: (seconds: number) => void;
+  action?: TimerAction;
   isLocked?: boolean;
+  setExactTime: (seconds: number) => void;
 }
 
-export const TimerPresets = ({ setExactTime, isLocked = false }: Props) => {
+export const TimerPresets = ({ action, isLocked = false, setExactTime }: Props) => {
   const { t } = useTranslation();
+  const sessionAction = useSessionStore(state => state.timerAction);
   const customTimerPresets = useSettingsStore(state => state.customTimerPresets);
+
+  const currentAction = action ?? sessionAction;
+  const isKeepAwake = currentAction === 'keep-awake';
 
   const getPresetLabel = (time: number) => {
     if (time === 0) {
-      return t($ => $.timer.nowLabel.text);
+      return isKeepAwake ? t($ => $.timer.indefiniteLabel.text) : t($ => $.timer.nowLabel.text);
     }
 
     return formatDurationShort(time, t);
@@ -24,7 +30,7 @@ export const TimerPresets = ({ setExactTime, isLocked = false }: Props) => {
 
   const getPresetAriaLabel = (time: number) => {
     if (time === 0) {
-      return t($ => $.timer.nowLabel.text);
+      return isKeepAwake ? t($ => $.timer.indefiniteLabel.text) : t($ => $.timer.nowLabel.text);
     }
 
     return formatDurationFull(time, t);

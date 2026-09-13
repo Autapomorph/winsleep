@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import { useTimerStore } from '@/entities/timer';
+import type { TimerAction } from '@/shared/config';
 import {
   logger,
   playCustomNotificationSound,
@@ -68,13 +69,14 @@ export const useTimerNotification = () => {
     if (timesToNotify.length > 0) {
       const notify = async () => {
         try {
-          const actionLabels = {
+          const actionLabels: Record<TimerAction, string> = {
             sleep: t($ => $.timerAction.notifications.planned.sleep),
             hibernate: t($ => $.timerAction.notifications.planned.hibernate),
             shutdown: t($ => $.timerAction.notifications.planned.shutdown),
             reboot: t($ => $.timerAction.notifications.planned.reboot),
             lock: t($ => $.timerAction.notifications.planned.lock),
             signout: t($ => $.timerAction.notifications.planned.signout),
+            'keep-awake': t($ => $.timerAction.notifications.planned.keepAwake),
           };
 
           showWarningToast(

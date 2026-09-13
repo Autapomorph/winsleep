@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
 import pRetry, { AbortError } from 'p-retry';
 
+import { useKeepAwakeStore } from '@/entities/keep-awake';
 import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import {
@@ -21,6 +22,12 @@ const WINDOWS_TIMEOUT_ERROR_KEYWORD = 'timeout';
 export const useTrayLanguageSync = () => {
   const { t, i18n } = useTranslation();
   const [syncTrigger, setSyncTrigger] = useState(0);
+
+  const { isIndefiniteActive } = useKeepAwakeStore(
+    useShallow(state => ({
+      isIndefiniteActive: state.isIndefiniteActive,
+    })),
+  );
 
   const { timerAction, isSettingsLocked } = useSessionStore(
     useShallow(state => ({
@@ -77,7 +84,9 @@ export const useTrayLanguageSync = () => {
   useEffect(() => {
     let tooltip = t($ => $.tray.tooltip.default);
 
-    if (timerState === 'paused') {
+    if (isIndefiniteActive) {
+      tooltip = t($ => $.timer.triggerAt.keepAwakeIndefiniteRunning);
+    } else if (timerState === 'paused') {
       tooltip = t($ => $.tray.tooltip.paused, {
         remainingTime: formatDays(remainingSeconds, t) ?? formatTime(remainingSeconds),
       });
@@ -94,6 +103,7 @@ export const useTrayLanguageSync = () => {
       reboot: t($ => $.tray.menu.timerAction.reboot),
       lock: t($ => $.tray.menu.timerAction.lock),
       signout: t($ => $.tray.menu.timerAction.signout),
+      'keep-awake': t($ => $.tray.menu.timerAction.keepAwake),
     };
 
     const selectedTimerActionLabel = timerActionLabels[timerAction];
@@ -102,7 +112,9 @@ export const useTrayLanguageSync = () => {
       plannedTime: formatDays(plannedSeconds, t) ?? formatTime(plannedSeconds),
     });
 
-    if (timerState === 'running' || timerState === 'paused') {
+    if (isIndefiniteActive) {
+      timerStatusLabel = t($ => $.timer.triggerAt.keepAwakeIndefiniteRunning);
+    } else if (timerState === 'running' || timerState === 'paused') {
       timerStatusLabel = `${timerActionLabels[timerAction]}: ${
         formatDays(remainingSeconds, t) ?? formatTime(remainingSeconds)
       }`;
@@ -110,7 +122,9 @@ export const useTrayLanguageSync = () => {
 
     let startResumePauseTimerLabel = t($ => $.tray.menu.startTimer);
 
-    if (timerState === 'paused') {
+    if (isIndefiniteActive) {
+      startResumePauseTimerLabel = t($ => $.tray.menu.pauseTimer);
+    } else if (timerState === 'paused') {
       startResumePauseTimerLabel = t($ => $.tray.menu.resumeTimer);
     } else if (timerState === 'running') {
       startResumePauseTimerLabel = t($ => $.tray.menu.pauseTimer);
@@ -146,7 +160,8 @@ export const useTrayLanguageSync = () => {
 
     const updateLabel = getUpdateText();
 
-    const isExpiring = timerState !== 'idle' && remainingSeconds <= DANGER_THRESHOLD_SECONDS;
+    const isExpiring =
+      !isIndefiniteActive && timerState !== 'idle' && remainingSeconds <= DANGER_THRESHOLD_SECONDS;
 
     const customSeconds = customTimerPresets.map(p => p.seconds);
     const allPresetSeconds = Array.from(new Set([...DEFAULT_TIMER_PRESETS, ...customSeconds])).sort(
@@ -154,7 +169,13 @@ export const useTrayLanguageSync = () => {
     );
 
     const timerPresets = allPresetSeconds.map(time => {
-      const label = time === 0 ? t($ => $.timer.nowLabel.text) : formatDurationShort(time, t);
+      let label = formatDurationShort(time, t);
+      if (time === 0) {
+        label =
+          timerAction === 'keep-awake'
+            ? t($ => $.timer.indefiniteLabel.text)
+            : t($ => $.timer.nowLabel.text);
+      }
       return { seconds: time, label };
     });
 
@@ -168,8 +189,8 @@ export const useTrayLanguageSync = () => {
       tooltip,
       openLabel: t($ => $.tray.menu.open),
       quitLabel: t($ => $.tray.menu.quit),
-      timerState,
-      timerMode,
+      timerState: isIndefiniteActive ? 'running' : timerState,
+      timerMode: isIndefiniteActive ? 'timestamp' : timerMode,
       isExpiring,
       timerAction: {
         selectedTimerActionLabel,
@@ -180,6 +201,7 @@ export const useTrayLanguageSync = () => {
         rebootLabel: timerActionLabels.reboot,
         lockLabel: timerActionLabels.lock,
         signoutLabel: timerActionLabels.signout,
+        keepAwakeLabel: timerActionLabels['keep-awake'],
       },
       timerStatusLabel,
       startResumePauseTimerLabel,
@@ -242,5 +264,6 @@ export const useTrayLanguageSync = () => {
     updateStatus,
     downloadProgress,
     syncTrigger,
+    isIndefiniteActive,
   ]);
 };
