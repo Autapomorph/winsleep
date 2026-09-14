@@ -2,16 +2,9 @@ import { useCallback } from 'react';
 import type { SelectorParam } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
-import {
-  pcHibernate,
-  pcLock,
-  pcReboot,
-  pcShutdown,
-  pcSignout,
-  pcSleep,
-} from '@/features/select-timer-action';
 import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
+import { pcHibernate, pcLock, pcReboot, pcShutdown, pcSignout, pcSleep } from '@/shared/api';
 import { type TimerAction, config } from '@/shared/config';
 import { logger, sendSystemNotification, showErrorToast, showInfoToast } from '@/shared/lib';
 

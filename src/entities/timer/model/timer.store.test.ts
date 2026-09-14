@@ -21,10 +21,6 @@ const triggerTick = (seconds: number) => {
   mockListeners['timer-tick']?.forEach(cb => cb({ payload: seconds }));
 };
 
-const triggerComplete = () => {
-  mockListeners['timer-complete']?.forEach(cb => cb({ payload: undefined }));
-};
-
 describe('timerStore', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -32,7 +28,6 @@ describe('timerStore', () => {
     useTimerStore.setState({
       endTime: null,
       isListenersInitialized: false,
-      onCompleteCallback: null,
       plannedSeconds: DEFAULT_TIMER_SECONDS,
       remainingSeconds: DEFAULT_TIMER_SECONDS,
       timeoutId: null,
@@ -72,9 +67,8 @@ describe('timerStore', () => {
   });
 
   test('should transition to running state when started', () => {
-    const onComplete = vi.fn();
     useTimerStore.getState().setExactTime(10);
-    useTimerStore.getState().start(onComplete);
+    useTimerStore.getState().start();
 
     const state = useTimerStore.getState();
 
@@ -83,27 +77,23 @@ describe('timerStore', () => {
     expect(state.endTime).toBeGreaterThan(0);
   });
 
-  test('should tick down and call onComplete when finished', () => {
-    const onComplete = vi.fn();
+  test('should tick down when tick received and reset on cancel', () => {
     useTimerStore.getState().setExactTime(3);
-    useTimerStore.getState().start(onComplete);
+    useTimerStore.getState().start();
 
     // Advance mock time and trigger tick from backend
     vi.advanceTimersByTime(1000);
     triggerTick(2);
     expect(useTimerStore.getState().remainingSeconds).toBe(2);
 
-    // Simulate completion
-    triggerComplete();
-    expect(useTimerStore.getState().remainingSeconds).toBe(3); // Resets to plannedSeconds on completion
-    expect(onComplete).toHaveBeenCalledTimes(1);
+    useTimerStore.getState().cancel();
+    expect(useTimerStore.getState().remainingSeconds).toBe(3); // Resets to plannedSeconds on cancel
     expect(useTimerStore.getState().timerState).toBe('idle');
   });
 
   test('should pause and resume ticking', () => {
-    const onComplete = vi.fn();
     useTimerStore.getState().setExactTime(5);
-    useTimerStore.getState().start(onComplete);
+    useTimerStore.getState().start();
 
     // Advance mock time and trigger tick from backend
     vi.advanceTimersByTime(2000);
@@ -117,22 +107,18 @@ describe('timerStore', () => {
     // Ticks received while paused should not affect it
     triggerTick(2);
     expect(useTimerStore.getState().remainingSeconds).toBe(3);
-    expect(onComplete).not.toHaveBeenCalled();
 
     // Resume the timer
-    useTimerStore.getState().resume(onComplete);
+    useTimerStore.getState().resume();
     expect(useTimerStore.getState().timerState).toBe('running');
 
-    // Simulate completion
-    triggerComplete();
-    expect(useTimerStore.getState().remainingSeconds).toBe(5); // Resets to plannedSeconds on completion
-    expect(onComplete).toHaveBeenCalledTimes(1);
+    triggerTick(2);
+    expect(useTimerStore.getState().remainingSeconds).toBe(2);
   });
 
   test('should cancel timer and reset to idle', () => {
-    const onComplete = vi.fn();
     useTimerStore.getState().setExactTime(10);
-    useTimerStore.getState().start(onComplete);
+    useTimerStore.getState().start();
 
     vi.advanceTimersByTime(3000);
     triggerTick(7);
@@ -145,15 +131,13 @@ describe('timerStore', () => {
     expect(state.remainingSeconds).toBe(10);
     expect(state.endTime).toBeNull();
     expect(state.timeoutId).toBeNull();
-    expect(onComplete).not.toHaveBeenCalled();
   });
 
   test('should ignore start when not in idle state', () => {
-    const onComplete = vi.fn();
     useTimerStore.setState({ timerState: 'running' });
-    useTimerStore.getState().start(onComplete);
+    useTimerStore.getState().start();
 
-    expect(onComplete).not.toHaveBeenCalled();
+    expect(useTimerStore.getState().timerState).toBe('running');
   });
 
   test('should ignore pause when not in running state or no endTime', () => {
@@ -175,10 +159,9 @@ describe('timerStore', () => {
   });
 
   test('should restore scheduled timer correctly', () => {
-    const onComplete = vi.fn();
     const targetDateTime = Date.now() + 60000;
 
-    useTimerStore.getState().restoreScheduledTimer(targetDateTime, onComplete);
+    useTimerStore.getState().restoreScheduledTimer(targetDateTime);
 
     const state = useTimerStore.getState();
     expect(state.timerState).toBe('running');

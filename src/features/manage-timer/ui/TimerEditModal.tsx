@@ -19,27 +19,18 @@ interface Props {
 export const TimerEditModal = ({ isOpen, onOpenChange, currentSeconds, setExactTime }: Props) => {
   const { t } = useTranslation();
 
-  const {
-    timerState,
-    timerMode,
-    targetDateTime,
-    onCompleteCallback,
-    setTimerMode,
-    setTargetDateTime,
-    cancel,
-    start,
-  } = useTimerStore(
-    useShallow(state => ({
-      timerState: state.timerState,
-      timerMode: state.timerMode,
-      targetDateTime: state.targetDateTime,
-      onCompleteCallback: state.onCompleteCallback,
-      setTimerMode: state.setTimerMode,
-      setTargetDateTime: state.setTargetDateTime,
-      cancel: state.cancel,
-      start: state.start,
-    })),
-  );
+  const { timerState, timerMode, targetDateTime, setTimerMode, setTargetDateTime, cancel, start } =
+    useTimerStore(
+      useShallow(state => ({
+        timerState: state.timerState,
+        timerMode: state.timerMode,
+        targetDateTime: state.targetDateTime,
+        setTimerMode: state.setTimerMode,
+        setTargetDateTime: state.setTargetDateTime,
+        cancel: state.cancel,
+        start: state.start,
+      })),
+    );
 
   const [activeTab, setActiveTab] = useState<TimerMode>(timerMode);
 
@@ -128,8 +119,8 @@ export const TimerEditModal = ({ isOpen, onOpenChange, currentSeconds, setExactT
       setTargetDateTime(selectedTimestamp);
     }
 
-    if (wasActive && isModeChanging && onCompleteCallback) {
-      start(onCompleteCallback);
+    if (wasActive && isModeChanging) {
+      start();
     }
 
     setContentHeight(null);

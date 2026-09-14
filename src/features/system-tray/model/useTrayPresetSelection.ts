@@ -20,8 +20,7 @@ export const useTrayPresetSelection = () => {
       logger.info(`Preset clicked from tray menu: ${seconds}s`);
 
       const { timerAction } = useSessionStore.getState();
-      const { timerState, cancel, start, setExactTime, onCompleteCallback } =
-        useTimerStore.getState();
+      const { timerState, cancel, start, setExactTime } = useTimerStore.getState();
       const { isIndefiniteActive, startIndefinite, stopIndefinite } = useKeepAwakeStore.getState();
 
       if (timerAction === 'keep-awake') {
@@ -50,11 +49,7 @@ export const useTrayPresetSelection = () => {
         if (isIndefiniteActive) {
           stopIndefinite();
           setExactTime(seconds);
-
-          if (onCompleteCallback) {
-            start(onCompleteCallback);
-          }
-
+          start();
           return;
         }
       }

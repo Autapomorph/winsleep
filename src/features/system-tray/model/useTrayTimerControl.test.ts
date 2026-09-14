@@ -26,7 +26,6 @@ describe('useTrayTimerControl', () => {
 
     useTimerStore.setState({
       timerState: 'idle',
-      onCompleteCallback: undefined,
     });
 
     useSettingsStore.setState({
@@ -63,12 +62,9 @@ describe('useTrayTimerControl', () => {
   });
 
   test('handles timer start resume pause events', () => {
-    const onComplete = vi.fn();
-
     useTimerStore.setState({
       timerState: 'idle',
       plannedSeconds: 300,
-      onCompleteCallback: onComplete,
     });
 
     renderHook(() => useTrayTimerControl());
@@ -87,11 +83,9 @@ describe('useTrayTimerControl', () => {
   });
 
   test('handles timer cancel event', () => {
-    const onComplete = vi.fn();
     useTimerStore.setState({
       timerState: 'running',
       plannedSeconds: 300,
-      onCompleteCallback: onComplete,
     });
 
     renderHook(() => useTrayTimerControl());
@@ -102,15 +96,12 @@ describe('useTrayTimerControl', () => {
   });
 
   test('ignores pause, resume, and cancel events from tray when settings are locked', () => {
-    const onComplete = vi.fn();
-
     useSessionStore.setState({ isLocked: true });
 
     // Idle state: start should be permitted
     useTimerStore.setState({
       timerState: 'idle',
       plannedSeconds: 300,
-      onCompleteCallback: onComplete,
     });
 
     renderHook(() => useTrayTimerControl());
@@ -182,16 +173,12 @@ describe('useTrayTimerControl', () => {
     });
 
     test('starts indefinite keep-awake instead of 0s timer when action is keep-awake and plannedSeconds is 0', () => {
-      const onComplete = vi.fn();
-      useTimerStore.setState({ onCompleteCallback: onComplete });
-
       renderHook(() => useTrayTimerControl());
 
       mockListeners['tray-timer-start-resume-pause-clicked']({ payload: null });
 
       expect(useKeepAwakeStore.getState().isIndefiniteActive).toBe(true);
       expect(useTimerStore.getState().timerState).toBe('idle');
-      expect(onComplete).not.toHaveBeenCalled();
     });
 
     test('ignores start/resume/pause click while indefinite is active since pause is disabled', () => {
@@ -215,8 +202,6 @@ describe('useTrayTimerControl', () => {
     });
 
     test('stops indefinite keep-awake and starts timer when a positive preset is selected', () => {
-      const onComplete = vi.fn();
-      useTimerStore.setState({ onCompleteCallback: onComplete });
       useKeepAwakeStore.setState({ isIndefiniteActive: true });
 
       renderHook(() => useTrayTimerControl());
@@ -229,12 +214,10 @@ describe('useTrayTimerControl', () => {
     });
 
     test('switches running countdown to indefinite keep-awake when preset 0 is selected', () => {
-      const onComplete = vi.fn();
       useTimerStore.setState({
         timerState: 'running',
         plannedSeconds: 600,
         remainingSeconds: 300,
-        onCompleteCallback: onComplete,
       });
       useKeepAwakeStore.setState({ isIndefiniteActive: false });
 
@@ -245,17 +228,14 @@ describe('useTrayTimerControl', () => {
       expect(useKeepAwakeStore.getState().isIndefiniteActive).toBe(true);
       expect(useTimerStore.getState().timerState).toBe('idle');
       expect(useTimerStore.getState().plannedSeconds).toBe(0);
-      expect(onComplete).not.toHaveBeenCalled();
     });
 
     test('cancels paused countdown and sets idle when preset 0 is selected in keep-awake', () => {
-      const onComplete = vi.fn();
       useSessionStore.setState({ timerAction: 'keep-awake' });
       useTimerStore.setState({
         timerState: 'paused',
         plannedSeconds: 600,
         remainingSeconds: 300,
-        onCompleteCallback: onComplete,
       });
       useKeepAwakeStore.setState({ isIndefiniteActive: false });
 
@@ -266,7 +246,6 @@ describe('useTrayTimerControl', () => {
       expect(useKeepAwakeStore.getState().isIndefiniteActive).toBe(false);
       expect(useTimerStore.getState().timerState).toBe('idle');
       expect(useTimerStore.getState().plannedSeconds).toBe(0);
-      expect(onComplete).not.toHaveBeenCalled();
     });
 
     test('ignores increase and decrease clicks while indefinite is active', () => {

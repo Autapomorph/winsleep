@@ -14,7 +14,6 @@ import { SHORTCUT_SCOPES } from '@/shared/config';
 import { useHotkeysScope } from '@/shared/lib';
 import { useFormattedTimerTime } from './useFormattedTimerTime';
 import { useTimerDefaults } from '../model/useTimerDefaults';
-import { useTimerExecution } from '../model/useTimerExecution';
 import { useTimerOrchestrator } from '../model/useTimerOrchestrator';
 
 export const Timer = () => {
@@ -26,8 +25,6 @@ export const Timer = () => {
       setIsLocked: state.setIsLocked,
     })),
   );
-
-  const { execute } = useTimerExecution();
 
   const {
     currentSeconds,
@@ -42,7 +39,7 @@ export const Timer = () => {
     handleCancel,
     handleSetExactTime,
     executeImmediately,
-  } = useTimerOrchestrator({ onComplete: execute });
+  } = useTimerOrchestrator();
 
   const formattedTime = useFormattedTimerTime({
     currentSeconds,

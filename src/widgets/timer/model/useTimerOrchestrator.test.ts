@@ -10,10 +10,19 @@ vi.mock('@/shared/api', () => ({
   typedListen: vi.fn().mockResolvedValue(() => {}),
 }));
 
-describe('useTimerOrchestrator', () => {
-  const onComplete = vi.fn();
+const mockExecute = vi.fn().mockResolvedValue(undefined);
 
+vi.mock('@/features/manage-timer', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/features/manage-timer')>();
+  return {
+    ...actual,
+    useTimerExecution: () => ({ execute: mockExecute }),
+  };
+});
+
+describe('useTimerOrchestrator', () => {
   beforeEach(() => {
+    mockExecute.mockClear();
     useSessionStore.setState({ timerAction: 'sleep', isLocked: false });
     useKeepAwakeStore.setState({ isIndefiniteActive: false, startedAt: null });
     useTimerStore.setState({
@@ -29,7 +38,7 @@ describe('useTimerOrchestrator', () => {
     useSessionStore.setState({ timerAction: 'keep-awake' });
     useTimerStore.setState({ plannedSeconds: 0, remainingSeconds: 0 });
 
-    const { result } = renderHook(() => useTimerOrchestrator({ onComplete }));
+    const { result } = renderHook(() => useTimerOrchestrator());
 
     expect(result.current.isIndefiniteMode).toBe(true);
     expect(result.current.effectiveTimerState).toBe('idle');
@@ -46,7 +55,7 @@ describe('useTimerOrchestrator', () => {
     useTimerStore.setState({ plannedSeconds: 1800, remainingSeconds: 1800 });
     useKeepAwakeStore.setState({ isIndefiniteActive: true });
 
-    const { result } = renderHook(() => useTimerOrchestrator({ onComplete }));
+    const { result } = renderHook(() => useTimerOrchestrator());
 
     expect(result.current.isIndefiniteMode).toBe(true);
     expect(result.current.effectiveTimerState).toBe('running');
@@ -57,7 +66,7 @@ describe('useTimerOrchestrator', () => {
     useSessionStore.setState({ timerAction: 'keep-awake' });
     useTimerStore.setState({ plannedSeconds: 0, remainingSeconds: 0 });
 
-    const { result } = renderHook(() => useTimerOrchestrator({ onComplete }));
+    const { result } = renderHook(() => useTimerOrchestrator());
 
     act(() => {
       result.current.handleStart();
@@ -71,7 +80,7 @@ describe('useTimerOrchestrator', () => {
     useSessionStore.setState({ timerAction: 'sleep' });
     useTimerStore.setState({ plannedSeconds: 60, remainingSeconds: 60 });
 
-    const { result } = renderHook(() => useTimerOrchestrator({ onComplete }));
+    const { result } = renderHook(() => useTimerOrchestrator());
 
     act(() => {
       result.current.handleStart();
@@ -83,7 +92,7 @@ describe('useTimerOrchestrator', () => {
   test('handlePause stops indefinite mode if active', () => {
     useKeepAwakeStore.setState({ isIndefiniteActive: true });
 
-    const { result } = renderHook(() => useTimerOrchestrator({ onComplete }));
+    const { result } = renderHook(() => useTimerOrchestrator());
 
     act(() => {
       result.current.handlePause();
@@ -95,7 +104,7 @@ describe('useTimerOrchestrator', () => {
   test('handlePause pauses running timer', () => {
     useTimerStore.setState({ timerState: 'running', endTime: Date.now() + 60000 });
 
-    const { result } = renderHook(() => useTimerOrchestrator({ onComplete }));
+    const { result } = renderHook(() => useTimerOrchestrator());
 
     act(() => {
       result.current.handlePause();
@@ -108,7 +117,7 @@ describe('useTimerOrchestrator', () => {
     useSessionStore.setState({ timerAction: 'keep-awake' });
     useTimerStore.setState({ plannedSeconds: 0, remainingSeconds: 0 });
 
-    const { result } = renderHook(() => useTimerOrchestrator({ onComplete }));
+    const { result } = renderHook(() => useTimerOrchestrator());
 
     act(() => {
       result.current.handleResume();
@@ -121,7 +130,7 @@ describe('useTimerOrchestrator', () => {
     useKeepAwakeStore.setState({ isIndefiniteActive: true });
     useTimerStore.setState({ timerState: 'running', endTime: Date.now() + 60000 });
 
-    const { result } = renderHook(() => useTimerOrchestrator({ onComplete }));
+    const { result } = renderHook(() => useTimerOrchestrator());
 
     act(() => {
       result.current.handleCancel();
@@ -134,34 +143,34 @@ describe('useTimerOrchestrator', () => {
   test('executeImmediately stops indefinite if active', () => {
     useKeepAwakeStore.setState({ isIndefiniteActive: true });
 
-    const { result } = renderHook(() => useTimerOrchestrator({ onComplete }));
+    const { result } = renderHook(() => useTimerOrchestrator());
 
     act(() => {
       result.current.executeImmediately();
     });
 
     expect(useKeepAwakeStore.getState().isIndefiniteActive).toBe(false);
-    expect(onComplete).not.toHaveBeenCalled();
+    expect(mockExecute).not.toHaveBeenCalled();
   });
 
-  test('executeImmediately triggers onComplete when timer is running', () => {
+  test('executeImmediately triggers execute when timer is running', () => {
     useTimerStore.setState({ timerState: 'running', endTime: Date.now() + 60000 });
 
-    const { result } = renderHook(() => useTimerOrchestrator({ onComplete }));
+    const { result } = renderHook(() => useTimerOrchestrator());
 
     act(() => {
       result.current.executeImmediately();
     });
 
     expect(useTimerStore.getState().timerState).toBe('idle');
-    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(mockExecute).toHaveBeenCalledTimes(1);
   });
 
   test('handleSetExactTime transitions from running timer to indefinite when set to 0', () => {
     useSessionStore.setState({ timerAction: 'keep-awake' });
     useTimerStore.setState({ timerState: 'running', endTime: Date.now() + 60000 });
 
-    const { result } = renderHook(() => useTimerOrchestrator({ onComplete }));
+    const { result } = renderHook(() => useTimerOrchestrator());
 
     act(() => {
       result.current.handleSetExactTime(0);
@@ -175,7 +184,7 @@ describe('useTimerOrchestrator', () => {
     useSessionStore.setState({ timerAction: 'keep-awake' });
     useTimerStore.setState({ timerState: 'paused', remainingSeconds: 59 });
 
-    const { result } = renderHook(() => useTimerOrchestrator({ onComplete }));
+    const { result } = renderHook(() => useTimerOrchestrator());
 
     act(() => {
       result.current.handleSetExactTime(0);
@@ -190,7 +199,7 @@ describe('useTimerOrchestrator', () => {
     useSessionStore.setState({ timerAction: 'keep-awake' });
     useKeepAwakeStore.setState({ isIndefiniteActive: true });
 
-    const { result } = renderHook(() => useTimerOrchestrator({ onComplete }));
+    const { result } = renderHook(() => useTimerOrchestrator());
 
     act(() => {
       result.current.handleSetExactTime(1800);
@@ -205,7 +214,7 @@ describe('useTimerOrchestrator', () => {
     useSessionStore.setState({ timerAction: 'keep-awake' });
     useKeepAwakeStore.setState({ isIndefiniteActive: true });
 
-    renderHook(() => useTimerOrchestrator({ onComplete }));
+    renderHook(() => useTimerOrchestrator());
 
     act(() => {
       useSessionStore.setState({ timerAction: 'sleep' });

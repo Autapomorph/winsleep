@@ -1,20 +1,14 @@
 import { renderHook } from '@testing-library/react';
 
-import {
-  pcHibernate,
-  pcLock,
-  pcReboot,
-  pcShutdown,
-  pcSignout,
-  pcSleep,
-} from '@/features/select-timer-action';
 import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
+import { pcHibernate, pcLock, pcReboot, pcShutdown, pcSignout, pcSleep } from '@/shared/api';
 import { config } from '@/shared/config';
 import * as sharedLib from '@/shared/lib';
 import { useTimerExecution } from './useTimerExecution';
 
-vi.mock('@/features/select-timer-action', () => ({
+vi.mock('@/shared/api', async importOriginal => ({
+  ...(await importOriginal()),
   pcSleep: vi.fn().mockResolvedValue(undefined),
   pcHibernate: vi.fn().mockResolvedValue(undefined),
   pcShutdown: vi.fn().mockResolvedValue(undefined),
@@ -36,6 +30,7 @@ describe('useTimerExecution', () => {
   beforeEach(() => {
     useSessionStore.setState({ timerAction: 'sleep' });
     useSettingsStore.setState({ isForceActionEnabled: false });
+    vi.clearAllMocks();
   });
 
   test('calls pcSleep in prod mode when action is sleep', async () => {
