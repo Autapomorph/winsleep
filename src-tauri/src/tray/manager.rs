@@ -228,27 +228,36 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
                             let scale_factor =
                                 monitor.as_ref().map(|m| m.scale_factor()).unwrap_or(1.0);
 
-                            let size = window.inner_size().unwrap_or_else(|_| {
-                                tauri::PhysicalSize::new(
-                                    (320.0 * scale_factor) as u32,
-                                    (480.0 * scale_factor) as u32,
-                                )
-                            });
+                            let size = window
+                                .outer_size()
+                                .or_else(|_| window.inner_size())
+                                .unwrap_or_else(|_| {
+                                    tauri::PhysicalSize::new(
+                                        (320.0 * scale_factor) as u32,
+                                        (480.0 * scale_factor) as u32,
+                                    )
+                                });
                             let win_width = size.width as f64;
                             let win_height = size.height as f64;
 
                             let (pos_x, pos_y) = match rect.position {
                                 tauri::Position::Physical(p) => (p.x as f64, p.y as f64),
-                                tauri::Position::Logical(l) => (l.x, l.y),
+                                tauri::Position::Logical(l) => (l.x * scale_factor, l.y * scale_factor),
                             };
                             let (width, height) = match rect.size {
                                 tauri::Size::Physical(s) => (s.width as f64, s.height as f64),
-                                tauri::Size::Logical(l) => (l.width, l.height),
+                                tauri::Size::Logical(l) => (l.width * scale_factor, l.height * scale_factor),
                             };
 
                             let icon_center_x = pos_x + (width / 2.0);
                             let icon_top_y = pos_y;
                             let icon_bottom_y = pos_y + height;
+
+                            let monitor_pos = monitor
+                                .as_ref()
+                                .map(|m| m.position())
+                                .cloned()
+                                .unwrap_or_else(|| tauri::PhysicalPosition::new(0, 0));
 
                             let monitor_size = monitor
                                 .as_ref()
@@ -256,17 +265,26 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
                                 .cloned()
                                 .unwrap_or_else(|| tauri::PhysicalSize::new(1920, 1080));
 
-                            let x = (icon_center_x - (win_width / 2.0)) as i32;
-                            let max_x = (monitor_size.width as f64 - win_width) as i32;
-                            let x = x.clamp(0, max_x);
+                            let margin = 10.0 * scale_factor;
 
-                            let y = if icon_top_y > (monitor_size.height as f64 / 2.0) {
-                                // Taskbar is at the bottom, place above the tray icon
-                                (icon_top_y - win_height - (8.0 * scale_factor)) as i32
+                            let x = (icon_center_x - (win_width / 2.0)) as i32;
+                            let min_x = (monitor_pos.x as f64 + margin) as i32;
+                            let max_x = (monitor_pos.x as f64 + monitor_size.width as f64 - win_width - margin) as i32;
+                            let max_x = max_x.max(min_x);
+                            let x = x.clamp(min_x, max_x);
+
+                            let monitor_mid_y = monitor_pos.y as f64 + (monitor_size.height as f64 / 2.0);
+                            let y = if icon_top_y > monitor_mid_y {
+                                // Taskbar is in the bottom half, place above the tray icon
+                                (icon_top_y - win_height - margin) as i32
                             } else {
-                                // Taskbar is at the top, place below the tray icon
-                                (icon_bottom_y + (8.0 * scale_factor)) as i32
+                                // Taskbar is in the top half, place below the tray icon
+                                (icon_bottom_y + margin) as i32
                             };
+                            let min_y = (monitor_pos.y as f64 + margin) as i32;
+                            let max_y = (monitor_pos.y as f64 + monitor_size.height as f64 - win_height - margin) as i32;
+                            let max_y = max_y.max(min_y);
+                            let y = y.clamp(min_y, max_y);
 
                             let _ = window.set_position(tauri::Position::Physical(
                                 tauri::PhysicalPosition::new(x, y),

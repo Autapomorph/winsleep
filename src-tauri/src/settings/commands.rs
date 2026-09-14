@@ -27,17 +27,11 @@ pub fn save_settings(
 ) -> Result<(), String> {
     let path = AppSettings::get_settings_path(&app_handle)?;
 
-    if let Some(parent) = path.parent() {
-        if !parent.exists() {
-            fs::create_dir_all(parent)
-                .map_err(|e| format!("Failed to create config directory: {e}"))?;
-        }
-    }
-
     let json_str = serde_json::to_string_pretty(&settings)
         .map_err(|e| format!("Failed to serialize settings: {e}"))?;
 
-    fs::write(&path, json_str).map_err(|e| format!("Failed to write settings file: {e}"))?;
+    crate::paths::atomic_write(&path, json_str.as_bytes())
+        .map_err(|e| format!("Failed to write settings file: {e}"))?;
 
     // Update the last write time for the file watcher to ignore this write event
     if let Ok(metadata) = fs::metadata(&path) {

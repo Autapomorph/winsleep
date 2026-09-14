@@ -56,3 +56,88 @@ pub fn get_log_dir(app_handle: &tauri::AppHandle) -> Result<PathBuf, String> {
         .app_log_dir()
         .map_err(|e| format!("Failed to get log directory path: {e}"))
 }
+
+/// Safely writes content to `path` atomically.
+///
+/// 1. Creates parent directories if missing.
+/// 2. Writes data to a temporary file located in the exact same directory (ensuring same disk partition).
+/// 3. Flushes and syncs data to physical disk via `sync_all()`.
+/// 4. Atomically replaces target file using `std::fs::rename`.
+pub fn atomic_write(path: &std::path::Path, content: &[u8]) -> Result<(), String> {
+    use std::io::Write;
+
+    if let Some(parent) = path.parent() {
+        if !parent.exists() {
+            std::fs::create_dir_all(parent)
+                .map_err(|e| format!("Failed to create directory {:?}: {e}", parent))?;
+        }
+    }
+
+    let file_name = path
+        .file_name()
+        .ok_or_else(|| format!("Invalid file path: {:?}", path))?
+        .to_string_lossy();
+
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    let pid = std::process::id();
+    let tmp_path = path.with_file_name(format!(".{file_name}.tmp.{nanos}_{pid}"));
+
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&tmp_path)
+        .map_err(|e| format!("Failed to create temporary file {:?}: {e}", tmp_path))?;
+
+    if let Err(e) = file.write_all(content) {
+        let _ = std::fs::remove_file(&tmp_path);
+        return Err(format!("Failed to write data to {:?}: {e}", tmp_path));
+    }
+
+    if let Err(e) = file.sync_all() {
+        let _ = std::fs::remove_file(&tmp_path);
+        return Err(format!("Failed to flush data to disk for {:?}: {e}", tmp_path));
+    }
+
+    drop(file);
+
+    if let Err(e) = std::fs::rename(&tmp_path, path) {
+        let _ = std::fs::remove_file(&tmp_path);
+        return Err(format!("Failed to rename {:?} to {:?}: {e}", tmp_path, path));
+    }
+
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_atomic_write_new_and_overwrite() {
+        let unique_id = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos();
+        let temp_dir = std::env::temp_dir().join(format!("winsleep_test_{}_{}", std::process::id(), unique_id));
+        let test_file = temp_dir.join("test_file.json");
+
+        let content = b"{\"key\":\"value\"}";
+        assert!(atomic_write(&test_file, content).is_ok());
+
+        let read_back = std::fs::read(&test_file).unwrap();
+        assert_eq!(read_back, content);
+
+        // Overwrite atomically
+        let new_content = b"{\"key\":\"updated\"}";
+        assert!(atomic_write(&test_file, new_content).is_ok());
+
+        let updated_read = std::fs::read(&test_file).unwrap();
+        assert_eq!(updated_read, new_content);
+
+        let _ = std::fs::remove_dir_all(&temp_dir);
+    }
+}
+

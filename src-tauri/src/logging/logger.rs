@@ -9,21 +9,11 @@ use tracing_subscriber::{
     EnvFilter,
 };
 
-fn escape_json_string(s: &str) -> String {
-    let mut escaped = String::with_capacity(s.len());
-
-    for c in s.chars() {
-        match c {
-            '"' => escaped.push_str("\\\""),
-            '\\' => escaped.push_str("\\\\"),
-            '\n' => escaped.push_str("\\n"),
-            '\r' => escaped.push_str("\\r"),
-            '\t' => escaped.push_str("\\t"),
-            _ => escaped.push(c),
-        }
-    }
-
-    escaped
+#[derive(serde::Serialize)]
+struct JsonLogEntry<'a> {
+    timestamp: &'a str,
+    level: &'a str,
+    message: &'a str,
 }
 
 struct MessageVisitor {
@@ -73,13 +63,16 @@ where
 
         let timestamp = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
         let level = metadata.level().to_string();
-        let escaped_message = escape_json_string(&visitor.message);
 
-        write!(
-            writer,
-            "{{\"timestamp\":\"{}\",\"level\":\"{}\",\"message\":\"{}\"}}\n",
-            timestamp, level, escaped_message
-        )?;
+        let entry = JsonLogEntry {
+            timestamp: &timestamp,
+            level: &level,
+            message: &visitor.message,
+        };
+
+        if let Ok(json) = serde_json::to_string(&entry) {
+            writeln!(writer, "{json}")?;
+        }
 
         Ok(())
     }

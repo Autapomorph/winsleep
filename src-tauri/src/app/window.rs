@@ -3,7 +3,9 @@ use crate::settings::AppSettings;
 use tauri::{Emitter, Listener, Manager};
 
 pub fn setup_window(app_handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-    let window = app_handle.get_webview_window("main").unwrap();
+    let window = app_handle
+        .get_webview_window("main")
+        .ok_or("Failed to get main webview window")?;
 
     pc_management::setup_power_events(&window);
 
@@ -18,7 +20,9 @@ pub fn setup_window(app_handle: &tauri::AppHandle) -> Result<(), Box<dyn std::er
     let window_clone = window.clone();
     window.listen("app-ready", move |_| {
         if !should_hide {
-            window_clone.show().unwrap();
+            if let Err(e) = window_clone.show() {
+                tracing::error!("Failed to show main window: {e}");
+            }
         }
     });
 
@@ -36,7 +40,9 @@ pub fn handle_window_event(window: &tauri::Window, event: &tauri::WindowEvent) {
                 .load(std::sync::atomic::Ordering::Relaxed)
             {
                 api.prevent_close();
-                window.hide().unwrap();
+                if let Err(e) = window.hide() {
+                    tracing::error!("Failed to hide window to tray: {e}");
+                }
                 let _ = window.emit("window-closed-to-tray", ());
             } else {
                 api.prevent_close();
