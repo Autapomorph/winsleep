@@ -221,7 +221,7 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
                 } else if button == tauri::tray::MouseButton::Right {
                     if let Some(window) = app.get_webview_window("tray_menu") {
                         if window.is_visible().unwrap_or(false) {
-                            let _ = window.hide();
+                            let _ = window.emit("tray-menu-close-request", ());
                         } else {
                             // Position the window
                             let monitor = window.current_monitor().ok().flatten();
@@ -292,6 +292,7 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
                             let _ = window.show();
                             let _ = window.set_focus();
                             let _ = app.emit("tray-sync-request", ());
+                            let _ = window.emit("tray-menu-show", ());
                         }
                     }
                 }

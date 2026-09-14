@@ -7,6 +7,8 @@ export interface Events {
   'window-closed-to-tray': never;
   'timer-tick': number;
   'timer-complete': never;
+  'tray-menu-show': never;
+  'tray-menu-close-request': never;
   'tray-sync-request': never;
   'tray-timer-action-selected': TimerAction;
   'tray-timer-start-resume-pause-clicked': never;
