@@ -263,9 +263,6 @@
     "indefiniteLabel": {
       "text": "Indefinite"
     },
-    "keepAwakeDisplay": {
-      "text": "Keep Awake"
-    },
     "decreaseTimeBtn": {
       "aria": {
         "label": "Decrease timer by {{amount}}"
@@ -340,7 +337,7 @@
         "reboot": "Rebooting PC",
         "lock": "Locking PC",
         "signout": "Signing Out",
-        "keepAwake": "Enabling keep-awake mode"
+        "keepAwake": "Keep awake"
       },
       "failed": {
         "sleep": "Failed to put PC to sleep",
@@ -349,7 +346,7 @@
         "reboot": "Failed to reboot PC",
         "lock": "Failed to lock PC",
         "signout": "Failed to sign out",
-        "keepAwake": "Failed to toggle keep-awake mode"
+        "keepAwake": "Failed to toggle keep awake mode"
       },
       "finished": {
         "keepAwake": "Keep awake session ended"

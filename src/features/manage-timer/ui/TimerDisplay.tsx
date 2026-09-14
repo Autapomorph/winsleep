@@ -126,7 +126,7 @@ export const TimerDisplay = ({
         aria-disabled={isLocked}
         aria-expanded={modalState.isOpen}
       >
-        {isIndefiniteMode ? t($ => $.timer.keepAwakeDisplay.text) : formattedTime}
+        {isIndefiniteMode ? t($ => $.timer.indefiniteLabel.text) : formattedTime}
       </span>
 
       <TimerEditModal
