@@ -14,6 +14,7 @@ export { openExternalLink } from './browser/openExternalLink';
 export { useTabUnsuspend } from './browser/useTabUnsuspend';
 export { isEditableElement } from './browser/isEditableElement';
 export { isSelectableElement } from './browser/isSelectableElement';
+export { useIntersectionObserver } from './browser/useIntersectionObserver';
 
 export { useLongPress } from './user-interactions/useLongPress';
 export { useScrollSpy } from './user-interactions/useScrollSpy';
