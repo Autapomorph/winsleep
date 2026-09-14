@@ -9,6 +9,10 @@ pub fn setup_window(app_handle: &tauri::AppHandle) -> Result<(), Box<dyn std::er
 
     pc_management::setup_power_events(&window);
 
+    if let Some(tray_window) = app_handle.get_webview_window("tray_menu") {
+        let _ = tray_window.set_background_color(Some(tauri::window::Color(0, 0, 0, 0)));
+    }
+
     // Check if launched with --autostart and if minimized boot setting is enabled
     let is_autostart_arg = std::env::args().any(|arg| arg == "--autostart");
     let is_start_minimized = AppSettings::load_initial_start_minimized(app_handle);

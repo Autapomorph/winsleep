@@ -20,7 +20,7 @@ export const useAutoUpdater = () => {
 
   const lastUpdateCheckAt = useAppStateStore(state => state.lastUpdateCheckAt);
   const checkUpdates = useUpdateStore(state => state.checkUpdates);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timerRef = useRef<number | null>(null);
 
   // Sync successful update checks to state.json
   useEffect(() => {
