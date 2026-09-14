@@ -36,10 +36,14 @@ unsafe extern "system" fn power_subclass_proc(
 }
 
 pub fn setup_power_events(window: &WebviewWindow) {
-    let hwnd = window.hwnd().unwrap().0 as HWND;
-    let window_box = Box::new(window.clone());
-    let ref_data = Box::into_raw(window_box) as usize;
-    unsafe {
-        SetWindowSubclass(hwnd, Some(power_subclass_proc), 12345, ref_data);
+    if let Ok(raw_hwnd) = window.hwnd() {
+        let hwnd = raw_hwnd.0 as HWND;
+        let window_box = Box::new(window.clone());
+        let ref_data = Box::into_raw(window_box) as usize;
+        unsafe {
+            SetWindowSubclass(hwnd, Some(power_subclass_proc), 12345, ref_data);
+        }
+    } else {
+        tracing::error!("Failed to obtain HWND for power events subclassing");
     }
 }

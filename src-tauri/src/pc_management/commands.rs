@@ -57,6 +57,17 @@ pub fn pc_hibernate(keep_awake: State<'_, KeepAwakeManager>) -> Result<(), Strin
     Ok(())
 }
 
+fn create_shutdown_command() -> Command {
+    let mut cmd = Command::new("shutdown");
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+    cmd
+}
+
 #[tauri::command]
 pub fn pc_shutdown(
     keep_awake: State<'_, KeepAwakeManager>,
@@ -64,7 +75,7 @@ pub fn pc_shutdown(
 ) -> Result<(), String> {
     let _ = keep_awake.release();
 
-    let mut cmd = Command::new("shutdown");
+    let mut cmd = create_shutdown_command();
     cmd.args(["/s", "/t", "0"]);
 
     if is_force.unwrap_or(false) {
@@ -92,7 +103,7 @@ pub fn pc_reboot(
 ) -> Result<(), String> {
     let _ = keep_awake.release();
 
-    let mut cmd = Command::new("shutdown");
+    let mut cmd = create_shutdown_command();
     cmd.args(["/r", "/t", "0"]);
 
     if is_force.unwrap_or(false) {
@@ -128,7 +139,7 @@ pub fn pc_lock() -> Result<(), String> {
 
 #[tauri::command]
 pub fn pc_signout(is_force: Option<bool>) -> Result<(), String> {
-    let mut cmd = Command::new("shutdown");
+    let mut cmd = create_shutdown_command();
     cmd.arg("/l");
 
     if is_force.unwrap_or(false) {

@@ -24,17 +24,11 @@ pub fn save_app_state(
 ) -> Result<(), String> {
     let path = get_app_state_path(&app_handle)?;
 
-    if let Some(parent) = path.parent() {
-        if !parent.exists() {
-            fs::create_dir_all(parent)
-                .map_err(|e| format!("Failed to create config directory: {e}"))?;
-        }
-    }
-
     let json_str = serde_json::to_string_pretty(&state)
         .map_err(|e| format!("Failed to serialize state: {e}"))?;
 
-    fs::write(&path, json_str).map_err(|e| format!("Failed to write state file: {e}"))?;
+    crate::paths::atomic_write(&path, json_str.as_bytes())
+        .map_err(|e| format!("Failed to write state file: {e}"))?;
 
     Ok(())
 }
