@@ -1,15 +1,11 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import { DEFAULT_TIMER_STEP_SECONDS, useTimerStore } from '@/entities/timer';
 
-interface Props {
-  onComplete: () => void;
-}
-
-export const useTimer = ({ onComplete }: Props) => {
+export const useTimer = () => {
   const {
     timerState,
     timerMode,
@@ -23,7 +19,6 @@ export const useTimer = ({ onComplete }: Props) => {
     increaseTimeStore,
     decreaseTimeStore,
     setExactTimeStore,
-    setOnComplete,
   } = useTimerStore(
     useShallow(state => ({
       timerState: state.timerState,
@@ -38,7 +33,6 @@ export const useTimer = ({ onComplete }: Props) => {
       increaseTimeStore: state.increaseTime,
       decreaseTimeStore: state.decreaseTime,
       setExactTimeStore: state.setExactTime,
-      setOnComplete: state.setOnComplete,
     })),
   );
 
@@ -56,18 +50,6 @@ export const useTimer = ({ onComplete }: Props) => {
       timerStepDecrease: state.timerStepDecrease,
     })),
   );
-
-  useEffect(() => {
-    setOnComplete(onComplete);
-  }, [onComplete, setOnComplete]);
-
-  const start = useCallback(() => {
-    startStore(onComplete);
-  }, [startStore, onComplete]);
-
-  const resume = useCallback(() => {
-    resumeStore(onComplete);
-  }, [resumeStore, onComplete]);
 
   const increaseStep = useMemo(
     () => (isCustomTimerStepsEnabled ? timerStepIncrease : DEFAULT_TIMER_STEP_SECONDS),
@@ -94,9 +76,9 @@ export const useTimer = ({ onComplete }: Props) => {
     remainingSeconds,
     targetDateTime,
     isLocked,
-    start,
+    start: startStore,
     pause: pauseStore,
-    resume,
+    resume: resumeStore,
     cancel: cancelStore,
     increaseTime,
     decreaseTime,

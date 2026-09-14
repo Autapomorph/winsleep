@@ -1,17 +1,14 @@
 import { useCallback, useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { useTimer } from '@/features/manage-timer';
+import { useTimer, useTimerExecution } from '@/features/manage-timer';
 import { useKeepAwakeStore } from '@/entities/keep-awake';
 import { useSessionStore } from '@/entities/session';
 import { logger } from '@/shared/lib';
 
-interface Props {
-  onComplete: () => void;
-}
-
-export const useTimerOrchestrator = ({ onComplete }: Props) => {
+export const useTimerOrchestrator = () => {
   const action = useSessionStore(state => state.timerAction);
+  const { execute } = useTimerExecution();
 
   const {
     timerState,
@@ -27,7 +24,7 @@ export const useTimerOrchestrator = ({ onComplete }: Props) => {
     setExactTime,
     increaseTime,
     decreaseTime,
-  } = useTimer({ onComplete });
+  } = useTimer();
 
   const { isIndefiniteActive, startIndefinite, stopIndefinite } = useKeepAwakeStore(
     useShallow(state => ({
@@ -111,8 +108,8 @@ export const useTimerOrchestrator = ({ onComplete }: Props) => {
     logger.info('Executing timer action immediately (manual override)');
 
     cancel();
-    onComplete();
-  }, [isIndefiniteActive, stopIndefinite, timerState, cancel, onComplete]);
+    execute();
+  }, [isIndefiniteActive, stopIndefinite, timerState, cancel, execute]);
 
   const handleSetExactTime = useCallback(
     (seconds: number) => {

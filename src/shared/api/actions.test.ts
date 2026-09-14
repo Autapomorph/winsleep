@@ -1,7 +1,7 @@
-import { typedInvoke } from '@/shared/api';
 import { pcHibernate, pcLock, pcReboot, pcShutdown, pcSignout, pcSleep } from './actions';
+import { typedInvoke } from './typedInvoke';
 
-vi.mock(import('@/shared/api'), () => ({
+vi.mock(import('./typedInvoke'), () => ({
   typedInvoke: vi.fn().mockResolvedValue(undefined),
 }));
 

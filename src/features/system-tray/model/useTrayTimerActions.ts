@@ -25,16 +25,8 @@ export const useTrayTimerActions = () => {
       }
 
       const store = useTimerStore.getState();
-      const {
-        timerState,
-        timerMode,
-        plannedSeconds,
-        remainingSeconds,
-        start,
-        resume,
-        pause,
-        onCompleteCallback,
-      } = store;
+      const { timerState, timerMode, plannedSeconds, remainingSeconds, start, resume, pause } =
+        store;
 
       if (timerState === 'running') {
         if (isLocked) {
@@ -55,19 +47,14 @@ export const useTrayTimerActions = () => {
         return;
       }
 
-      if (!onCompleteCallback) {
-        logger.warn('Cannot control timer from tray: onCompleteCallback is not set');
-        return;
-      }
-
       if (timerState === 'idle') {
-        start(onCompleteCallback);
+        start();
       } else if (timerState === 'paused') {
         if (isLocked) {
           return;
         }
 
-        resume(onCompleteCallback);
+        resume();
       }
     });
 

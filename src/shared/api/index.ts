@@ -11,6 +11,7 @@ export type {
   ShutdownCommandArgs,
   SignoutCommandArgs,
 } from './actions';
+export { pcHibernate, pcLock, pcReboot, pcShutdown, pcSignout, pcSleep } from './actions';
 export type { LogMessageCommandArgs } from './logs';
 export type { TrayMenuState } from './tray-menu';
 

@@ -4,6 +4,7 @@ import {
   usePowerSystemEvents,
   useScheduledTimerRestore,
   useScheduledTimerStateSync,
+  useTimerCompletionListener,
   useTimerNotification,
 } from '@/features/manage-timer';
 import { useTrayMode } from '@/features/system-tray';
@@ -19,6 +20,7 @@ export const MainWindowInitializer = () => {
   usePowerSystemEvents();
   useKeepAwakeTimerSync();
   useTimerNotification();
+  useTimerCompletionListener();
   useScheduledTimerStateSync();
   useScheduledTimerRestore();
   useTrayMode();
