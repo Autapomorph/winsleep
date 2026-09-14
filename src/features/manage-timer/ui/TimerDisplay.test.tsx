@@ -88,7 +88,7 @@ describe('TimerDisplay', () => {
   test('displays Keep Awake and disables +/- buttons when action is keep-awake and currentSeconds is 0', async () => {
     render(<TimerDisplay {...baseProps} currentSeconds={0} action="keep-awake" />);
 
-    expect(screen.getByText('timer.keepAwakeDisplay.text')).toBeInTheDocument();
+    expect(screen.getByText('timer.indefiniteLabel.text')).toBeInTheDocument();
 
     expect(
       screen.getByRole('button', { name: /timer\.decreaseTimeBtn\.aria\.label/ }),
