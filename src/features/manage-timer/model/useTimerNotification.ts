@@ -19,11 +19,13 @@ export const useTimerNotification = () => {
 
   const armedTimesRef = useRef<Set<number>>(new Set());
   const notifiedTimesRef = useRef<Set<number>>(new Set());
+  const prevEndTimeRef = useRef<number | null>(null);
 
   const action = useSessionStore(state => state.timerAction);
 
   const timerState = useTimerStore(state => state.timerState);
   const remainingSeconds = useTimerStore(state => state.remainingSeconds);
+  const endTime = useTimerStore(state => state.endTime);
 
   const isNotificationsEnabled = useSettingsStore(state => state.isNotificationsEnabled);
   const notificationTimes = useSettingsStore(state => state.notificationTimes);
@@ -34,27 +36,39 @@ export const useTimerNotification = () => {
     if (!isNotificationsEnabled) {
       armedTimesRef.current.clear();
       notifiedTimesRef.current.clear();
+      prevEndTimeRef.current = null;
       return;
     }
 
     if (timerState === 'idle') {
       armedTimesRef.current.clear();
       notifiedTimesRef.current.clear();
+      prevEndTimeRef.current = null;
       return;
     }
 
     if (timerState !== 'running') {
+      prevEndTimeRef.current = null;
+      return;
+    }
+
+    // If timer was started or rescheduled by the user (endTime changed), reset and re-arm
+    if (endTime !== prevEndTimeRef.current) {
+      prevEndTimeRef.current = endTime;
+      armedTimesRef.current.clear();
+      notifiedTimesRef.current.clear();
+
+      notificationTimes.forEach(({ seconds }) => {
+        if (remainingSeconds > seconds) {
+          armedTimesRef.current.add(seconds);
+        }
+      });
       return;
     }
 
     const timesToNotify: number[] = [];
 
     notificationTimes.forEach(({ seconds }) => {
-      if (remainingSeconds > seconds) {
-        armedTimesRef.current.add(seconds);
-        notifiedTimesRef.current.delete(seconds);
-      }
-
       if (
         remainingSeconds <= seconds &&
         remainingSeconds > 0 &&
@@ -62,6 +76,7 @@ export const useTimerNotification = () => {
         !notifiedTimesRef.current.has(seconds)
       ) {
         notifiedTimesRef.current.add(seconds);
+        armedTimesRef.current.delete(seconds);
         timesToNotify.push(seconds);
       }
     });
@@ -109,6 +124,7 @@ export const useTimerNotification = () => {
     action,
     timerState,
     remainingSeconds,
+    endTime,
     isNotificationsEnabled,
     notificationTimes,
     isNotificationSoundEnabled,
