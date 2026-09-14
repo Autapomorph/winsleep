@@ -25,10 +25,14 @@ export const LogViewer = () => {
 
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const deferredLevel = useDeferredValue(selectedLevel);
-  const isPending = searchQuery !== deferredSearchQuery || selectedLevel !== deferredLevel;
+  const deferredEntries = useDeferredValue(parsedEntries);
+  const isPending =
+    searchQuery !== deferredSearchQuery ||
+    selectedLevel !== deferredLevel ||
+    parsedEntries !== deferredEntries;
 
   const filteredEntries = useMemo(() => {
-    return parsedEntries.filter(entry => {
+    return deferredEntries.filter(entry => {
       const matchesSearch = deferredSearchQuery
         ? entry.message.toLowerCase().includes(deferredSearchQuery.toLowerCase())
         : true;
@@ -36,7 +40,7 @@ export const LogViewer = () => {
 
       return matchesSearch && matchesLevel;
     });
-  }, [parsedEntries, deferredSearchQuery, deferredLevel]);
+  }, [deferredEntries, deferredSearchQuery, deferredLevel]);
 
   const { flatEntries, groupCounts, groups } = useMemo(() => {
     return groupLogEntries(filteredEntries, i18n.language);

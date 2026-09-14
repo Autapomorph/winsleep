@@ -9,6 +9,7 @@ const DEFAULT_INITIAL_DELAY_MS = 200;
 export const useDebugLogs = (
   pollIntervalMs: number = DEFAULT_POLL_INTERVAL_MS,
   initialDelayMs: number = DEFAULT_INITIAL_DELAY_MS,
+  isEnabled = true,
 ) => {
   const { fetchLogs, rawLogs, isLoading, error } = useDebugLogsStore(
     useShallow(state => ({
@@ -21,8 +22,12 @@ export const useDebugLogs = (
 
   // Set up polling for real-time log updates (starting after completion)
   useEffect(() => {
+    if (!isEnabled) {
+      return undefined;
+    }
+
     let isMounted = true;
-    let timeoutId: number | undefined;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
     const poll = async () => {
       await fetchLogs();
@@ -40,6 +45,12 @@ export const useDebugLogs = (
       isMounted = false;
       clearTimeout(initialTimeoutId);
       clearTimeout(timeoutId);
+    };
+  }, [fetchLogs, pollIntervalMs, initialDelayMs, isEnabled]);
+
+  // Clean up store on full unmount of the hook
+  useEffect(() => {
+    return () => {
       useDebugLogsStore.setState({
         rawLogs: '',
         parsedEntries: [],
@@ -49,7 +60,7 @@ export const useDebugLogs = (
         selectedLevel: 'ALL',
       });
     };
-  }, [fetchLogs, pollIntervalMs, initialDelayMs]);
+  }, []);
 
   return {
     rawLogs,

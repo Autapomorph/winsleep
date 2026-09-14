@@ -8,6 +8,19 @@ export interface LogGroup {
 export const groupLogEntries = (entries: LogEntry[], language: string) => {
   const groups: LogGroup[] = [];
   let currentGroup: LogGroup | null = null;
+  const dateCache = new Map<string, string>();
+
+  let formatter: Intl.DateTimeFormat | null = null;
+  try {
+    formatter = new Intl.DateTimeFormat(language, {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  } catch {
+    // Ignore invalid language tag fallback
+  }
 
   entries.forEach(entry => {
     let dateStr: string | null = null;
@@ -16,18 +29,28 @@ export const groupLogEntries = (entries: LogEntry[], language: string) => {
       try {
         const date = new Date(entry.timestamp);
 
-        if (Number.isNaN(date.getTime())) {
-          throw new Error('Invalid date');
-        }
+        if (!Number.isNaN(date.getTime())) {
+          const localDateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 
-        dateStr = date.toLocaleDateString(language, {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        });
+          let cached = dateCache.get(localDateKey);
+
+          if (!cached) {
+            cached = formatter
+              ? formatter.format(date)
+              : date.toLocaleDateString(language, {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                });
+
+            dateCache.set(localDateKey, cached);
+          }
+
+          dateStr = cached;
+        }
       } catch {
-        // ignore
+        // Шgnore
       }
     }
 

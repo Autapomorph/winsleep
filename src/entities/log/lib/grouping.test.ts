@@ -46,4 +46,20 @@ describe('groupLogEntries', () => {
     expect(result.groups).toHaveLength(1);
     expect(result.groups[0].dateStr).toBeNull();
   });
+
+  test('correctly groups many entries on the same day into a single group', () => {
+    const entries: LogEntry[] = Array.from({ length: 50 }, (_, i) => ({
+      id: `${i}`,
+      timestamp: '2026-09-14T10:00:00Z',
+      level: 'INFO' as const,
+      message: `Log ${i}`,
+    }));
+
+    const result = groupLogEntries(entries, 'en-US');
+
+    expect(result.groups).toHaveLength(1);
+    expect(result.groups[0].entries).toHaveLength(50);
+    expect(result.groupCounts).toEqual([50]);
+    expect(result.flatEntries).toHaveLength(50);
+  });
 });

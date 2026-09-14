@@ -68,4 +68,47 @@ describe('useDebugLogs polling hook', () => {
     expect(state.searchQuery).toBe('');
     expect(state.selectedLevel).toBe('ALL');
   });
+
+  test('does not start polling when isEnabled is false', async () => {
+    renderHook(() => useDebugLogs(1000, 100, false));
+
+    await act(async () => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(spyFetchLogs).not.toHaveBeenCalled();
+  });
+
+  test('pauses and resumes polling when isEnabled changes, without wiping logs during pause', async () => {
+    let enabled = true;
+    const { rerender } = renderHook(() => useDebugLogs(1000, 100, enabled));
+
+    // Initial fetch triggers after 100ms
+    await act(async () => {
+      vi.advanceTimersByTime(100);
+    });
+    expect(spyFetchLogs).toHaveBeenCalledTimes(1);
+
+    // Disable polling (e.g. scrolled out of view)
+    enabled = false;
+    rerender();
+
+    // Advance time and check that no new polls happen
+    await act(async () => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(spyFetchLogs).toHaveBeenCalledTimes(1);
+
+    // Logs are preserved in store while paused
+    expect(useDebugLogsStore.getState().rawLogs).toBe('Mock logs content');
+
+    // Re-enable polling (scrolled back into view)
+    enabled = true;
+    rerender();
+
+    await act(async () => {
+      vi.advanceTimersByTime(100);
+    });
+    expect(spyFetchLogs).toHaveBeenCalledTimes(2);
+  });
 });
