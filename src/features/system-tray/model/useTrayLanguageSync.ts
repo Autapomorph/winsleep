@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
 
@@ -16,7 +16,7 @@ import { type TimerAction, DEFAULT_TIMER_PRESETS } from '@/shared/config';
 import { formatDays, formatDurationShort, formatTime, logger } from '@/shared/lib';
 
 export const useTrayLanguageSync = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [syncTrigger, setSyncTrigger] = useState(0);
 
   const { isIndefiniteActive } = useKeepAwakeStore(
@@ -76,7 +76,8 @@ export const useTrayLanguageSync = () => {
         });
     };
   }, []);
-  useEffect(() => {
+
+  const staticLabels = useMemo(() => {
     const tooltipActionLabels: Record<TimerAction, string> = {
       sleep: t($ => $.tray.tooltip.action.sleep),
       hibernate: t($ => $.tray.tooltip.action.hibernate),
@@ -87,7 +88,57 @@ export const useTrayLanguageSync = () => {
       'keep-awake': t($ => $.tray.tooltip.action.keepAwake),
     };
 
-    const currentTooltipAction = tooltipActionLabels[timerAction];
+    const timerActionLabels: Record<TimerAction, string> = {
+      sleep: t($ => $.tray.menu.timerAction.sleep),
+      hibernate: t($ => $.tray.menu.timerAction.hibernate),
+      shutdown: t($ => $.tray.menu.timerAction.shutdown),
+      reboot: t($ => $.tray.menu.timerAction.reboot),
+      lock: t($ => $.tray.menu.timerAction.lock),
+      signout: t($ => $.tray.menu.timerAction.signout),
+      'keep-awake': t($ => $.tray.menu.timerAction.keepAwake),
+    };
+
+    const increaseStep = isCustomTimerStepsEnabled ? timerStepIncrease : DEFAULT_TIMER_STEP_SECONDS;
+    const decreaseStep = isCustomTimerStepsEnabled ? timerStepDecrease : DEFAULT_TIMER_STEP_SECONDS;
+
+    const formattedIncreaseStep = formatDurationShort(increaseStep, t);
+    const formattedDecreaseStep = formatDurationShort(decreaseStep, t);
+
+    return {
+      tooltipActionLabels,
+      timerActionLabels,
+      openLabel: t($ => $.tray.menu.open),
+      quitLabel: t($ => $.tray.menu.quit),
+      cancelTimerLabel: t($ => $.tray.menu.cancelTimer),
+      presetsLabel: t($ => $.tray.menu.selectPreset),
+      lockSettingsLabel: isSettingsLocked
+        ? t($ => $.tray.menu.unlockSettings)
+        : t($ => $.tray.menu.lockSettings),
+      timerIncreaseLabel: t($ => $.tray.menu.increaseTimer, { amount: formattedIncreaseStep }),
+      timerDecreaseLabel: t($ => $.tray.menu.decreaseTimer, { amount: formattedDecreaseStep }),
+    };
+  }, [t, isSettingsLocked, isCustomTimerStepsEnabled, timerStepIncrease, timerStepDecrease]);
+
+  const timerPresets = useMemo(() => {
+    const customSeconds = customTimerPresets.map(p => p.seconds);
+    const allPresetSeconds = Array.from(new Set([...DEFAULT_TIMER_PRESETS, ...customSeconds])).sort(
+      (a, b) => a - b,
+    );
+
+    return allPresetSeconds.map(time => {
+      let label = formatDurationShort(time, t);
+      if (time === 0) {
+        label =
+          timerAction === 'keep-awake'
+            ? t($ => $.timer.indefiniteLabel.text)
+            : t($ => $.timer.nowLabel.text);
+      }
+      return { seconds: time, label };
+    });
+  }, [customTimerPresets, timerAction, t]);
+
+  useEffect(() => {
+    const currentTooltipAction = staticLabels.tooltipActionLabels[timerAction];
 
     const formattedRemainingTime = isIndefiniteActive
       ? t($ => $.tray.tooltip.remainingTime.indefinite)
@@ -107,17 +158,7 @@ export const useTrayLanguageSync = () => {
       });
     }
 
-    const timerActionLabels: Record<typeof timerAction, string> = {
-      sleep: t($ => $.tray.menu.timerAction.sleep),
-      hibernate: t($ => $.tray.menu.timerAction.hibernate),
-      shutdown: t($ => $.tray.menu.timerAction.shutdown),
-      reboot: t($ => $.tray.menu.timerAction.reboot),
-      lock: t($ => $.tray.menu.timerAction.lock),
-      signout: t($ => $.tray.menu.timerAction.signout),
-      'keep-awake': t($ => $.tray.menu.timerAction.keepAwake),
-    };
-
-    const selectedTimerActionLabel = timerActionLabels[timerAction];
+    const selectedTimerActionLabel = staticLabels.timerActionLabels[timerAction];
 
     let timerStatusLabel = t($ => $.tray.menu.timerState.notRunning, {
       plannedTime: formatDays(plannedSeconds, t) ?? formatTime(plannedSeconds),
@@ -126,7 +167,7 @@ export const useTrayLanguageSync = () => {
     if (isIndefiniteActive) {
       timerStatusLabel = t($ => $.timer.triggerAt.keepAwakeIndefiniteRunning);
     } else if (timerState === 'running' || timerState === 'paused') {
-      timerStatusLabel = `${timerActionLabels[timerAction]}: ${
+      timerStatusLabel = `${staticLabels.timerActionLabels[timerAction]}: ${
         formatDays(remainingSeconds, t) ?? formatTime(remainingSeconds)
       }`;
     }
@@ -140,17 +181,6 @@ export const useTrayLanguageSync = () => {
     } else if (timerState === 'running') {
       startResumePauseTimerLabel = t($ => $.tray.menu.pauseTimer);
     }
-
-    const cancelTimerLabel = t($ => $.tray.menu.cancelTimer);
-
-    const increaseStep = isCustomTimerStepsEnabled ? timerStepIncrease : DEFAULT_TIMER_STEP_SECONDS;
-    const decreaseStep = isCustomTimerStepsEnabled ? timerStepDecrease : DEFAULT_TIMER_STEP_SECONDS;
-
-    const formattedIncreaseStep = formatDurationShort(increaseStep, t);
-    const formattedDecreaseStep = formatDurationShort(decreaseStep, t);
-
-    const timerIncreaseLabel = t($ => $.tray.menu.increaseTimer, { amount: formattedIncreaseStep });
-    const timerDecreaseLabel = t($ => $.tray.menu.decreaseTimer, { amount: formattedDecreaseStep });
 
     const getUpdateText = () => {
       switch (updateStatus) {
@@ -174,55 +204,33 @@ export const useTrayLanguageSync = () => {
     const isExpiring =
       !isIndefiniteActive && timerState !== 'idle' && remainingSeconds <= DANGER_THRESHOLD_SECONDS;
 
-    const customSeconds = customTimerPresets.map(p => p.seconds);
-    const allPresetSeconds = Array.from(new Set([...DEFAULT_TIMER_PRESETS, ...customSeconds])).sort(
-      (a, b) => a - b,
-    );
-
-    const timerPresets = allPresetSeconds.map(time => {
-      let label = formatDurationShort(time, t);
-      if (time === 0) {
-        label =
-          timerAction === 'keep-awake'
-            ? t($ => $.timer.indefiniteLabel.text)
-            : t($ => $.timer.nowLabel.text);
-      }
-      return { seconds: time, label };
-    });
-
-    const presetsLabel = t($ => $.tray.menu.selectPreset);
-
-    const lockSettingsLabel = isSettingsLocked
-      ? t($ => $.tray.menu.unlockSettings)
-      : t($ => $.tray.menu.lockSettings);
-
     const payload: TrayMenuState = {
       tooltip,
-      openLabel: t($ => $.tray.menu.open),
-      quitLabel: t($ => $.tray.menu.quit),
+      openLabel: staticLabels.openLabel,
+      quitLabel: staticLabels.quitLabel,
       timerState: isIndefiniteActive ? 'running' : timerState,
       timerMode: isIndefiniteActive ? 'timestamp' : timerMode,
       isExpiring,
       timerAction: {
         selectedTimerActionLabel,
         selectedTimerAction: timerAction,
-        sleepLabel: timerActionLabels.sleep,
-        hibernateLabel: timerActionLabels.hibernate,
-        shutdownLabel: timerActionLabels.shutdown,
-        rebootLabel: timerActionLabels.reboot,
-        lockLabel: timerActionLabels.lock,
-        signoutLabel: timerActionLabels.signout,
-        keepAwakeLabel: timerActionLabels['keep-awake'],
+        sleepLabel: staticLabels.timerActionLabels.sleep,
+        hibernateLabel: staticLabels.timerActionLabels.hibernate,
+        shutdownLabel: staticLabels.timerActionLabels.shutdown,
+        rebootLabel: staticLabels.timerActionLabels.reboot,
+        lockLabel: staticLabels.timerActionLabels.lock,
+        signoutLabel: staticLabels.timerActionLabels.signout,
+        keepAwakeLabel: staticLabels.timerActionLabels['keep-awake'],
       },
       timerStatusLabel,
       startResumePauseTimerLabel,
-      cancelTimerLabel,
-      timerIncreaseLabel,
-      timerDecreaseLabel,
-      presetsLabel,
+      cancelTimerLabel: staticLabels.cancelTimerLabel,
+      timerIncreaseLabel: staticLabels.timerIncreaseLabel,
+      timerDecreaseLabel: staticLabels.timerDecreaseLabel,
+      presetsLabel: staticLabels.presetsLabel,
       isSettingsLocked,
       timerPresets,
-      lockSettingsLabel,
+      lockSettingsLabel: staticLabels.lockSettingsLabel,
       updateLabel,
       updateStatus,
     };
@@ -232,20 +240,17 @@ export const useTrayLanguageSync = () => {
     });
   }, [
     t,
-    i18n.language,
+    timerAction,
     remainingSeconds,
     plannedSeconds,
     timerState,
     timerMode,
-    timerAction,
+    isIndefiniteActive,
     isSettingsLocked,
-    isCustomTimerStepsEnabled,
-    timerStepIncrease,
-    timerStepDecrease,
-    customTimerPresets,
     updateStatus,
     downloadProgress,
     syncTrigger,
-    isIndefiniteActive,
+    staticLabels,
+    timerPresets,
   ]);
 };
