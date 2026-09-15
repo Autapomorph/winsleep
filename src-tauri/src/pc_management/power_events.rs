@@ -1,6 +1,6 @@
 use tauri::{Emitter, WebviewWindow};
 use windows_sys::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
-use windows_sys::Win32::UI::Shell::{DefSubclassProc, SetWindowSubclass};
+use windows_sys::Win32::UI::Shell::{DefSubclassProc, RemoveWindowSubclass, SetWindowSubclass};
 use windows_sys::Win32::UI::WindowsAndMessaging::{WM_NCDESTROY, WM_POWERBROADCAST};
 
 const PBT_APMRESUMEAUTOMATIC: usize = 0x0012;
@@ -11,7 +11,7 @@ unsafe extern "system" fn power_subclass_proc(
     msg: u32,
     wparam: WPARAM,
     lparam: LPARAM,
-    _uid: usize,
+    uid: usize,
     ref_data: usize,
 ) -> LRESULT {
     if msg == WM_POWERBROADCAST {
@@ -27,6 +27,7 @@ unsafe extern "system" fn power_subclass_proc(
     }
 
     if msg == WM_NCDESTROY {
+        RemoveWindowSubclass(hwnd, Some(power_subclass_proc), uid);
         // Drop the cloned WebviewWindow box to prevent memory leaks
         let ptr = ref_data as *mut WebviewWindow;
         let _ = Box::from_raw(ptr);

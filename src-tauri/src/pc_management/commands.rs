@@ -125,7 +125,9 @@ pub fn pc_reboot(
 }
 
 #[tauri::command]
-pub fn pc_lock() -> Result<(), String> {
+pub fn pc_lock(keep_awake: State<'_, KeepAwakeManager>) -> Result<(), String> {
+    let _ = keep_awake.release();
+
     let res = unsafe { LockWorkStation() };
     if res == 0 {
         let error_code = unsafe { GetLastError() };
@@ -138,7 +140,12 @@ pub fn pc_lock() -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn pc_signout(is_force: Option<bool>) -> Result<(), String> {
+pub fn pc_signout(
+    keep_awake: State<'_, KeepAwakeManager>,
+    is_force: Option<bool>,
+) -> Result<(), String> {
+    let _ = keep_awake.release();
+
     let mut cmd = create_shutdown_command();
     cmd.arg("/l");
 
