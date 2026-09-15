@@ -14,7 +14,7 @@ export const initTimerListeners = () => {
   typedListen('timer-tick', event => {
     const state = useTimerStore.getState();
 
-    if (state.timerState === 'running') {
+    if (state.timerState === 'running' && state.remainingSeconds !== event.payload) {
       useTimerStore.setState({ remainingSeconds: event.payload }, false, 'timer/backend-tick');
     }
   }).catch(err => {
