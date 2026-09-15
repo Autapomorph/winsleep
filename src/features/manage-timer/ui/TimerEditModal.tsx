@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
 import { Button, Modal, Tabs } from '@heroui/react';
 
+import { useKeepAwakeStore } from '@/entities/keep-awake';
 import { type TimerMode, useTimerStore } from '@/entities/timer';
 import { SHORTCUT_SCOPES } from '@/shared/config';
 import { getHMS, getTotalSeconds, useHotkeysScope } from '@/shared/lib';
@@ -19,18 +20,13 @@ interface Props {
 export const TimerEditModal = ({ isOpen, onOpenChange, currentSeconds, setExactTime }: Props) => {
   const { t } = useTranslation();
 
-  const { timerState, timerMode, targetDateTime, setTimerMode, setTargetDateTime, cancel, start } =
-    useTimerStore(
-      useShallow(state => ({
-        timerState: state.timerState,
-        timerMode: state.timerMode,
-        targetDateTime: state.targetDateTime,
-        setTimerMode: state.setTimerMode,
-        setTargetDateTime: state.setTargetDateTime,
-        cancel: state.cancel,
-        start: state.start,
-      })),
-    );
+  const { timerMode, targetDateTime, setTargetDateTime } = useTimerStore(
+    useShallow(state => ({
+      timerMode: state.timerMode,
+      targetDateTime: state.targetDateTime,
+      setTargetDateTime: state.setTargetDateTime,
+    })),
+  );
 
   const [activeTab, setActiveTab] = useState<TimerMode>(timerMode);
 
@@ -100,27 +96,22 @@ export const TimerEditModal = ({ isOpen, onOpenChange, currentSeconds, setExactT
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const isModeChanging = timerMode !== activeTab;
-    const wasActive = timerState !== 'idle';
-
-    if (wasActive && isModeChanging) {
-      cancel();
-    }
+    const { isIndefiniteActive } = useKeepAwakeStore.getState();
 
     if (activeTab === 'duration') {
-      setTimerMode('duration');
       setExactTime(getTotalSeconds(h, m, s));
     } else {
       if (!isTimestampValid || selectedTimestamp === null) {
         return;
       }
 
-      setTimerMode('timestamp');
-      setTargetDateTime(selectedTimestamp);
-    }
-
-    if (wasActive && isModeChanging) {
-      start();
+      if (isIndefiniteActive) {
+        useKeepAwakeStore.getState().stopIndefinite();
+        setTargetDateTime(selectedTimestamp);
+        useTimerStore.getState().start();
+      } else {
+        setTargetDateTime(selectedTimestamp);
+      }
     }
 
     setContentHeight(null);
