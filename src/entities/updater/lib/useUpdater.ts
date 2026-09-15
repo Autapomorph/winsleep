@@ -10,7 +10,7 @@ export const useUpdater = () => {
   const update = async () => {
     const { status, installUpdate, relaunchApp, checkUpdates } = useUpdateStore.getState();
 
-    if (config.isPortable && (status === 'available' || status === 'readyToRestart')) {
+    if (config.isPortable && (status === 'available' || status === 'readyToInstall')) {
       await openExternalLink(`${GITHUB_REPO_URL}/releases`);
       showInfoToast(t($ => $.titlebar.updateBtn.notifications.portableDownload));
       return;
@@ -21,12 +21,12 @@ export const useUpdater = () => {
       return;
     }
 
-    if (status === 'readyToRestart') {
+    if (status === 'readyToInstall') {
       try {
         await installUpdate();
         await relaunchApp();
       } catch (err) {
-        logger.error(`Failed to relaunch application: ${err}`);
+        logger.error(`Failed to install and relaunch application: ${err}`);
         showErrorToast(t($ => $.titlebar.updateBtn.notifications.relaunchFailed));
       }
 

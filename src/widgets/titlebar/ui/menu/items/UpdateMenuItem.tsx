@@ -29,8 +29,8 @@ export const CheckUpdates = () => {
         return t($ => $.titlebar.menu.items.checkUpdates.downloading, {
           progress: downloadProgress,
         });
-      case 'readyToRestart':
-        return t($ => $.titlebar.menu.items.checkUpdates.readyToRestart);
+      case 'readyToInstall':
+        return t($ => $.titlebar.menu.items.checkUpdates.readyToInstall);
       default:
         return t($ => $.titlebar.menu.items.checkUpdates.default);
     }

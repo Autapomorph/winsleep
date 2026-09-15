@@ -151,8 +151,8 @@ export const useTrayLanguageSync = () => {
           return t($ => $.tray.menu.checkUpdates.downloading, {
             progress: downloadProgress,
           });
-        case 'readyToRestart':
-          return t($ => $.tray.menu.checkUpdates.readyToRestart);
+        case 'readyToInstall':
+          return t($ => $.tray.menu.checkUpdates.readyToInstall);
         default:
           return t($ => $.tray.menu.checkUpdates.default);
       }
