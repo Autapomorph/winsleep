@@ -125,8 +125,20 @@
   "tray": {
     "tooltip": {
       "default": "WinSleep",
-      "paused": "WinSleep (таймер приостановлен: {{remainingTime}})",
-      "running": "WinSleep (таймер запущен: {{remainingTime}})"
+      "paused": "WinSleep ({{action}}, приостановлен: {{remainingTime}})",
+      "running": "WinSleep ({{action}}, запущен: {{remainingTime}})",
+      "action": {
+        "sleep": "Сон",
+        "hibernate": "Гибернация",
+        "shutdown": "Выключение",
+        "reboot": "Перезагрузка",
+        "lock": "Блокировка",
+        "signout": "Выход",
+        "keepAwake": "Бодрствование"
+      },
+      "remainingTime": {
+        "indefinite": "бессрочно"
+      }
     },
     "menu": {
       "open": "Открыть",

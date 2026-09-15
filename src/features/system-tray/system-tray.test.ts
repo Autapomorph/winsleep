@@ -189,11 +189,15 @@ describe('system-tray feature model hooks', () => {
 
     test('handles different update statuses and timer states', () => {
       // 1. Paused timer
+      useSessionStore.setState({ timerAction: 'sleep' });
       useTimerStore.setState({ timerState: 'paused', remainingSeconds: 20 });
       renderHook(() => useTrayLanguageSync());
       expect(typedInvoke).toHaveBeenCalledWith(
         'update_tray_menu',
-        expect.objectContaining({ timerState: 'paused' }),
+        expect.objectContaining({
+          timerState: 'paused',
+          tooltip: 'tray.tooltip.paused',
+        }),
       );
     });
 
@@ -204,7 +208,11 @@ describe('system-tray feature model hooks', () => {
       renderHook(() => useTrayLanguageSync());
       expect(typedInvoke).toHaveBeenCalledWith(
         'update_tray_menu',
-        expect.objectContaining({ timerMode: 'timestamp', timerState: 'running' }),
+        expect.objectContaining({
+          timerMode: 'timestamp',
+          timerState: 'running',
+          tooltip: 'tray.tooltip.running',
+        }),
       );
     });
 
