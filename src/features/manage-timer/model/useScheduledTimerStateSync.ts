@@ -41,8 +41,17 @@ export const useScheduledTimerStateSync = () => {
       }
     };
 
+    const handleSessionChange = () => {
+      const { timerState, timerMode } = useTimerStore.getState();
+      const { isIndefiniteActive } = useKeepAwakeStore.getState();
+
+      if ((timerState === 'running' && timerMode === 'timestamp') || isIndefiniteActive) {
+        syncScheduledTimerState();
+      }
+    };
+
     const unsubscribeTimer = useTimerStore.subscribe(syncScheduledTimerState);
-    const unsubscribeSession = useSessionStore.subscribe(syncScheduledTimerState);
+    const unsubscribeSession = useSessionStore.subscribe(handleSessionChange);
     const unsubscribeKeepAwake = useKeepAwakeStore.subscribe(syncScheduledTimerState);
 
     return () => {
