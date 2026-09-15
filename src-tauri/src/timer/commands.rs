@@ -27,6 +27,8 @@ pub async fn start_timer(
         let start_instant = Instant::now();
         let target_instant = start_instant + Duration::from_millis(duration_ms);
 
+        let mut last_emitted: Option<u64> = None;
+
         loop {
             tokio::select! {
                 _ = interval.tick() => {
@@ -52,8 +54,10 @@ pub async fn start_timer(
                         target_instant.duration_since(now_instant).as_secs_f64().ceil() as u64
                     };
 
-                    // tracing::debug!("Ticking. Remaining: {}s", remaining);
-                    let _ = app_handle.emit("timer-tick", remaining);
+                    if last_emitted != Some(remaining) {
+                        let _ = app_handle.emit("timer-tick", remaining);
+                        last_emitted = Some(remaining);
+                    }
                 }
                 _ = &mut rx => {
                     tracing::info!("Timer loop received cancel signal, exiting");

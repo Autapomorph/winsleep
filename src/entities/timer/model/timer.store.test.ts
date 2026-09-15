@@ -91,6 +91,30 @@ describe('timerStore', () => {
     expect(useTimerStore.getState().timerState).toBe('idle');
   });
 
+  test('should ignore duplicate tick events with identical remainingSeconds', () => {
+    useTimerStore.getState().setExactTime(10);
+    useTimerStore.getState().start();
+
+    triggerTick(9);
+    expect(useTimerStore.getState().remainingSeconds).toBe(9);
+
+    const subscriberSpy = vi.fn();
+    const unsubscribe = useTimerStore.subscribe(subscriberSpy);
+
+    // Trigger tick with the same value
+    triggerTick(9);
+
+    expect(subscriberSpy).not.toHaveBeenCalled();
+    expect(useTimerStore.getState().remainingSeconds).toBe(9);
+
+    // Trigger tick with different value
+    triggerTick(8);
+    expect(subscriberSpy).toHaveBeenCalledTimes(1);
+    expect(useTimerStore.getState().remainingSeconds).toBe(8);
+
+    unsubscribe();
+  });
+
   test('should pause and resume ticking', () => {
     useTimerStore.getState().setExactTime(5);
     useTimerStore.getState().start();
