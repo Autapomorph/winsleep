@@ -44,7 +44,7 @@ describe('useAutoInstallOnExit', () => {
     expect(mockListeners['app-exit-requested']).toBeUndefined();
   });
 
-  test('calls quit_app directly without installing when status is not readyToRestart', async () => {
+  test('calls quit_app directly without installing when status is not readyToInstall', async () => {
     const installUpdateMock = vi.fn().mockResolvedValue(undefined);
     useUpdateStore.setState({
       status: 'idle',
@@ -65,7 +65,7 @@ describe('useAutoInstallOnExit', () => {
       isAutoUpdateEnabled: false,
     });
     useUpdateStore.setState({
-      status: 'readyToRestart',
+      status: 'readyToInstall',
       isManualCheck: false,
       installUpdate: installUpdateMock,
     });
@@ -84,7 +84,7 @@ describe('useAutoInstallOnExit', () => {
       isAutoUpdateEnabled: false,
     });
     useUpdateStore.setState({
-      status: 'readyToRestart',
+      status: 'readyToInstall',
       isManualCheck: true,
       installUpdate: installUpdateMock,
     });
@@ -97,13 +97,13 @@ describe('useAutoInstallOnExit', () => {
     expect(typedInvoke).toHaveBeenCalledWith('quit_app');
   });
 
-  test('installs update and then calls quit_app when isAutoUpdateEnabled is true and status is readyToRestart', async () => {
+  test('installs update and then calls quit_app when isAutoUpdateEnabled is true and status is readyToInstall', async () => {
     const installUpdateMock = vi.fn().mockResolvedValue(undefined);
     useSettingsStore.setState({
       isAutoUpdateEnabled: true,
     });
     useUpdateStore.setState({
-      status: 'readyToRestart',
+      status: 'readyToInstall',
       installUpdate: installUpdateMock,
     });
 
@@ -121,7 +121,7 @@ describe('useAutoInstallOnExit', () => {
       isAutoUpdateEnabled: true,
     });
     useUpdateStore.setState({
-      status: 'readyToRestart',
+      status: 'readyToInstall',
       installUpdate: installUpdateMock,
     });
 
@@ -139,7 +139,7 @@ describe('useAutoInstallOnExit', () => {
       isAutoUpdateEnabled: true,
     });
     useUpdateStore.setState({
-      status: 'readyToRestart',
+      status: 'readyToInstall',
       installUpdate: installUpdateMock,
     });
 

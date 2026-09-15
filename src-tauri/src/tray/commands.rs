@@ -313,7 +313,7 @@ pub fn update_tray_menu(
 
     // Swap the tray icon dynamically
     if let Some(tray) = app_handle.tray_by_id("main") {
-        let icon_kind = if timer_state == "idle" && update_status == "readyToRestart" {
+        let icon_kind = if timer_state == "idle" && update_status == "readyToInstall" {
             IconKind::DefaultHasUpdate
         } else {
             match timer_state.as_str() {

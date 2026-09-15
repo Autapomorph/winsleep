@@ -23,7 +23,7 @@ export const useAutoInstallOnExit = () => {
       const { isAutoUpdateEnabled } = useSettingsStore.getState();
       const { status, installUpdate, isManualCheck } = useUpdateStore.getState();
       const shouldInstall =
-        !config.isPortable && (isAutoUpdateEnabled || isManualCheck) && status === 'readyToRestart';
+        !config.isPortable && (isAutoUpdateEnabled || isManualCheck) && status === 'readyToInstall';
 
       if (shouldInstall) {
         logger.info('Auto-installing downloaded update on application exit...');

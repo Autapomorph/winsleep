@@ -38,5 +38,5 @@ export type TrayMenuState = {
   lockSettingsLabel: string;
   updateLabel: string;
   updateStatus:
-    'idle' | 'checking' | 'available' | 'downloading' | 'readyToRestart' | 'error' | 'upToDate';
+    'idle' | 'checking' | 'available' | 'downloading' | 'readyToInstall' | 'error' | 'upToDate';
 };

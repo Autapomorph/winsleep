@@ -33,7 +33,7 @@ export const UpdateButton = ({ ButtonComponent }: Props) => {
     (status === 'checking' && isManualCheck) ||
     status === 'available' ||
     status === 'downloading' ||
-    status === 'readyToRestart' ||
+    status === 'readyToInstall' ||
     (status === 'error' && isManualCheck);
 
   if (!isVisible) {
@@ -53,7 +53,7 @@ export const UpdateButton = ({ ButtonComponent }: Props) => {
   };
 
   const renderIconAttention = () => {
-    if (status === 'readyToRestart') {
+    if (status === 'readyToInstall') {
       return (
         <span className="absolute top-2.5 right-2.5 flex h-1.5 w-1.5 animate-pulse">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-danger opacity-75" />
@@ -73,8 +73,8 @@ export const UpdateButton = ({ ButtonComponent }: Props) => {
         return t($ => $.titlebar.updateBtn.tooltip.available);
       case 'downloading':
         return t($ => $.titlebar.updateBtn.tooltip.downloading, { progress: downloadProgress });
-      case 'readyToRestart':
-        return t($ => $.titlebar.updateBtn.tooltip.readyToRestart);
+      case 'readyToInstall':
+        return t($ => $.titlebar.updateBtn.tooltip.readyToInstall);
       case 'error':
         return t($ => $.titlebar.updateBtn.tooltip.error);
       default:
@@ -90,8 +90,8 @@ export const UpdateButton = ({ ButtonComponent }: Props) => {
         return t($ => $.titlebar.updateBtn.aria.label.available);
       case 'downloading':
         return t($ => $.titlebar.updateBtn.aria.label.downloading);
-      case 'readyToRestart':
-        return t($ => $.titlebar.updateBtn.aria.label.readyToRestart);
+      case 'readyToInstall':
+        return t($ => $.titlebar.updateBtn.aria.label.readyToInstall);
       case 'error':
         return t($ => $.titlebar.updateBtn.aria.label.error);
       default:

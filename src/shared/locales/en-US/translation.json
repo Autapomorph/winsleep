@@ -149,7 +149,7 @@
         "checking": "Checking for updates...",
         "available": "Update available",
         "downloading": "Downloading update ({{progress}}%)",
-        "readyToRestart": "Update ready to install"
+        "readyToInstall": "Update ready to install"
       },
       "timerAction": {
         "selected": "Action: {{selectedTimerAction}}",
@@ -369,7 +369,7 @@
           "checking": "Checking for updates...",
           "available": "Update available",
           "downloading": "Downloading update ({{progress}}%)",
-          "readyToRestart": "Update ready to install"
+          "readyToInstall": "Update ready to install"
         }
       }
     },
@@ -380,7 +380,7 @@
           "checking": "Checking for updates...",
           "available": "Update available. Press to download",
           "downloading": "Downloading update",
-          "readyToRestart": "Update downloaded. Press to install",
+          "readyToInstall": "Update downloaded. Press to install",
           "error": "Failed to check for updates"
         }
       },
@@ -389,7 +389,7 @@
         "checking": "Checking for updates...",
         "available": "Update available",
         "downloading": "Downloading update ({{progress}}%)",
-        "readyToRestart": "Update ready to install",
+        "readyToInstall": "Update ready to install",
         "error": "Failed to check for updates"
       },
       "notifications": {

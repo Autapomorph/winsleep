@@ -112,7 +112,7 @@ describe('updateStore', () => {
     expect(check).not.toHaveBeenCalled();
   });
 
-  test('should run download during checkUpdates and reach readyToRestart', async () => {
+  test('should run download during checkUpdates and reach readyToInstall', async () => {
     const mockDownload = vi.fn(async onEvent => {
       if (onEvent) {
         onEvent({ data: { contentLength: 100 }, event: 'Started' });
@@ -139,7 +139,7 @@ describe('updateStore', () => {
     await vi.advanceTimersByTimeAsync(0);
 
     const state = useUpdateStore.getState();
-    expect(state.status).toBe('readyToRestart');
+    expect(state.status).toBe('readyToInstall');
     expect(state.downloadProgress).toBe(100);
     expect(mockDownload).toHaveBeenCalled();
   });
@@ -172,7 +172,7 @@ describe('updateStore', () => {
     expect(state.errorMessage).toBe('Disk full');
   });
 
-  test('should run install during installUpdate when status is readyToRestart', async () => {
+  test('should run install during installUpdate when status is readyToInstall', async () => {
     const mockInstall = vi.fn(async () => {});
     const mockUpdate = {
       download: vi.fn(),
@@ -181,7 +181,7 @@ describe('updateStore', () => {
     };
 
     useUpdateStore.setState({
-      status: 'readyToRestart',
+      status: 'readyToInstall',
       updateInfo: mockUpdate as unknown as Update,
     });
     await useUpdateStore.getState().installUpdate();
@@ -200,7 +200,7 @@ describe('updateStore', () => {
     };
 
     useUpdateStore.setState({
-      status: 'readyToRestart',
+      status: 'readyToInstall',
       updateInfo: mockUpdate as unknown as Update,
     });
     await useUpdateStore.getState().installUpdate();
@@ -219,7 +219,7 @@ describe('updateStore', () => {
     };
 
     useUpdateStore.setState({
-      status: 'readyToRestart',
+      status: 'readyToInstall',
       updateInfo: mockUpdate as unknown as Update,
     });
     await useUpdateStore.getState().installUpdate({ restartAfterInstall: false });
@@ -280,8 +280,8 @@ describe('updateStore', () => {
     // Wait for promise resolution
     await mockPromise;
 
-    // Since download steps are mocked to resolve instantly, the status goes straight to readyToRestart!
-    expect(useUpdateStore.getState().status).toBe('readyToRestart');
+    // Since download steps are mocked to resolve instantly, the status goes straight to readyToInstall!
+    expect(useUpdateStore.getState().status).toBe('readyToInstall');
 
     // Calling triggerMockUpdate when not idle resets the store immediately
     await useUpdateStore.getState().triggerMockUpdate();

@@ -19,7 +19,7 @@ export interface UpdateState {
 }
 
 export type UpdateStatus =
-  'idle' | 'checking' | 'upToDate' | 'available' | 'downloading' | 'readyToRestart' | 'error';
+  'idle' | 'checking' | 'upToDate' | 'available' | 'downloading' | 'readyToInstall' | 'error';
 
 export interface UpdateActions {
   checkUpdates: (options?: { isManual?: boolean }) => Promise<void>;
@@ -142,7 +142,7 @@ export const createUpdateSlice: StateCreator<
         });
 
         logger.info('Update downloaded successfully. Ready to install.');
-        set({ status: 'readyToRestart' }, false, 'updater/downloadReadyToRestart');
+        set({ status: 'readyToInstall' }, false, 'updater/downloadReadyToInstall');
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         logger.error(`Download failed: ${message}`);
@@ -159,12 +159,12 @@ export const createUpdateSlice: StateCreator<
         return;
       }
 
-      if (status !== 'readyToRestart') {
+      if (status !== 'readyToInstall') {
         await get().downloadUpdate();
       }
 
       const currentStatus = get().status;
-      if (currentStatus !== 'readyToRestart') {
+      if (currentStatus !== 'readyToInstall') {
         return;
       }
 
