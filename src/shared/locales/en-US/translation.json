@@ -125,8 +125,20 @@
   "tray": {
     "tooltip": {
       "default": "WinSleep",
-      "paused": "WinSleep (timer paused: {{remainingTime}})",
-      "running": "WinSleep (timer running: {{remainingTime}})"
+      "paused": "WinSleep ({{action}}, paused: {{remainingTime}})",
+      "running": "WinSleep ({{action}}, running: {{remainingTime}})",
+      "action": {
+        "sleep": "Sleep",
+        "hibernate": "Hibernation",
+        "shutdown": "Shutdown",
+        "reboot": "Restart",
+        "lock": "Screen Lock",
+        "signout": "Sign Out",
+        "keepAwake": "Keep Awake"
+      },
+      "remainingTime": {
+        "indefinite": "indefinite"
+      }
     },
     "menu": {
       "open": "Open",

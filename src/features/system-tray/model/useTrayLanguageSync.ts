@@ -12,7 +12,7 @@ import {
 } from '@/entities/timer';
 import { useUpdateStore } from '@/entities/updater';
 import { type TrayMenuState, typedInvoke, typedListen } from '@/shared/api';
-import { DEFAULT_TIMER_PRESETS } from '@/shared/config';
+import { type TimerAction, DEFAULT_TIMER_PRESETS } from '@/shared/config';
 import { formatDays, formatDurationShort, formatTime, logger } from '@/shared/lib';
 
 export const useTrayLanguageSync = () => {
@@ -76,19 +76,34 @@ export const useTrayLanguageSync = () => {
         });
     };
   }, []);
-
   useEffect(() => {
+    const tooltipActionLabels: Record<TimerAction, string> = {
+      sleep: t($ => $.tray.tooltip.action.sleep),
+      hibernate: t($ => $.tray.tooltip.action.hibernate),
+      shutdown: t($ => $.tray.tooltip.action.shutdown),
+      reboot: t($ => $.tray.tooltip.action.reboot),
+      lock: t($ => $.tray.tooltip.action.lock),
+      signout: t($ => $.tray.tooltip.action.signout),
+      'keep-awake': t($ => $.tray.tooltip.action.keepAwake),
+    };
+
+    const currentTooltipAction = tooltipActionLabels[timerAction];
+
+    const formattedRemainingTime = isIndefiniteActive
+      ? t($ => $.tray.tooltip.remainingTime.indefinite)
+      : (formatDays(remainingSeconds, t) ?? formatTime(remainingSeconds));
+
     let tooltip = t($ => $.tray.tooltip.default);
 
-    if (isIndefiniteActive) {
-      tooltip = t($ => $.timer.triggerAt.keepAwakeIndefiniteRunning);
+    if (isIndefiniteActive || timerState === 'running') {
+      tooltip = t($ => $.tray.tooltip.running, {
+        action: currentTooltipAction,
+        remainingTime: formattedRemainingTime,
+      });
     } else if (timerState === 'paused') {
       tooltip = t($ => $.tray.tooltip.paused, {
-        remainingTime: formatDays(remainingSeconds, t) ?? formatTime(remainingSeconds),
-      });
-    } else if (timerState === 'running') {
-      tooltip = t($ => $.tray.tooltip.running, {
-        remainingTime: formatDays(remainingSeconds, t) ?? formatTime(remainingSeconds),
+        action: currentTooltipAction,
+        remainingTime: formattedRemainingTime,
       });
     }
 
