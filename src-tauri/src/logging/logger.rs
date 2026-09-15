@@ -23,20 +23,14 @@ struct MessageVisitor {
 impl tracing::field::Visit for MessageVisitor {
     fn record_debug(&mut self, field: &tracing::field::Field, value: &dyn std::fmt::Debug) {
         if field.name() == "message" {
-            let debug_str = format!("{:?}", value);
-            if debug_str.starts_with('"') && debug_str.ends_with('"') && debug_str.len() >= 2 {
-                self.message = debug_str[1..debug_str.len() - 1]
-                    .replace("\\\"", "\"")
-                    .replace("\\\\", "\\");
-            } else {
-                self.message = debug_str;
-            }
+            use std::fmt::Write;
+            let _ = write!(&mut self.message, "{:?}", value);
         }
     }
 
     fn record_str(&mut self, field: &tracing::field::Field, value: &str) {
         if field.name() == "message" {
-            self.message = value.to_string();
+            self.message.push_str(value);
         }
     }
 }
@@ -113,4 +107,82 @@ pub fn init(app_handle: &tauri::AppHandle) -> Result<WorkerGuard, Box<dyn std::e
     }
 
     Ok(guard)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::{Arc, Mutex};
+    use tracing_subscriber::layer::SubscriberExt;
+
+    #[derive(Clone)]
+    struct BufferWriter(Arc<Mutex<Vec<u8>>>);
+
+    impl std::io::Write for BufferWriter {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            self.0.lock().unwrap().extend_from_slice(buf);
+            Ok(buf.len())
+        }
+
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    impl<'a> tracing_subscriber::fmt::MakeWriter<'a> for BufferWriter {
+        type Writer = BufferWriter;
+        fn make_writer(&'a self) -> Self::Writer {
+            self.clone()
+        }
+    }
+
+    #[test]
+    fn test_json_formatter_plain_and_formatted_messages() {
+        let buffer = Arc::new(Mutex::new(Vec::new()));
+        let writer = BufferWriter(Arc::clone(&buffer));
+
+        let layer = fmt::layer()
+            .with_writer(writer)
+            .with_ansi(false)
+            .event_format(JsonFormatter);
+
+        let subscriber = tracing_subscriber::registry().with(layer);
+
+        tracing::subscriber::with_default(subscriber, || {
+            tracing::info!("Plain log message");
+            tracing::info!("Formatted duration: {}s", 60);
+            tracing::info!("Path with backslashes: C:\\Program Files\\WinSleep");
+            tracing::info!("\"Legitimate outer quotes\"");
+            tracing::warn!("Warning: line 1\nline 2");
+        });
+
+        let output = String::from_utf8(buffer.lock().unwrap().clone()).unwrap();
+        let lines: Vec<&str> = output.lines().filter(|l| !l.trim().is_empty()).collect();
+
+        assert_eq!(lines.len(), 5);
+
+        let entry0: serde_json::Value = serde_json::from_str(lines[0]).unwrap();
+        assert_eq!(entry0["level"], "INFO");
+        assert_eq!(entry0["message"], "Plain log message");
+        assert!(entry0["timestamp"].is_string());
+
+        let entry1: serde_json::Value = serde_json::from_str(lines[1]).unwrap();
+        assert_eq!(entry1["level"], "INFO");
+        assert_eq!(entry1["message"], "Formatted duration: 60s");
+
+        let entry2: serde_json::Value = serde_json::from_str(lines[2]).unwrap();
+        assert_eq!(entry2["level"], "INFO");
+        assert_eq!(
+            entry2["message"],
+            "Path with backslashes: C:\\Program Files\\WinSleep"
+        );
+
+        let entry3: serde_json::Value = serde_json::from_str(lines[3]).unwrap();
+        assert_eq!(entry3["level"], "INFO");
+        assert_eq!(entry3["message"], "\"Legitimate outer quotes\"");
+
+        let entry4: serde_json::Value = serde_json::from_str(lines[4]).unwrap();
+        assert_eq!(entry4["level"], "WARN");
+        assert_eq!(entry4["message"], "Warning: line 1\nline 2");
+    }
 }
