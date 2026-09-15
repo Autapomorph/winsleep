@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
-import pRetry, { AbortError } from 'p-retry';
 
 import { useKeepAwakeStore } from '@/entities/keep-awake';
 import { useSessionStore } from '@/entities/session';
@@ -15,9 +14,6 @@ import { useUpdateStore } from '@/entities/updater';
 import { type TrayMenuState, typedInvoke, typedListen } from '@/shared/api';
 import { DEFAULT_TIMER_PRESETS } from '@/shared/config';
 import { formatDays, formatDurationShort, formatTime, logger } from '@/shared/lib';
-
-const WINDOWS_TIMEOUT_ERROR_CODE = '1460';
-const WINDOWS_TIMEOUT_ERROR_KEYWORD = 'timeout';
 
 export const useTrayLanguageSync = () => {
   const { t, i18n } = useTranslation();
@@ -216,38 +212,9 @@ export const useTrayLanguageSync = () => {
       updateStatus,
     };
 
-    const controller = new AbortController();
-
-    pRetry(() => typedInvoke('update_tray_menu', payload), {
-      retries: 3,
-      minTimeout: 1000,
-      factor: 2,
-      signal: controller.signal,
-      onFailedAttempt: context => {
-        const errorStr = String(context.error.message);
-        const isTimeout =
-          errorStr.includes(WINDOWS_TIMEOUT_ERROR_CODE) ||
-          errorStr.toLowerCase().includes(WINDOWS_TIMEOUT_ERROR_KEYWORD);
-
-        if (!isTimeout) {
-          throw new AbortError(context.error);
-        }
-
-        logger.debug(
-          `Failed to update tray menu due to timeout (attempt ${context.attemptNumber}/4). Retrying...`,
-        );
-      },
-    }).catch(err => {
-      if (controller.signal.aborted) {
-        return;
-      }
-
-      logger.error(`Failed to update tray menu language: ${err}`);
+    typedInvoke('update_tray_menu', payload).catch(err => {
+      logger.error(`Failed to update tray menu: ${err}`);
     });
-
-    return () => {
-      controller.abort();
-    };
   }, [
     t,
     i18n.language,
