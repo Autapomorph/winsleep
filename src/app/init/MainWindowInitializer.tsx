@@ -21,8 +21,8 @@ export const MainWindowInitializer = () => {
   useKeepAwakeTimerSync();
   useTimerNotification();
   useTimerCompletionListener();
-  useScheduledTimerStateSync();
   useScheduledTimerRestore();
+  useScheduledTimerStateSync();
   useTrayMode();
   useAutoUpdater();
   useMockUpdater();
