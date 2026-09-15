@@ -263,6 +263,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
           remainingSeconds: validSeconds,
           targetDateTime: null,
           timerMode: 'duration',
+          timerState: 'running',
         },
         false,
         'timer/setExactTime',
@@ -278,11 +279,58 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
   },
 
   setTargetDateTime: timestamp => {
-    set({ targetDateTime: timestamp }, false, 'timer/setTargetDateTime');
+    const { timerState } = get();
 
-    if (timestamp && get().timerState === 'idle') {
-      const seconds = Math.max(0, Math.ceil((timestamp - getDateNow()) / 1000));
-      set({ plannedSeconds: seconds, remainingSeconds: seconds }, false, 'timer/setTargetDateTime');
+    if (!timestamp) {
+      set(
+        {
+          targetDateTime: null,
+        },
+        false,
+        'timer/setTargetDateTime',
+      );
+
+      return;
+    }
+
+    const seconds = Math.max(0, Math.ceil((timestamp - getDateNow()) / 1000));
+
+    if (timerState === 'idle') {
+      logger.info(`Timer target timestamp set to: ${timestamp} (${seconds}s planned)`);
+
+      set(
+        {
+          plannedSeconds: seconds,
+          remainingSeconds: seconds,
+          targetDateTime: timestamp,
+          timerMode: 'timestamp',
+        },
+        false,
+        'timer/setTargetDateTime',
+      );
+    } else {
+      logger.info(`Timer target timestamp updated to: ${timestamp} (${seconds}s remaining)`);
+
+      const endTime = timestamp;
+      set(
+        {
+          endTime,
+          plannedSeconds: seconds,
+          remainingSeconds: seconds,
+          targetDateTime: timestamp,
+          timerMode: 'timestamp',
+          timerState: 'running',
+        },
+        false,
+        'timer/setTargetDateTime',
+      );
+
+      typedInvoke('start_timer', {
+        durationMs: seconds * 1000,
+        targetTimestampMs: timestamp,
+      }).catch(err => {
+        logger.error(`Failed to update backend timer on setTargetDateTime: ${err}`);
+      });
     }
   },
 
