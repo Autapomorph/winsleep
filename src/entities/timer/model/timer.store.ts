@@ -15,7 +15,6 @@ interface TimerStoreState {
   plannedSeconds: number;
   remainingSeconds: number;
   endTime: number | null;
-  timeoutId: number | null;
   isListenersInitialized: boolean;
 }
 
@@ -39,7 +38,6 @@ const initialState: TimerStoreState = {
   plannedSeconds: DEFAULT_TIMER_SECONDS,
   remainingSeconds: DEFAULT_TIMER_SECONDS,
   endTime: null,
-  timeoutId: null,
   isListenersInitialized: false,
 };
 
@@ -100,7 +98,6 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
       {
         endTime: null,
         remainingSeconds: remainingSecs,
-        timeoutId: null,
         timerState: 'paused',
       },
       false,
@@ -150,7 +147,6 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
         endTime: null,
         plannedSeconds: clampedPlanned,
         remainingSeconds: clampedPlanned,
-        timeoutId: null,
         timerState: 'idle',
       },
       false,
