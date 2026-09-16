@@ -30,7 +30,6 @@ describe('timerStore', () => {
       isListenersInitialized: false,
       plannedSeconds: DEFAULT_TIMER_SECONDS,
       remainingSeconds: DEFAULT_TIMER_SECONDS,
-      timeoutId: null,
       timerState: 'idle',
     });
     initTimerListeners();
@@ -154,7 +153,6 @@ describe('timerStore', () => {
     expect(state.timerState).toBe('idle');
     expect(state.remainingSeconds).toBe(10);
     expect(state.endTime).toBeNull();
-    expect(state.timeoutId).toBeNull();
   });
 
   test('should ignore start when not in idle state', () => {
