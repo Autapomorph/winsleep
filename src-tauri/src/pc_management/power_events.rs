@@ -41,8 +41,14 @@ pub fn setup_power_events(window: &WebviewWindow) {
         let hwnd = raw_hwnd.0 as HWND;
         let window_box = Box::new(window.clone());
         let ref_data = Box::into_raw(window_box) as usize;
-        unsafe {
-            SetWindowSubclass(hwnd, Some(power_subclass_proc), 12345, ref_data);
+        let success = unsafe {
+            SetWindowSubclass(hwnd, Some(power_subclass_proc), 12345, ref_data)
+        };
+        if success == 0 {
+            tracing::error!("SetWindowSubclass failed for power events subclassing");
+            unsafe {
+                let _ = Box::from_raw(ref_data as *mut WebviewWindow);
+            }
         }
     } else {
         tracing::error!("Failed to obtain HWND for power events subclassing");
