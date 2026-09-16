@@ -1,3 +1,4 @@
+use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::time::SystemTime;
@@ -6,6 +7,7 @@ use tauri::{Emitter, Manager};
 pub struct AppSettings {
     pub is_tray_mode_enabled: AtomicBool,
     pub last_write_time: Mutex<Option<SystemTime>>,
+    pub watcher: Mutex<Option<RecommendedWatcher>>,
 }
 
 impl Default for AppSettings {
@@ -13,6 +15,7 @@ impl Default for AppSettings {
         Self {
             is_tray_mode_enabled: AtomicBool::new(true),
             last_write_time: Mutex::new(None),
+            watcher: Mutex::new(None),
         }
     }
 }
@@ -88,27 +91,46 @@ impl AppSettings {
             }
         }
 
-        // Spawn a background thread to watch for settings.json changes
+        let config_dir = match crate::paths::get_config_dir(app_handle) {
+            Ok(dir) => dir,
+            Err(e) => {
+                tracing::error!("Failed to get config directory for watcher: {e}");
+                return;
+            }
+        };
+
+        if let Err(e) = std::fs::create_dir_all(&config_dir) {
+            tracing::error!("Failed to ensure config directory exists: {e}");
+            return;
+        }
+
         let app_handle_clone = app_handle.clone();
-        std::thread::spawn(move || {
-            let mut last_seen_modified = initial_write_time;
+        let target_settings_path = match Self::get_settings_path(app_handle) {
+            Ok(p) => p,
+            Err(e) => {
+                tracing::error!("Failed to get settings path for watcher: {e}");
+                return;
+            }
+        };
 
-            loop {
-                std::thread::sleep(std::time::Duration::from_secs(1));
+        let watcher_result = RecommendedWatcher::new(
+            move |res: Result<Event, notify::Error>| match res {
+                Ok(event) => {
+                    let affects_settings = event.paths.iter().any(|p| {
+                        p == &target_settings_path
+                            || p.file_name() == target_settings_path.file_name()
+                    });
 
-                let path = match Self::get_settings_path(&app_handle_clone) {
-                    Ok(p) => p,
-                    Err(_) => continue,
-                };
+                    if !affects_settings {
+                        return;
+                    }
 
-                if !path.exists() {
-                    continue;
-                }
+                    if !target_settings_path.exists() {
+                        return;
+                    }
 
-                if let Ok(metadata) = std::fs::metadata(&path) {
-                    if let Ok(modified) = metadata.modified() {
-                        // Check if the file's modified time changed
-                        if Some(modified) != last_seen_modified {
+                    if let Ok(metadata) = std::fs::metadata(&target_settings_path) {
+                        if let Ok(modified) = metadata.modified() {
                             let settings_state = app_handle_clone.state::<AppSettings>();
                             let was_saved_by_user =
                                 if let Ok(guard) = settings_state.last_write_time.lock() {
@@ -117,16 +139,37 @@ impl AppSettings {
                                     false
                                 };
 
-                            // If not saved by user (i.e. modified externally), emit reload event to frontend
                             if !was_saved_by_user {
+                                tracing::info!("External settings.json change detected via notify");
+                                if let Ok(mut guard) = settings_state.last_write_time.lock() {
+                                    *guard = Some(modified);
+                                }
                                 let _ = app_handle_clone.emit("settings-external-change", ());
                             }
-
-                            last_seen_modified = Some(modified);
                         }
                     }
                 }
+                Err(e) => {
+                    tracing::error!("File watcher error: {e}");
+                }
+            },
+            Config::default(),
+        );
+
+        match watcher_result {
+            Ok(mut watcher) => {
+                if let Err(e) = watcher.watch(&config_dir, RecursiveMode::NonRecursive) {
+                    tracing::error!("Failed to watch config directory {config_dir:?}: {e}");
+                } else {
+                    tracing::info!("Started reactive file watcher on {config_dir:?}");
+                    if let Ok(mut guard) = settings_state.watcher.lock() {
+                        *guard = Some(watcher);
+                    }
+                }
             }
-        });
+            Err(e) => {
+                tracing::error!("Failed to create file watcher: {e}");
+            }
+        }
     }
 }
