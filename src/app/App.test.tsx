@@ -22,7 +22,6 @@ vi.mock(import('@/shared/lib'), async importOriginal => ({
   ...(await importOriginal()),
   isMainWindow: vi.fn(),
   useGlobalErrorTracking: vi.fn(),
-  useTabUnsuspend: vi.fn(),
 }));
 
 vi.mock(import('./init'), async importOriginal => ({

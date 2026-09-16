@@ -10,10 +10,14 @@ import {
 import { useTrayMode } from '@/features/system-tray';
 import { useDevLanguageShortcut } from '@/features/toggle-language';
 import { useDevThemeShortcut } from '@/features/toggle-theme';
+import { useTimerListeners } from '@/entities/timer';
+import { useTabUnsuspend } from '@/shared/lib';
 import { useAppReady } from './useAppReady';
 import { useAppShortcuts } from './useAppShortcuts';
 
 export const MainWindowInitializer = () => {
+  useTabUnsuspend();
+  useTimerListeners();
   useAppShortcuts();
   useDevThemeShortcut();
   useDevLanguageShortcut();

@@ -20,6 +20,7 @@ enum IconKind {
 }
 
 static LAST_ICON_KIND: std::sync::Mutex<Option<IconKind>> = std::sync::Mutex::new(None);
+static LAST_TOOLTIP: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
 
 fn get_default_icon() -> tauri::image::Image<'static> {
     DEFAULT_ICON
@@ -122,14 +123,6 @@ pub fn update_tray_menu(
     update_label: String,
     update_status: String,
 ) -> Result<(), String> {
-    // Load the custom tray icons from the static cache
-    let default_icon = get_default_icon();
-    let running_icon = get_running_icon();
-    let expiring_icon = get_expiring_icon();
-    let paused_icon = get_paused_icon();
-
-    let default_has_update_icon = get_default_has_update_icon();
-
     // Swap the tray icon dynamically
     if let Some(tray) = app_handle.tray_by_id("main") {
         let icon_kind = if timer_state == "idle" && update_status == "readyToInstall" {
@@ -154,18 +147,23 @@ pub fn update_tray_menu(
 
         if should_set_icon {
             let icon = match icon_kind {
-                IconKind::Default => default_icon,
-                IconKind::Running => running_icon,
-                IconKind::Expiring => expiring_icon,
-                IconKind::Paused => paused_icon,
-                IconKind::DefaultHasUpdate => default_has_update_icon,
+                IconKind::Default => get_default_icon(),
+                IconKind::Running => get_running_icon(),
+                IconKind::Expiring => get_expiring_icon(),
+                IconKind::Paused => get_paused_icon(),
+                IconKind::DefaultHasUpdate => get_default_has_update_icon(),
             };
             tray.set_icon(Some(icon)).map_err(|e| e.to_string())?;
             *last_icon = Some(icon_kind);
         }
 
-        tray.set_tooltip(Some(&tooltip))
-            .map_err(|e| e.to_string())?;
+        let mut last_tooltip = LAST_TOOLTIP.lock().unwrap();
+        let should_set_tooltip = last_tooltip.as_deref() != Some(&tooltip);
+        if should_set_tooltip {
+            tray.set_tooltip(Some(&tooltip))
+                .map_err(|e| e.to_string())?;
+            *last_tooltip = Some(tooltip.clone());
+        }
     }
 
     // Emit the state to the frontend tray window
