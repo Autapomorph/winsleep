@@ -18,7 +18,6 @@ export const useAutoUpdater = () => {
     })),
   );
 
-  const lastUpdateCheckAt = useAppStateStore(state => state.lastUpdateCheckAt);
   const checkUpdates = useUpdateStore(state => state.checkUpdates);
   const timerRef = useRef<number | null>(null);
 
@@ -94,9 +93,17 @@ export const useAutoUpdater = () => {
               timerRef.current = setTimeout(() => {
                 scheduleCheck();
               }, retryDelayMs);
+            } else {
+              scheduleCheck();
             }
           })
-          .catch(() => {});
+          .catch(() => {
+            const retryDelayMs = Math.min(intervalMs, RETRY_DELAY_ON_ERROR_MS);
+
+            timerRef.current = setTimeout(() => {
+              scheduleCheck();
+            }, retryDelayMs);
+          });
       }, delayMs);
     };
 
@@ -120,5 +127,5 @@ export const useAutoUpdater = () => {
           logger.error(`Failed to unsubscribe from system-resume event: ${err}`);
         });
     };
-  }, [isAutoUpdateEnabled, updateInterval, lastUpdateCheckAt, checkUpdates]);
+  }, [isAutoUpdateEnabled, updateInterval, checkUpdates]);
 };

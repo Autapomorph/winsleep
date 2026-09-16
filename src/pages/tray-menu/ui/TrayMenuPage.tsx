@@ -18,6 +18,8 @@ const ANIMATION_DURATION_MS = 150;
 export const TrayMenuPage = () => {
   const [trayState, setTrayState] = useState<TrayMenuState | null>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const isVisibleRef = useRef(false);
+  const latestTrayStateRef = useRef<TrayMenuState | null>(null);
   const isClosingRef = useRef(false);
   const closeTimeoutRef = useRef<number | null>(null);
 
@@ -30,6 +32,7 @@ export const TrayMenuPage = () => {
     }
 
     isClosingRef.current = true;
+    isVisibleRef.current = false;
     setIsVisible(false);
 
     if (closeTimeoutRef.current) {
@@ -55,6 +58,11 @@ export const TrayMenuPage = () => {
     }
 
     isClosingRef.current = false;
+    isVisibleRef.current = true;
+
+    if (latestTrayStateRef.current) {
+      setTrayState(latestTrayStateRef.current);
+    }
     setIsVisible(true);
   }, []);
 
@@ -86,7 +94,14 @@ export const TrayMenuPage = () => {
   // Sync state and listen to focus blur to hide window
   useEffect(() => {
     const unlistenTrayMenuStateUpdated = typedListen('tray-state-updated', event => {
-      setTrayState(event.payload);
+      latestTrayStateRef.current = event.payload;
+      setTrayState(prev => {
+        if (isVisibleRef.current || !prev) {
+          return event.payload;
+        }
+
+        return prev;
+      });
     });
 
     const unlistenWindowFocusChanged = getCurrentWindow().onFocusChanged(
