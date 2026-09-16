@@ -16,10 +16,14 @@ const formatTimestamp = (isoString?: string) => {
 };
 
 interface Props {
-  entry: LogEntry;
+  entry?: LogEntry;
 }
 
 export const LogItemRow = ({ entry }: Props) => {
+  if (!entry) {
+    return null;
+  }
+
   return (
     <div className="flex items-start gap-2 px-1 py-0.5 text-[11px] leading-5 break-all whitespace-pre-wrap select-text">
       {/* Timestamp */}

@@ -12,7 +12,7 @@ export type {
   SignoutCommandArgs,
 } from './actions';
 export { pcHibernate, pcLock, pcReboot, pcShutdown, pcSignout, pcSleep } from './actions';
-export type { LogMessageCommandArgs } from './logs';
+export type { LogChunk, LogMessageCommandArgs, ReadLogsCommandArgs } from './logs';
 export type { TrayMenuState } from './tray-menu';
 
 export { windowClose, windowMinimize } from './window';

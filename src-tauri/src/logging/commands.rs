@@ -79,14 +79,21 @@ pub fn open_log_dir(app_handle: tauri::AppHandle) -> Result<(), String> {
 }
 
 pub const CLEAR_LOGS_MARKER: &str = "__WINSLEEP_LOGS_CLEARED__";
-pub const MAX_TOTAL_LOG_LINES: usize = 2000;
-pub const MAX_TAIL_BYTES_PER_FILE: u64 = 2 * 1024 * 1024; // 2 MB tail limit per file
+pub const DEFAULT_PAGE_LIMIT: usize = 1000;
+pub const MAX_PAGE_LIMIT: usize = 2000;
 
-/// Reads up to `max_lines` from the tail of the log file at `path`.
-/// Returns `(lines, hit_clear_marker)` where `lines` are in chronological order
-/// (oldest to newest within this file chunk).
-/// If `hit_clear_marker` is true, all logs before the marker should be ignored.
-fn read_lines_from_tail(
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct LogChunk {
+    pub data: String,
+    pub has_more: bool,
+}
+
+/// Reads up to `max_lines` from the tail of the log file at `path` in reverse order
+/// (newest line first).
+/// Returns `(lines_rev, hit_clear_marker)`.
+/// If `hit_clear_marker` is true, all logs before the marker in this and older files should be ignored.
+fn read_lines_from_tail_rev(
     path: &std::path::Path,
     max_lines: usize,
 ) -> Result<(Vec<String>, bool), String> {
@@ -109,7 +116,9 @@ fn read_lines_from_tail(
         return Ok((Vec::new(), false));
     }
 
-    let read_len = file_len.min(MAX_TAIL_BYTES_PER_FILE);
+    // Estimate bytes needed with safety factor (~1KB per line, min 1MB, max 16MB)
+    let estimated_bytes = (max_lines as u64 * 1024).clamp(1024 * 1024, 16 * 1024 * 1024);
+    let read_len = file_len.min(estimated_bytes);
     let seek_pos = file_len - read_len;
 
     file.seek(SeekFrom::Start(seek_pos))
@@ -153,54 +162,70 @@ fn read_lines_from_tail(
         }
     }
 
-    result_lines_rev.reverse();
     Ok((result_lines_rev, hit_marker))
 }
 
 #[tauri::command]
-pub fn read_logs(app_handle: tauri::AppHandle) -> Result<String, String> {
+pub fn read_logs(
+    app_handle: tauri::AppHandle,
+    offset: Option<usize>,
+    limit: Option<usize>,
+) -> Result<LogChunk, String> {
     let files = get_sorted_log_files(&app_handle)?;
     if files.is_empty() {
-        return Ok(String::new());
+        return Ok(LogChunk {
+            data: String::new(),
+            has_more: false,
+        });
     }
 
-    let mut remaining_lines_budget = MAX_TOTAL_LOG_LINES;
-    let mut file_chunks = Vec::new();
+    let offset = offset.unwrap_or(0);
+    let limit = limit.unwrap_or(DEFAULT_PAGE_LIMIT).clamp(1, MAX_PAGE_LIMIT);
+    let needed = offset + limit + 1; // +1 to probe if more lines exist
+
+    let mut skipped = 0;
+    let mut collected_rev = Vec::with_capacity(limit);
+    let mut has_more = false;
 
     for path in files {
-        if remaining_lines_budget == 0 {
+        if collected_rev.len() == limit && has_more {
             break;
         }
 
-        let (lines, hit_marker) = read_lines_from_tail(&path, remaining_lines_budget)?;
-        remaining_lines_budget = remaining_lines_budget.saturating_sub(lines.len());
+        let max_for_this_file = needed.saturating_sub(skipped + collected_rev.len());
+        if max_for_this_file == 0 && has_more {
+            break;
+        }
 
-        if !lines.is_empty() {
-            file_chunks.push(lines);
+        let (lines_rev, hit_marker) = read_lines_from_tail_rev(&path, max_for_this_file + 1)?;
+
+        for line in lines_rev {
+            if skipped < offset {
+                skipped += 1;
+            } else if collected_rev.len() < limit {
+                collected_rev.push(line);
+            } else {
+                has_more = true;
+                break;
+            }
         }
 
         if hit_marker {
+            // All logs before this marker are considered cleared, so no more can exist
+            has_more = false;
             break;
         }
     }
 
-    // file_chunks contains [today_lines, yesterday_lines, ...]
-    // Reverse to reconstruct global chronological order (oldest files first)
-    file_chunks.reverse();
+    // Reverse collected lines to return them in chronological order (oldest first)
+    collected_rev.reverse();
 
-    let mut combined_lines = Vec::new();
-    for chunk in file_chunks {
-        combined_lines.extend(chunk);
+    let mut data = collected_rev.join("\n");
+    if !data.is_empty() {
+        data.push('\n');
     }
 
-    if combined_lines.is_empty() {
-        return Ok(String::new());
-    }
-
-    let mut result = combined_lines.join("\n");
-    result.push('\n');
-
-    Ok(result)
+    Ok(LogChunk { data, has_more })
 }
 
 #[tauri::command]
@@ -265,47 +290,50 @@ mod tests {
     }
 
     #[test]
-    fn test_read_lines_from_tail_empty_file() {
+    fn test_read_lines_from_tail_rev_empty_file() {
         let (_dir, file_path) = create_temp_log_file("");
-        let (lines, hit_marker) = read_lines_from_tail(&file_path, 10).unwrap();
+        let (lines, hit_marker) = read_lines_from_tail_rev(&file_path, 10).unwrap();
         assert!(lines.is_empty());
         assert!(!hit_marker);
     }
 
     #[test]
-    fn test_read_lines_from_tail_fewer_lines_than_max() {
+    fn test_read_lines_from_tail_rev_fewer_lines_than_max() {
         let content = "line 1\nline 2\nline 3\n";
         let (_dir, file_path) = create_temp_log_file(content);
-        let (lines, hit_marker) = read_lines_from_tail(&file_path, 10).unwrap();
-        assert_eq!(lines, vec!["line 1", "line 2", "line 3"]);
+        let (lines, hit_marker) = read_lines_from_tail_rev(&file_path, 10).unwrap();
+        // Returned in reverse order (newest first)
+        assert_eq!(lines, vec!["line 3", "line 2", "line 1"]);
         assert!(!hit_marker);
     }
 
     #[test]
-    fn test_read_lines_from_tail_more_lines_than_max() {
+    fn test_read_lines_from_tail_rev_more_lines_than_max() {
         let content = "line 1\nline 2\nline 3\nline 4\nline 5\n";
         let (_dir, file_path) = create_temp_log_file(content);
-        let (lines, hit_marker) = read_lines_from_tail(&file_path, 3).unwrap();
-        assert_eq!(lines, vec!["line 3", "line 4", "line 5"]);
+        let (lines, hit_marker) = read_lines_from_tail_rev(&file_path, 3).unwrap();
+        // Newest 3 lines in reverse order
+        assert_eq!(lines, vec!["line 5", "line 4", "line 3"]);
         assert!(!hit_marker);
     }
 
     #[test]
-    fn test_read_lines_from_tail_with_clear_marker() {
+    fn test_read_lines_from_tail_rev_with_clear_marker() {
         let content = format!("line 1\nline 2\n{CLEAR_LOGS_MARKER}\nline 3\nline 4\n");
         let (_dir, file_path) = create_temp_log_file(&content);
-        let (lines, hit_marker) = read_lines_from_tail(&file_path, 10).unwrap();
-        assert_eq!(lines, vec!["line 3", "line 4"]);
+        let (lines, hit_marker) = read_lines_from_tail_rev(&file_path, 10).unwrap();
+        // Only lines after the marker, in reverse order
+        assert_eq!(lines, vec!["line 4", "line 3"]);
         assert!(hit_marker);
     }
 
     #[test]
-    fn test_read_lines_from_tail_with_clear_marker_inside_json() {
+    fn test_read_lines_from_tail_rev_with_clear_marker_inside_json() {
         let content = format!(
             "{{\"message\":\"old\"}}\n{{\"message\":\"{CLEAR_LOGS_MARKER}\"}}\n{{\"message\":\"new\"}}\n"
         );
         let (_dir, file_path) = create_temp_log_file(&content);
-        let (lines, hit_marker) = read_lines_from_tail(&file_path, 10).unwrap();
+        let (lines, hit_marker) = read_lines_from_tail_rev(&file_path, 10).unwrap();
         assert_eq!(lines, vec!["{\"message\":\"new\"}"]);
         assert!(hit_marker);
     }

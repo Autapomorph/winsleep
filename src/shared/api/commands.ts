@@ -6,7 +6,7 @@ import type {
   ShutdownCommandArgs,
   SignoutCommandArgs,
 } from './actions';
-import type { LogMessageCommandArgs } from './logs';
+import type { LogChunk, LogMessageCommandArgs, ReadLogsCommandArgs } from './logs';
 import type { SetIsTrayModeEnabledCommandArgs, TrayMenuState } from './tray-menu';
 
 type CommandsShape<T extends Record<string, CommandDef<unknown, InvokeArgs | undefined>>> = T;
@@ -37,7 +37,7 @@ export type Commands = CommandsShape<{
   load_app_state: CommandDef<Record<string, unknown> | null>;
   save_app_state: CommandDef<void, { state: Record<string, unknown> }>;
   log_message: CommandDef<void, LogMessageCommandArgs>;
-  read_logs: CommandDef<string>;
+  read_logs: CommandDef<LogChunk, ReadLogsCommandArgs | undefined>;
   clear_logs: CommandDef<void>;
   open_log_dir: CommandDef<void>;
   is_portable: CommandDef<boolean>;

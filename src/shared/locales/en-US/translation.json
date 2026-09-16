@@ -779,6 +779,7 @@
             "title": "Logs",
             "empty": "No logs recorded yet",
             "error": "Failed to read logs",
+            "loadingOlder": "Loading older logs...",
             "searchPlaceholder": "Search logs...",
             "clearSearchBtn": {
               "aria": {
