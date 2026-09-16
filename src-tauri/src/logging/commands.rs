@@ -79,6 +79,83 @@ pub fn open_log_dir(app_handle: tauri::AppHandle) -> Result<(), String> {
 }
 
 pub const CLEAR_LOGS_MARKER: &str = "__WINSLEEP_LOGS_CLEARED__";
+pub const MAX_TOTAL_LOG_LINES: usize = 2000;
+pub const MAX_TAIL_BYTES_PER_FILE: u64 = 2 * 1024 * 1024; // 2 MB tail limit per file
+
+/// Reads up to `max_lines` from the tail of the log file at `path`.
+/// Returns `(lines, hit_clear_marker)` where `lines` are in chronological order
+/// (oldest to newest within this file chunk).
+/// If `hit_clear_marker` is true, all logs before the marker should be ignored.
+fn read_lines_from_tail(
+    path: &std::path::Path,
+    max_lines: usize,
+) -> Result<(Vec<String>, bool), String> {
+    use std::fs::File;
+    use std::io::{Read, Seek, SeekFrom};
+
+    if max_lines == 0 {
+        return Ok((Vec::new(), false));
+    }
+
+    let mut file = File::open(path)
+        .map_err(|e| format!("Failed to open log file {:?}: {e}", path.file_name()))?;
+
+    let file_len = file
+        .metadata()
+        .map_err(|e| format!("Failed to get metadata for {:?}: {e}", path.file_name()))?
+        .len();
+
+    if file_len == 0 {
+        return Ok((Vec::new(), false));
+    }
+
+    let read_len = file_len.min(MAX_TAIL_BYTES_PER_FILE);
+    let seek_pos = file_len - read_len;
+
+    file.seek(SeekFrom::Start(seek_pos))
+        .map_err(|e| format!("Failed to seek in log file {:?}: {e}", path.file_name()))?;
+
+    let mut buffer = Vec::with_capacity(read_len as usize);
+    file.take(read_len)
+        .read_to_end(&mut buffer)
+        .map_err(|e| format!("Failed to read log file {:?}: {e}", path.file_name()))?;
+
+    let raw_text = String::from_utf8_lossy(&buffer);
+    let sanitized = if raw_text.contains('\0') {
+        raw_text.replace('\0', "")
+    } else {
+        raw_text.to_string()
+    };
+
+    let mut all_lines: Vec<&str> = sanitized.lines().collect();
+    // If we sought into the middle of the file, the first slice is likely an incomplete partial line
+    if seek_pos > 0 && !all_lines.is_empty() {
+        all_lines.remove(0);
+    }
+
+    let mut result_lines_rev = Vec::new();
+    let mut hit_marker = false;
+
+    for line in all_lines.into_iter().rev() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+
+        if trimmed.contains(CLEAR_LOGS_MARKER) {
+            hit_marker = true;
+            break;
+        }
+
+        result_lines_rev.push(trimmed.to_string());
+        if result_lines_rev.len() >= max_lines {
+            break;
+        }
+    }
+
+    result_lines_rev.reverse();
+    Ok((result_lines_rev, hit_marker))
+}
 
 #[tauri::command]
 pub fn read_logs(app_handle: tauri::AppHandle) -> Result<String, String> {
@@ -87,49 +164,43 @@ pub fn read_logs(app_handle: tauri::AppHandle) -> Result<String, String> {
         return Ok(String::new());
     }
 
-    let mut loaded_contents = Vec::new();
-    let mut total_lines = 0;
-    const MAX_LINES_LIMIT: usize = 3000;
+    let mut remaining_lines_budget = MAX_TOTAL_LOG_LINES;
+    let mut file_chunks = Vec::new();
 
-    for (index, path) in files.iter().enumerate() {
-        let content = fs::read_to_string(path)
-            .map_err(|e| format!("Failed to read log file {:?}: {e}", path.file_name()))?;
+    for path in files {
+        if remaining_lines_budget == 0 {
+            break;
+        }
 
-        // Sanitize any null bytes that might have been introduced by previous truncations
-        let sanitized = if content.contains('\0') {
-            content.replace('\0', "")
-        } else {
-            content
-        };
+        let (lines, hit_marker) = read_lines_from_tail(&path, remaining_lines_budget)?;
+        remaining_lines_budget = remaining_lines_budget.saturating_sub(lines.len());
 
-        let line_count = sanitized.lines().count();
-        loaded_contents.push(sanitized);
-        total_lines += line_count;
+        if !lines.is_empty() {
+            file_chunks.push(lines);
+        }
 
-        // The first file (index 0) is today's active file. We always load it fully.
-        // For older files, we stop if we have exceeded the combined limit.
-        if index > 0 && total_lines >= MAX_LINES_LIMIT {
+        if hit_marker {
             break;
         }
     }
 
-    // Reverse the order of loaded files to merge them chronologically (oldest first)
-    loaded_contents.reverse();
+    // file_chunks contains [today_lines, yesterday_lines, ...]
+    // Reverse to reconstruct global chronological order (oldest files first)
+    file_chunks.reverse();
 
-    let combined = loaded_contents.join("");
-
-    // If a clear marker exists, discard all logs prior to the latest clear marker
-    if let Some(pos) = combined.rfind(CLEAR_LOGS_MARKER) {
-        let after_marker = &combined[pos..];
-        let remaining = if let Some(newline_pos) = after_marker.find('\n') {
-            &after_marker[newline_pos + 1..]
-        } else {
-            ""
-        };
-        return Ok(remaining.to_string());
+    let mut combined_lines = Vec::new();
+    for chunk in file_chunks {
+        combined_lines.extend(chunk);
     }
 
-    Ok(combined)
+    if combined_lines.is_empty() {
+        return Ok(String::new());
+    }
+
+    let mut result = combined_lines.join("\n");
+    result.push('\n');
+
+    Ok(result)
 }
 
 #[tauri::command]
@@ -161,3 +232,82 @@ pub fn log_message(level: String, message: String) {
         _ => tracing::info!("{}", message),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+
+    struct TempDirGuard(std::path::PathBuf);
+
+    impl Drop for TempDirGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    fn create_temp_log_file(content: &str) -> (TempDirGuard, std::path::PathBuf) {
+        let unique_id = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos();
+        let temp_dir = std::env::temp_dir().join(format!(
+            "winsleep_log_test_{}_{}",
+            std::process::id(),
+            unique_id
+        ));
+        std::fs::create_dir_all(&temp_dir).expect("failed to create temp dir");
+        let file_path = temp_dir.join("WinSleep.2026-09-16.log");
+        let mut file = std::fs::File::create(&file_path).expect("failed to create temp log file");
+        file.write_all(content.as_bytes())
+            .expect("failed to write temp log file");
+        (TempDirGuard(temp_dir), file_path)
+    }
+
+    #[test]
+    fn test_read_lines_from_tail_empty_file() {
+        let (_dir, file_path) = create_temp_log_file("");
+        let (lines, hit_marker) = read_lines_from_tail(&file_path, 10).unwrap();
+        assert!(lines.is_empty());
+        assert!(!hit_marker);
+    }
+
+    #[test]
+    fn test_read_lines_from_tail_fewer_lines_than_max() {
+        let content = "line 1\nline 2\nline 3\n";
+        let (_dir, file_path) = create_temp_log_file(content);
+        let (lines, hit_marker) = read_lines_from_tail(&file_path, 10).unwrap();
+        assert_eq!(lines, vec!["line 1", "line 2", "line 3"]);
+        assert!(!hit_marker);
+    }
+
+    #[test]
+    fn test_read_lines_from_tail_more_lines_than_max() {
+        let content = "line 1\nline 2\nline 3\nline 4\nline 5\n";
+        let (_dir, file_path) = create_temp_log_file(content);
+        let (lines, hit_marker) = read_lines_from_tail(&file_path, 3).unwrap();
+        assert_eq!(lines, vec!["line 3", "line 4", "line 5"]);
+        assert!(!hit_marker);
+    }
+
+    #[test]
+    fn test_read_lines_from_tail_with_clear_marker() {
+        let content = format!("line 1\nline 2\n{CLEAR_LOGS_MARKER}\nline 3\nline 4\n");
+        let (_dir, file_path) = create_temp_log_file(&content);
+        let (lines, hit_marker) = read_lines_from_tail(&file_path, 10).unwrap();
+        assert_eq!(lines, vec!["line 3", "line 4"]);
+        assert!(hit_marker);
+    }
+
+    #[test]
+    fn test_read_lines_from_tail_with_clear_marker_inside_json() {
+        let content = format!(
+            "{{\"message\":\"old\"}}\n{{\"message\":\"{CLEAR_LOGS_MARKER}\"}}\n{{\"message\":\"new\"}}\n"
+        );
+        let (_dir, file_path) = create_temp_log_file(&content);
+        let (lines, hit_marker) = read_lines_from_tail(&file_path, 10).unwrap();
+        assert_eq!(lines, vec!["{\"message\":\"new\"}"]);
+        assert!(hit_marker);
+    }
+}
+
