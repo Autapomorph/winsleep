@@ -30,7 +30,10 @@ describe('debugLogsStore', () => {
     const mockLogs =
       '{"timestamp":"1970-01-01T00:00:00Z","level":"info","message":"Tauri started"}\nInvalid JSON line';
 
-    vi.mocked(typedInvoke).mockResolvedValueOnce(mockLogs);
+    vi.mocked(typedInvoke).mockResolvedValueOnce({
+      data: mockLogs,
+      hasMore: false,
+    });
 
     await useDebugLogsStore.getState().fetchLogs();
 
@@ -100,5 +103,37 @@ describe('debugLogsStore', () => {
 
     expect(state.searchQuery).toBe('');
     expect(state.selectedLevel).toBe('ALL');
+  });
+
+  test('should load older logs and prepend them', async () => {
+    useDebugLogsStore.setState({
+      hasMore: true,
+      isLoadingOlder: false,
+      loadedLinesCount: 1,
+      parsedEntries: [
+        {
+          id: '1970-01-01T00:00:01Z-0',
+          level: 'INFO',
+          message: 'Line 2',
+          timestamp: '1970-01-01T00:00:01Z',
+        },
+      ],
+    });
+
+    const mockOlderLogs = '{"timestamp":"1970-01-01T00:00:00Z","level":"info","message":"Line 1"}';
+
+    vi.mocked(typedInvoke).mockResolvedValueOnce({
+      data: mockOlderLogs,
+      hasMore: false,
+    });
+
+    const added = await useDebugLogsStore.getState().loadOlderLogs();
+
+    expect(added).toBe(1);
+    const state = useDebugLogsStore.getState();
+    expect(state.parsedEntries).toHaveLength(2);
+    expect(state.parsedEntries[0].message).toBe('Line 1');
+    expect(state.parsedEntries[1].message).toBe('Line 2');
+    expect(state.hasMore).toBe(false);
   });
 });

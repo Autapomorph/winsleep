@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo } from 'react';
+import { useCallback, useDeferredValue, useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
 import { cn, Spinner } from '@heroui/react';
@@ -9,15 +9,35 @@ import { LogFilters } from './LogFilters';
 import { LogGroupHeader } from './LogGroupHeader';
 import { LogItemRow } from './LogItemRow';
 import { LogSearch } from './LogSearch';
+import { LogViewerHeader } from './LogViewerHeader';
+
+const START_INDEX = 100_000;
+
+const virtuosoComponents = {
+  Header: LogViewerHeader,
+};
 
 export const LogViewer = () => {
   const { t, i18n } = useTranslation();
+  const [firstItemIndex, setFirstItemIndex] = useState(START_INDEX);
 
-  const { isLoading, error, searchQuery, selectedLevel, parsedEntries } = useDebugLogsStore(
+  const {
+    error,
+    hasMore,
+    isLoading,
+    isLoadingOlder,
+    loadOlderLogs,
+    parsedEntries,
+    searchQuery,
+    selectedLevel,
+  } = useDebugLogsStore(
     useShallow(state => ({
-      parsedEntries: state.parsedEntries,
-      isLoading: state.isLoading,
       error: state.error,
+      hasMore: state.hasMore,
+      isLoading: state.isLoading,
+      isLoadingOlder: state.isLoadingOlder,
+      loadOlderLogs: state.loadOlderLogs,
+      parsedEntries: state.parsedEntries,
       searchQuery: state.searchQuery,
       selectedLevel: state.selectedLevel,
     })),
@@ -48,6 +68,24 @@ export const LogViewer = () => {
 
   const hasFilteredEntries = flatEntries.length > 0;
 
+  const handleStartReached = useCallback(async () => {
+    if (isLoadingOlder || !hasMore) {
+      return;
+    }
+
+    const addedCount = await loadOlderLogs();
+    if (addedCount > 0) {
+      setFirstItemIndex(prev => prev - addedCount);
+    }
+  }, [isLoadingOlder, hasMore, loadOlderLogs]);
+
+  const virtuosoContext = useMemo(
+    () => ({
+      isLoadingOlder,
+    }),
+    [isLoadingOlder],
+  );
+
   const renderConsoleContent = () => {
     if (isLoading && !hasFilteredEntries) {
       return (
@@ -75,12 +113,23 @@ export const LogViewer = () => {
 
     return (
       <GroupedVirtuoso
-        groupCounts={groupCounts}
-        groupContent={groupIndex => <LogGroupHeader dateStr={groups[groupIndex].dateStr} />}
-        itemContent={index => <LogItemRow entry={flatEntries[index]} />}
-        computeItemKey={index => flatEntries[index]?.id ?? index}
-        initialTopMostItemIndex={flatEntries.length - 1}
+        components={virtuosoComponents}
+        context={virtuosoContext}
+        firstItemIndex={firstItemIndex}
         followOutput={isAtBottom => (isAtBottom ? 'auto' : false)}
+        groupContent={groupIndex => <LogGroupHeader dateStr={groups[groupIndex].dateStr} />}
+        groupCounts={groupCounts}
+        initialTopMostItemIndex={flatEntries.length > 0 ? flatEntries.length - 1 : undefined}
+        itemContent={index => {
+          const entry = flatEntries[index - firstItemIndex];
+
+          if (!entry) {
+            return null;
+          }
+
+          return <LogItemRow entry={entry} />;
+        }}
+        startReached={handleStartReached}
         style={{ flex: 1 }}
       />
     );

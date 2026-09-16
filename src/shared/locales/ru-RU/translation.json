@@ -779,6 +779,7 @@
             "title": "Логи",
             "empty": "Логи отсутствуют",
             "error": "Не удалось загрузить логи",
+            "loadingOlder": "Загрузка предыдущих записей...",
             "searchPlaceholder": "Поиск по логам...",
             "clearSearchBtn": {
               "aria": {

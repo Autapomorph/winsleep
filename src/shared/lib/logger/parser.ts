@@ -1,13 +1,13 @@
 import { type LogEntry, type LogLevel } from './types';
 
-export const parseLogLine = (trimmed: string, index: number): LogEntry => {
+export const parseLogLine = (trimmed: string, suffix: string): LogEntry => {
   // Parse as JSON
   try {
     const parsed = JSON.parse(trimmed);
 
     if (parsed && typeof parsed === 'object' && 'message' in parsed) {
       return {
-        id: `${parsed.timestamp ?? ''}-${index}`,
+        id: `${parsed.timestamp ?? ''}-${suffix}`,
         timestamp: parsed.timestamp,
         level: parsed.level?.toUpperCase() as LogLevel,
         message: parsed.message,
@@ -18,7 +18,7 @@ export const parseLogLine = (trimmed: string, index: number): LogEntry => {
   }
 
   return {
-    id: `raw-${index}`,
+    id: `raw-${suffix}`,
     message: trimmed,
   };
 };

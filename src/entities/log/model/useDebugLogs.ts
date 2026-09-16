@@ -52,10 +52,13 @@ export const useDebugLogs = (
   useEffect(() => {
     return () => {
       useDebugLogsStore.setState({
-        rawLogs: '',
-        parsedEntries: [],
-        isLoading: false,
         error: null,
+        hasMore: true,
+        isLoading: false,
+        isLoadingOlder: false,
+        loadedLinesCount: 0,
+        parsedEntries: [],
+        rawLogs: '',
         searchQuery: '',
         selectedLevel: 'ALL',
       });
