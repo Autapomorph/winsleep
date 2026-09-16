@@ -33,6 +33,10 @@ pub fn setup_window(app_handle: &tauri::AppHandle) -> Result<(), Box<dyn std::er
     Ok(())
 }
 
+use std::sync::atomic::{AtomicBool, Ordering};
+
+static IS_EXIT_IN_PROGRESS: AtomicBool = AtomicBool::new(false);
+
 pub fn handle_window_event(window: &tauri::Window, event: &tauri::WindowEvent) {
     if let tauri::WindowEvent::CloseRequested { api, .. } = event {
         if window.label() == "main" {
@@ -41,7 +45,7 @@ pub fn handle_window_event(window: &tauri::Window, event: &tauri::WindowEvent) {
 
             if settings
                 .is_tray_mode_enabled
-                .load(std::sync::atomic::Ordering::Relaxed)
+                .load(Ordering::Relaxed)
             {
                 api.prevent_close();
                 if let Err(e) = window.hide() {
@@ -49,8 +53,24 @@ pub fn handle_window_event(window: &tauri::Window, event: &tauri::WindowEvent) {
                 }
                 let _ = window.emit("window-closed-to-tray", ());
             } else {
+                let already_exiting = IS_EXIT_IN_PROGRESS.swap(true, Ordering::SeqCst);
+                if already_exiting {
+                    // Second close attempt forces immediate exit without waiting
+                    tracing::info!("Repeated close request detected, forcing immediate exit");
+                    crate::app::commands::quit_app(app_handle.clone());
+                    return;
+                }
+
                 api.prevent_close();
                 let _ = window.emit("app-exit-requested", ());
+
+                // Spawn a fallback watchdog to force exit if frontend hangs or fails to respond
+                let app_handle_clone = app_handle.clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_millis(2500));
+                    tracing::warn!("Frontend did not complete exit in time, forcing application exit via watchdog");
+                    crate::app::commands::quit_app(app_handle_clone);
+                });
             }
         }
     }
