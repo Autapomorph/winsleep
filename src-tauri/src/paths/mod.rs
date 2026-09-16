@@ -103,12 +103,36 @@ pub fn atomic_write(path: &std::path::Path, content: &[u8]) -> Result<(), String
 
     drop(file);
 
-    if let Err(e) = std::fs::rename(&tmp_path, path) {
-        let _ = std::fs::remove_file(&tmp_path);
-        return Err(format!("Failed to rename {:?} to {:?}: {e}", tmp_path, path));
+    // If target path already exists, ensure it is not marked read-only on Windows
+    if path.exists() {
+        if let Ok(metadata) = std::fs::metadata(path) {
+            let mut permissions = metadata.permissions();
+            if permissions.readonly() {
+                permissions.set_readonly(false);
+                let _ = std::fs::set_permissions(path, permissions);
+            }
+        }
     }
 
-    Ok(())
+    // Attempt to rename with retry loop for Windows sharing violations / transient locks
+    const MAX_RETRIES: u32 = 10;
+    let mut attempt = 0;
+    loop {
+        match std::fs::rename(&tmp_path, path) {
+            Ok(()) => return Ok(()),
+            Err(_e) if attempt < MAX_RETRIES => {
+                attempt += 1;
+                std::thread::sleep(std::time::Duration::from_millis(15 * attempt as u64));
+            }
+            Err(e) => {
+                let _ = std::fs::remove_file(&tmp_path);
+                return Err(format!(
+                    "Failed to rename {:?} to {:?} after {attempt} retries: {e}",
+                    tmp_path, path
+                ));
+            }
+        }
+    }
 }
 
 #[cfg(test)]

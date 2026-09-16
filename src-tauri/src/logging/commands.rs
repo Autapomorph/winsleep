@@ -78,6 +78,8 @@ pub fn open_log_dir(app_handle: tauri::AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+pub const CLEAR_LOGS_MARKER: &str = "__WINSLEEP_LOGS_CLEARED__";
+
 #[tauri::command]
 pub fn read_logs(app_handle: tauri::AppHandle) -> Result<String, String> {
     let files = get_sorted_log_files(&app_handle)?;
@@ -93,8 +95,15 @@ pub fn read_logs(app_handle: tauri::AppHandle) -> Result<String, String> {
         let content = fs::read_to_string(path)
             .map_err(|e| format!("Failed to read log file {:?}: {e}", path.file_name()))?;
 
-        let line_count = content.lines().count();
-        loaded_contents.push(content);
+        // Sanitize any null bytes that might have been introduced by previous truncations
+        let sanitized = if content.contains('\0') {
+            content.replace('\0', "")
+        } else {
+            content
+        };
+
+        let line_count = sanitized.lines().count();
+        loaded_contents.push(sanitized);
         total_lines += line_count;
 
         // The first file (index 0) is today's active file. We always load it fully.
@@ -109,6 +118,17 @@ pub fn read_logs(app_handle: tauri::AppHandle) -> Result<String, String> {
 
     let combined = loaded_contents.join("");
 
+    // If a clear marker exists, discard all logs prior to the latest clear marker
+    if let Some(pos) = combined.rfind(CLEAR_LOGS_MARKER) {
+        let after_marker = &combined[pos..];
+        let remaining = if let Some(newline_pos) = after_marker.find('\n') {
+            &after_marker[newline_pos + 1..]
+        } else {
+            ""
+        };
+        return Ok(remaining.to_string());
+    }
+
     Ok(combined)
 }
 
@@ -119,20 +139,13 @@ pub fn clear_logs(app_handle: tauri::AppHandle) -> Result<(), String> {
         return Ok(());
     }
 
-    // Truncate today's active log file (index 0)
-    let newest_path = &files[0];
-    let file = fs::OpenOptions::new()
-        .write(true)
-        .open(newest_path)
-        .map_err(|e| format!("Failed to open active log file for clearing: {e}"))?;
-
-    file.set_len(0)
-        .map_err(|e| format!("Failed to truncate active log file: {e}"))?;
-
     // Delete all older historical log files
     for path in files.iter().skip(1) {
         let _ = fs::remove_file(path);
     }
+
+    // Mark the active log as cleared without corrupting the open file handle in tracing-appender
+    tracing::info!("{CLEAR_LOGS_MARKER}");
 
     Ok(())
 }
