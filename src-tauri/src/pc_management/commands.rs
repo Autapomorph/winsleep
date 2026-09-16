@@ -2,7 +2,9 @@ use std::process::Command;
 use tauri::State;
 use windows_sys::Win32::Foundation::GetLastError;
 use windows_sys::Win32::System::Power::SetSuspendState;
-use windows_sys::Win32::System::Shutdown::LockWorkStation;
+use windows_sys::Win32::System::Shutdown::{
+    ExitWindowsEx, LockWorkStation, EWX_FORCE, EWX_LOGOFF,
+};
 
 use crate::pc_management::KeepAwakeManager;
 
@@ -146,21 +148,16 @@ pub fn pc_signout(
 ) -> Result<(), String> {
     let _ = keep_awake.release();
 
-    let mut cmd = create_shutdown_command();
-    cmd.arg("/l");
-
+    let mut flags = EWX_LOGOFF;
     if is_force.unwrap_or(false) {
-        cmd.arg("/f");
+        flags |= EWX_FORCE;
     }
 
-    let status = cmd
-        .status()
-        .map_err(|e| format!("Failed to initiate user logoff process: {e}"))?;
-
-    if !status.success() {
+    let res = unsafe { ExitWindowsEx(flags, 0) };
+    if res == 0 {
+        let error_code = unsafe { GetLastError() };
         return Err(format!(
-            "Logoff command exited with an error. Exit code: {:?}",
-            status.code()
+            "Failed to initiate user logoff. Error code: {error_code}"
         ));
     }
 
