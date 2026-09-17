@@ -30,16 +30,25 @@ pub fn save_settings(
     let json_str = serde_json::to_string_pretty(&settings)
         .map_err(|e| format!("Failed to serialize settings: {e}"))?;
 
-    crate::paths::atomic_write(&path, json_str.as_bytes())
-        .map_err(|e| format!("Failed to write settings file: {e}"))?;
+    let bytes = json_str.as_bytes();
+    let content_hash = AppSettings::calculate_hash(bytes);
 
-    // Update the last write time for the file watcher to ignore this write event
-    if let Ok(metadata) = fs::metadata(&path) {
-        if let Ok(modified) = metadata.modified() {
-            if let Ok(mut guard) = state.last_write_time.lock() {
-                *guard = Some(modified);
-            }
+    // Update the last known content hash BEFORE writing to disk.
+    // This ensures that when atomic_write replaces the file and notify triggers,
+    // the watcher callback immediately observes the matching hash without race conditions.
+    if let Ok(mut guard) = state.last_content_hash.lock() {
+        *guard = Some(content_hash);
+    }
+
+    if let Err(e) = crate::paths::atomic_write(&path, bytes) {
+        // Revert last_content_hash to the actual file content on disk if write failed
+        let disk_hash = std::fs::read(&path)
+            .ok()
+            .map(|b| AppSettings::calculate_hash(&b));
+        if let Ok(mut guard) = state.last_content_hash.lock() {
+            *guard = disk_hash;
         }
+        return Err(format!("Failed to write settings file: {e}"));
     }
 
     // Update the in-memory tray mode state if it is present in the settings object
