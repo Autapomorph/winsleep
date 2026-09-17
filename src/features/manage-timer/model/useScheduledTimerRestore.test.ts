@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react';
 
 import { useAppStateStore } from '@/entities/app-state';
-import { useKeepAwakeStore } from '@/entities/keep-awake';
 import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import { useTimerStore } from '@/entities/timer';
@@ -26,7 +25,6 @@ describe('useScheduledTimerRestore', () => {
   beforeEach(() => {
     useSettingsStore.setState({ isRestoreScheduledTimerOnStartupEnabled: true });
     useAppStateStore.setState({ scheduledTimer: null });
-    useKeepAwakeStore.setState({ isIndefiniteActive: false, startedAt: null });
     useSessionStore.setState({ timerAction: 'sleep' });
     useTimerStore.setState({
       timerState: 'idle',
@@ -83,7 +81,8 @@ describe('useScheduledTimerRestore', () => {
     renderHook(() => useScheduledTimerRestore());
 
     expect(useSessionStore.getState().timerAction).toBe('keep-awake');
-    expect(useKeepAwakeStore.getState().isIndefiniteActive).toBe(true);
+    expect(useTimerStore.getState().timerMode).toBe('indefinite');
+    expect(useTimerStore.getState().timerState).toBe('running');
     expect(useTimerStore.getState().plannedSeconds).toBe(0);
     expect(useTimerStore.getState().remainingSeconds).toBe(0);
     expect(sharedLib.showInfoToast).toHaveBeenCalled();
@@ -101,7 +100,8 @@ describe('useScheduledTimerRestore', () => {
 
     renderHook(() => useScheduledTimerRestore());
 
-    expect(useKeepAwakeStore.getState().isIndefiniteActive).toBe(false);
+    expect(useTimerStore.getState().timerMode).toBe('duration');
+    expect(useTimerStore.getState().timerState).toBe('idle');
     expect(sharedLib.showInfoToast).not.toHaveBeenCalled();
   });
 
@@ -205,6 +205,7 @@ describe('useScheduledTimerRestore', () => {
     expect(scheduled?.timerAction).toBe('keep-awake');
     expect(scheduled?.armedAt).toBe(originalArmedAt);
     expect(useSessionStore.getState().timerAction).toBe('keep-awake');
-    expect(useKeepAwakeStore.getState().isIndefiniteActive).toBe(true);
+    expect(useTimerStore.getState().timerMode).toBe('indefinite');
+    expect(useTimerStore.getState().timerState).toBe('running');
   });
 });

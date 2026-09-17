@@ -3,8 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
 import { Button, Modal, Tabs } from '@heroui/react';
 
-import { useKeepAwakeStore } from '@/entities/keep-awake';
-import { type TimerMode, useTimerStore } from '@/entities/timer';
+import { useTimerStore } from '@/entities/timer';
 import { SHORTCUT_SCOPES } from '@/shared/config';
 import { getHMS, getTotalSeconds, useHotkeysScope } from '@/shared/lib';
 import { DurationPickerPanel } from './DurationPickerPanel';
@@ -28,7 +27,9 @@ export const TimerEditModal = ({ isOpen, onOpenChange, currentSeconds, setExactT
     })),
   );
 
-  const [activeTab, setActiveTab] = useState<TimerMode>(timerMode);
+  const [activeTab, setActiveTab] = useState<'duration' | 'timestamp'>(
+    timerMode === 'timestamp' ? 'timestamp' : 'duration',
+  );
 
   const [h, setH] = useState(() => getHMS(currentSeconds).hours);
   const [m, setM] = useState(() => getHMS(currentSeconds).minutes);
@@ -80,7 +81,7 @@ export const TimerEditModal = ({ isOpen, onOpenChange, currentSeconds, setExactT
       setH(hours);
       setM(minutes);
       setS(seconds);
-      setActiveTab(timerMode);
+      setActiveTab(timerMode === 'timestamp' ? 'timestamp' : 'duration');
       setSelectedTimestamp(targetDateTime);
     }
   }, [isOpen, timerMode, targetDateTime]);
@@ -96,8 +97,6 @@ export const TimerEditModal = ({ isOpen, onOpenChange, currentSeconds, setExactT
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const { isIndefiniteActive } = useKeepAwakeStore.getState();
-
     if (activeTab === 'duration') {
       setExactTime(getTotalSeconds(h, m, s));
     } else {
@@ -105,13 +104,7 @@ export const TimerEditModal = ({ isOpen, onOpenChange, currentSeconds, setExactT
         return;
       }
 
-      if (isIndefiniteActive) {
-        useKeepAwakeStore.getState().stopIndefinite();
-        setTargetDateTime(selectedTimestamp);
-        useTimerStore.getState().start();
-      } else {
-        setTargetDateTime(selectedTimestamp);
-      }
+      setTargetDateTime(selectedTimestamp);
     }
 
     setContentHeight(null);
@@ -142,7 +135,7 @@ export const TimerEditModal = ({ isOpen, onOpenChange, currentSeconds, setExactT
                   <Tabs
                     className="w-full"
                     selectedKey={activeTab}
-                    onSelectionChange={key => setActiveTab(key as TimerMode)}
+                    onSelectionChange={key => setActiveTab(key as 'duration' | 'timestamp')}
                   >
                     <Tabs.ListContainer>
                       <Tabs.List aria-label={t($ => $.timer.timerEditModal.modes.tabs.aria.label)}>

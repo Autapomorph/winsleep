@@ -1,13 +1,9 @@
-import { useCallback, useEffect } from 'react';
-import { useShallow } from 'zustand/react/shallow';
+import { useCallback } from 'react';
 
 import { useTimer, useTimerExecution } from '@/features/manage-timer';
-import { useKeepAwakeStore } from '@/entities/keep-awake';
-import { useSessionStore } from '@/entities/session';
 import { logger } from '@/shared/lib';
 
 export const useTimerOrchestrator = () => {
-  const action = useSessionStore(state => state.timerAction);
   const { execute } = useTimerExecution();
 
   const {
@@ -22,22 +18,14 @@ export const useTimerOrchestrator = () => {
     resume,
     cancel,
     setExactTime,
+    setTimerMode,
+    setIndefinite,
     increaseTime,
     decreaseTime,
   } = useTimer();
 
-  const { isIndefiniteActive, startIndefinite, stopIndefinite } = useKeepAwakeStore(
-    useShallow(state => ({
-      isIndefiniteActive: state.isIndefiniteActive,
-      startIndefinite: state.startIndefinite,
-      stopIndefinite: state.stopIndefinite,
-    })),
-  );
-
-  const isIndefiniteRunning = action === 'keep-awake' && isIndefiniteActive;
-
   let currentSeconds: number;
-  if (isIndefiniteRunning) {
+  if (timerMode === 'indefinite') {
     currentSeconds = 0;
   } else if (timerState === 'idle') {
     currentSeconds = plannedSeconds;
@@ -45,62 +33,9 @@ export const useTimerOrchestrator = () => {
     currentSeconds = remainingSeconds;
   }
 
-  const isIndefiniteMode = action === 'keep-awake' && (isIndefiniteActive || currentSeconds === 0);
-
-  let effectiveTimerState = timerState;
-  if (isIndefiniteMode) {
-    effectiveTimerState = isIndefiniteActive ? 'running' : 'idle';
-  }
-
-  const effectiveTimerMode = isIndefiniteMode ? 'timestamp' : timerMode;
-
-  useEffect(() => {
-    if (action !== 'keep-awake' && isIndefiniteActive) {
-      stopIndefinite();
-    }
-  }, [action, isIndefiniteActive, stopIndefinite]);
-
-  const handleStart = useCallback(() => {
-    if (action === 'keep-awake' && currentSeconds === 0) {
-      startIndefinite();
-      return;
-    }
-
-    start();
-  }, [action, currentSeconds, startIndefinite, start]);
-
-  const handlePause = useCallback(() => {
-    if (isIndefiniteActive) {
-      stopIndefinite();
-      return;
-    }
-
-    pause();
-  }, [isIndefiniteActive, stopIndefinite, pause]);
-
-  const handleResume = useCallback(() => {
-    if (action === 'keep-awake' && currentSeconds === 0) {
-      startIndefinite();
-      return;
-    }
-
-    resume();
-  }, [action, currentSeconds, startIndefinite, resume]);
-
-  const handleCancel = useCallback(() => {
-    if (isIndefiniteActive) {
-      stopIndefinite();
-    }
-
-    cancel();
-  }, [isIndefiniteActive, stopIndefinite, cancel]);
+  const isIndefiniteMode = timerMode === 'indefinite';
 
   const executeImmediately = useCallback(() => {
-    if (isIndefiniteActive) {
-      stopIndefinite();
-      return;
-    }
-
     if (timerState !== 'running') {
       return;
     }
@@ -109,72 +44,27 @@ export const useTimerOrchestrator = () => {
 
     cancel();
     execute();
-  }, [isIndefiniteActive, stopIndefinite, timerState, cancel, execute]);
-
-  const handleSetExactTime = useCallback(
-    (seconds: number) => {
-      if (action === 'keep-awake') {
-        if (seconds === 0) {
-          if (timerState === 'running') {
-            cancel();
-            setExactTime(0);
-            startIndefinite();
-            return;
-          }
-
-          if (timerState === 'paused') {
-            cancel();
-            setExactTime(0);
-            return;
-          }
-
-          if (isIndefiniteActive) {
-            return;
-          }
-
-          setExactTime(0);
-          return;
-        }
-
-        if (isIndefiniteActive) {
-          stopIndefinite();
-          setExactTime(seconds);
-          start();
-          return;
-        }
-      }
-
-      setExactTime(seconds);
-    },
-    [
-      action,
-      timerState,
-      isIndefiniteActive,
-      cancel,
-      setExactTime,
-      startIndefinite,
-      stopIndefinite,
-      start,
-    ],
-  );
+  }, [timerState, cancel, execute]);
 
   return {
     currentSeconds,
-    effectiveTimerState,
+    effectiveTimerState: timerState,
     isIndefiniteMode,
     timerState,
-    timerMode: effectiveTimerMode,
+    timerMode,
     plannedSeconds,
     remainingSeconds,
     targetDateTime,
     isLocked,
     increaseTime,
     decreaseTime,
-    handleStart,
-    handlePause,
-    handleResume,
-    handleCancel,
-    handleSetExactTime,
+    handleStart: start,
+    handlePause: pause,
+    handleResume: resume,
+    handleCancel: cancel,
+    handleSetExactTime: setExactTime,
+    handleSetIndefinite: setIndefinite,
+    setTimerMode,
     executeImmediately,
   };
 };

@@ -19,6 +19,8 @@ export const useTimer = () => {
     increaseTimeStore,
     decreaseTimeStore,
     setExactTimeStore,
+    setTimerModeStore,
+    setIndefiniteStore,
   } = useTimerStore(
     useShallow(state => ({
       timerState: state.timerState,
@@ -33,6 +35,8 @@ export const useTimer = () => {
       increaseTimeStore: state.increaseTime,
       decreaseTimeStore: state.decreaseTime,
       setExactTimeStore: state.setExactTime,
+      setTimerModeStore: state.setTimerMode,
+      setIndefiniteStore: state.setIndefinite,
     })),
   );
 
@@ -83,6 +87,8 @@ export const useTimer = () => {
     increaseTime,
     decreaseTime,
     setExactTime: setExactTimeStore,
+    setTimerMode: setTimerModeStore,
+    setIndefinite: setIndefiniteStore,
     toggleLock,
   };
 };

@@ -3,6 +3,7 @@ import { Button, Toolbar } from '@heroui/react';
 
 import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
+import { useTimerStore } from '@/entities/timer';
 import { type TimerAction, DEFAULT_TIMER_PRESETS } from '@/shared/config';
 import { formatDurationFull, formatDurationShort } from '@/shared/lib';
 
@@ -10,9 +11,10 @@ interface Props {
   action?: TimerAction;
   isLocked?: boolean;
   setExactTime: (seconds: number) => void;
+  setIndefinite?: () => void;
 }
 
-export const TimerPresets = ({ action, isLocked = false, setExactTime }: Props) => {
+export const TimerPresets = ({ action, isLocked = false, setExactTime, setIndefinite }: Props) => {
   const { t } = useTranslation();
   const sessionAction = useSessionStore(state => state.timerAction);
   const customTimerPresets = useSettingsStore(state => state.customTimerPresets);
@@ -47,6 +49,19 @@ export const TimerPresets = ({ action, isLocked = false, setExactTime }: Props) 
     ariaLabel: getPresetAriaLabel(time),
   }));
 
+  const handlePress = (time: number) => {
+    if (time === 0 && isKeepAwake) {
+      if (setIndefinite) {
+        setIndefinite();
+      } else {
+        useTimerStore.getState().setIndefinite();
+      }
+      return;
+    }
+
+    setExactTime(time);
+  };
+
   return (
     <Toolbar aria-label={t($ => $.timer.presets.aria.label)}>
       <div className="grid grid-cols-3 place-items-center gap-2.5">
@@ -56,7 +71,7 @@ export const TimerPresets = ({ action, isLocked = false, setExactTime }: Props) 
             size="sm"
             variant="outline"
             className="w-full min-w-0"
-            onPress={() => setExactTime(time)}
+            onPress={() => handlePress(time)}
             isDisabled={isLocked}
             aria-label={ariaLabel}
           >

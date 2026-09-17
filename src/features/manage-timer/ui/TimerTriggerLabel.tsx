@@ -1,7 +1,6 @@
 import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
 
-import { useKeepAwakeStore } from '@/entities/keep-awake';
 import { useSessionStore } from '@/entities/session';
 import { useTimerStore } from '@/entities/timer';
 import { type TimerAction } from '@/shared/config';
@@ -15,7 +14,6 @@ interface Props {
 export const TimerTriggerLabel = ({ currentSeconds, action }: Props) => {
   const { t, i18n } = useTranslation();
   const sessionAction = useSessionStore(state => state.timerAction);
-  const isIndefiniteActive = useKeepAwakeStore(state => state.isIndefiniteActive);
 
   const currentAction = action ?? sessionAction;
   const isKeepAwake = currentAction === 'keep-awake';
@@ -32,6 +30,8 @@ export const TimerTriggerLabel = ({ currentSeconds, action }: Props) => {
         plannedSeconds: state.plannedSeconds,
       })),
     );
+
+  const isIndefiniteMode = timerMode === 'indefinite';
 
   let triggerTimestamp: number;
   if (timerState !== 'idle') {
@@ -56,15 +56,13 @@ export const TimerTriggerLabel = ({ currentSeconds, action }: Props) => {
   });
 
   let triggerAtLabel = '';
-  if (currentSeconds === 0) {
-    if (isKeepAwake) {
-      triggerAtLabel =
-        timerState === 'running' || isIndefiniteActive
-          ? t($ => $.timer.triggerAt.keepAwakeIndefiniteRunning)
-          : t($ => $.timer.triggerAt.keepAwakeIndefiniteIdle);
-    } else {
-      triggerAtLabel = t($ => $.timer.triggerAt.now);
-    }
+  if (isIndefiniteMode || (isKeepAwake && currentSeconds === 0)) {
+    triggerAtLabel =
+      timerState === 'running'
+        ? t($ => $.timer.triggerAt.keepAwakeIndefiniteRunning)
+        : t($ => $.timer.triggerAt.keepAwakeIndefiniteIdle);
+  } else if (currentSeconds === 0) {
+    triggerAtLabel = t($ => $.timer.triggerAt.now);
   } else if (isToday) {
     triggerAtLabel = isKeepAwake
       ? t($ => $.timer.triggerAt.keepAwakeToday, { time: formattedTime })
@@ -93,7 +91,7 @@ export const TimerTriggerLabel = ({ currentSeconds, action }: Props) => {
         });
   }
 
-  const isRunning = timerState === 'running' || isIndefiniteActive;
+  const isRunning = timerState === 'running';
 
   return (
     <div className="text-muted-foreground flex items-center justify-center gap-1.5 text-xs font-medium">
@@ -104,7 +102,7 @@ export const TimerTriggerLabel = ({ currentSeconds, action }: Props) => {
         </span>
       )}
 
-      {!isIndefiniteActive && !(isKeepAwake && currentSeconds === 0) && timerState === 'paused' && (
+      {!isIndefiniteMode && timerState === 'paused' && (
         <span className="h-2 w-2 rounded-full bg-warning" />
       )}
       <span>{triggerAtLabel}</span>

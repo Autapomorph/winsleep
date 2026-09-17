@@ -172,8 +172,6 @@ export const TrayMenuPage = () => {
     updateStatus,
   } = trayState;
 
-  const isTimestampMode = timerMode === 'timestamp';
-
   return (
     <div
       className={cn(
@@ -214,7 +212,7 @@ export const TrayMenuPage = () => {
         <TrayMenuButton
           icon={timerState === 'running' ? <FaPause /> : <FaPlay />}
           isDisabled={
-            (timerState === 'running' && isTimestampMode) ||
+            (timerState === 'running' && timerMode !== 'duration') ||
             (timerState !== 'idle' && isSettingsLocked)
           }
           onPress={() => typedEmit('tray-timer-start-resume-pause-clicked')}
@@ -234,7 +232,7 @@ export const TrayMenuPage = () => {
         {/* Increase Time */}
         <TrayMenuButton
           icon={<FaPlus />}
-          isDisabled={isSettingsLocked || isTimestampMode}
+          isDisabled={isSettingsLocked || timerMode !== 'duration'}
           onPress={() => typedEmit('tray-timer-increase-clicked')}
         >
           {timerIncreaseLabel}
@@ -243,7 +241,7 @@ export const TrayMenuPage = () => {
         {/* Decrease Time */}
         <TrayMenuButton
           icon={<FaMinus />}
-          isDisabled={isSettingsLocked || isTimestampMode}
+          isDisabled={isSettingsLocked || timerMode !== 'duration'}
           onPress={() => typedEmit('tray-timer-decrease-clicked')}
         >
           {timerDecreaseLabel}

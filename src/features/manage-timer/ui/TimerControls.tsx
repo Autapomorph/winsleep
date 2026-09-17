@@ -58,7 +58,7 @@ export const TimerControls = ({
     aria: { label: startStopAriaLabel },
   } = startStopButtonConfig[timerState];
 
-  const isStartStopAvailable = timerState !== 'running' || timerMode !== 'timestamp';
+  const isStartStopAvailable = timerState !== 'running' || timerMode === 'duration';
 
   return (
     <div className="flex justify-center gap-5">

@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 
-import { useKeepAwakeStore } from '@/entities/keep-awake';
 import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import { useTimerStore } from '@/entities/timer';
@@ -14,7 +13,6 @@ export const useKeepAwakeTimerSync = () => {
 
     const syncKeepAwakeState = () => {
       const { timerState } = useTimerStore.getState();
-      const { isIndefiniteActive } = useKeepAwakeStore.getState();
       const { timerAction } = useSessionStore.getState();
       const { isPreventPCSleepDuringTimerEnabled, isPreventDisplaySleepDuringTimerEnabled } =
         useSettingsStore.getState();
@@ -23,7 +21,7 @@ export const useKeepAwakeTimerSync = () => {
         timerState === 'running' &&
         (timerAction === 'keep-awake' || isPreventPCSleepDuringTimerEnabled);
 
-      const shouldKeepPCAwake = isIndefiniteActive || isTimerAwakeActive;
+      const shouldKeepPCAwake = isTimerAwakeActive;
       const shouldKeepDisplayAwake = shouldKeepPCAwake && isPreventDisplaySleepDuringTimerEnabled;
 
       if (
@@ -50,13 +48,11 @@ export const useKeepAwakeTimerSync = () => {
     const unsubscribeTimer = useTimerStore.subscribe(syncKeepAwakeState);
     const unsubscribeSession = useSessionStore.subscribe(syncKeepAwakeState);
     const unsubscribeSettings = useSettingsStore.subscribe(syncKeepAwakeState);
-    const unsubscribeKeepAwake = useKeepAwakeStore.subscribe(syncKeepAwakeState);
 
     return () => {
       unsubscribeTimer();
       unsubscribeSession();
       unsubscribeSettings();
-      unsubscribeKeepAwake();
 
       if (lastKeepPCAwake) {
         setKeepAwake({ isEnabled: false, keepDisplayAwake: false }).catch(err => {

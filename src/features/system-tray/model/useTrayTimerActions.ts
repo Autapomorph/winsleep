@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 
-import { useKeepAwakeStore } from '@/entities/keep-awake';
 import { useSessionStore } from '@/entities/session';
 import { useTimerStore } from '@/entities/timer';
 import { typedListen } from '@/shared/api';
@@ -17,33 +16,18 @@ export const useTrayTimerActions = () => {
 
       logger.info('Timer start/pause/resume clicked from tray menu');
 
-      const { isLocked, timerAction } = useSessionStore.getState();
-      const { isIndefiniteActive, startIndefinite } = useKeepAwakeStore.getState();
-
-      if (isIndefiniteActive) {
-        return;
-      }
-
+      const { isLocked } = useSessionStore.getState();
       const store = useTimerStore.getState();
-      const { timerState, timerMode, plannedSeconds, remainingSeconds, start, resume, pause } =
-        store;
+      const { timerState, timerMode, start, resume, pause } = store;
 
       if (timerState === 'running') {
         if (isLocked) {
           return;
         }
 
-        pause();
-        return;
-      }
-
-      const isKeepAwakeIndefinite =
-        timerAction === 'keep-awake' &&
-        timerMode === 'duration' &&
-        (timerState === 'idle' ? plannedSeconds === 0 : remainingSeconds === 0);
-
-      if (isKeepAwakeIndefinite) {
-        startIndefinite();
+        if (timerMode === 'duration') {
+          pause();
+        }
         return;
       }
 
@@ -70,10 +54,6 @@ export const useTrayTimerActions = () => {
       }
 
       logger.info('Timer cancel clicked from tray menu');
-
-      if (useKeepAwakeStore.getState().isIndefiniteActive) {
-        useKeepAwakeStore.getState().stopIndefinite();
-      }
 
       const { cancel } = useTimerStore.getState();
       cancel();

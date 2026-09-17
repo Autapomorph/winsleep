@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react';
 
 import { useAppStateStore } from '@/entities/app-state';
-import { useKeepAwakeStore } from '@/entities/keep-awake';
 import { useSessionStore } from '@/entities/session';
 import { useTimerStore } from '@/entities/timer';
 import { useScheduledTimerStateSync } from './useScheduledTimerStateSync';
@@ -10,7 +9,6 @@ describe('useScheduledTimerStateSync', () => {
   beforeEach(() => {
     useAppStateStore.setState({ scheduledTimer: null });
     useSessionStore.setState({ timerAction: 'sleep' });
-    useKeepAwakeStore.setState({ isIndefiniteActive: false, startedAt: null });
     useTimerStore.setState({
       timerState: 'idle',
       timerMode: 'duration',
@@ -56,7 +54,11 @@ describe('useScheduledTimerStateSync', () => {
     renderHook(() => useScheduledTimerStateSync());
 
     useSessionStore.setState({ timerAction: 'keep-awake' });
-    useKeepAwakeStore.setState({ isIndefiniteActive: true, startedAt: Date.now() });
+    useTimerStore.setState({
+      timerState: 'running',
+      timerMode: 'indefinite',
+      targetDateTime: null,
+    });
 
     const scheduled = useAppStateStore.getState().scheduledTimer;
     expect(scheduled).not.toBeNull();
@@ -68,10 +70,16 @@ describe('useScheduledTimerStateSync', () => {
     renderHook(() => useScheduledTimerStateSync());
 
     useSessionStore.setState({ timerAction: 'keep-awake' });
-    useKeepAwakeStore.setState({ isIndefiniteActive: true, startedAt: Date.now() });
+    useTimerStore.setState({
+      timerState: 'running',
+      timerMode: 'indefinite',
+      targetDateTime: null,
+    });
     expect(useAppStateStore.getState().scheduledTimer).not.toBeNull();
 
-    useKeepAwakeStore.setState({ isIndefiniteActive: false, startedAt: null });
+    useTimerStore.setState({
+      timerState: 'idle',
+    });
     expect(useAppStateStore.getState().scheduledTimer).toBeNull();
   });
 
