@@ -116,50 +116,57 @@ fn read_lines_from_tail_rev(
         return Ok((Vec::new(), false));
     }
 
-    // Estimate bytes needed with safety factor (~1KB per line, min 1MB, max 16MB)
-    let estimated_bytes = (max_lines as u64 * 1024).clamp(1024 * 1024, 16 * 1024 * 1024);
-    let read_len = file_len.min(estimated_bytes);
-    let seek_pos = file_len - read_len;
-
-    file.seek(SeekFrom::Start(seek_pos))
-        .map_err(|e| format!("Failed to seek in log file {:?}: {e}", path.file_name()))?;
-
-    let mut buffer = Vec::with_capacity(read_len as usize);
-    file.take(read_len)
-        .read_to_end(&mut buffer)
-        .map_err(|e| format!("Failed to read log file {:?}: {e}", path.file_name()))?;
-
-    let raw_text = String::from_utf8_lossy(&buffer);
-    let sanitized = if raw_text.contains('\0') {
-        raw_text.replace('\0', "")
-    } else {
-        raw_text.to_string()
-    };
-
-    let mut all_lines: Vec<&str> = sanitized.lines().collect();
-    // If we sought into the middle of the file, the first slice is likely an incomplete partial line
-    if seek_pos > 0 && !all_lines.is_empty() {
-        all_lines.remove(0);
-    }
-
     let mut result_lines_rev = Vec::new();
     let mut hit_marker = false;
+    let mut current_end = file_len;
+    let mut remainder = String::new();
 
-    for line in all_lines.into_iter().rev() {
-        let trimmed = line.trim();
-        if trimmed.is_empty() {
-            continue;
+    // Read in chunks backwards until max_lines satisfied, marker hit, or file beginning reached
+    const CHUNK_SIZE: u64 = 64 * 1024;
+
+    while current_end > 0 && result_lines_rev.len() < max_lines && !hit_marker {
+        let read_len = current_end.min(CHUNK_SIZE);
+        let seek_pos = current_end - read_len;
+
+        file.seek(SeekFrom::Start(seek_pos))
+            .map_err(|e| format!("Failed to seek in log file {:?}: {e}", path.file_name()))?;
+
+        let mut buffer = vec![0u8; read_len as usize];
+        file.read_exact(&mut buffer)
+            .map_err(|e| format!("Failed to read log file {:?}: {e}", path.file_name()))?;
+
+        let mut raw_text = String::from_utf8_lossy(&buffer).replace('\0', "");
+        if !remainder.is_empty() {
+            raw_text.push_str(&remainder);
+            remainder.clear();
         }
 
-        if trimmed.contains(CLEAR_LOGS_MARKER) {
-            hit_marker = true;
-            break;
+        let mut chunk_lines: Vec<&str> = raw_text.lines().collect();
+
+        // If we sought into the middle of the file (seek_pos > 0), the first line
+        // might be incomplete and continues into the previous chunk.
+        if seek_pos > 0 && !chunk_lines.is_empty() {
+            remainder = chunk_lines.remove(0).to_string();
         }
 
-        result_lines_rev.push(trimmed.to_string());
-        if result_lines_rev.len() >= max_lines {
-            break;
+        for line in chunk_lines.into_iter().rev() {
+            let trimmed = line.trim();
+            if trimmed.is_empty() {
+                continue;
+            }
+
+            if trimmed.contains(CLEAR_LOGS_MARKER) {
+                hit_marker = true;
+                break;
+            }
+
+            result_lines_rev.push(trimmed.to_string());
+            if result_lines_rev.len() >= max_lines {
+                break;
+            }
         }
+
+        current_end = seek_pos;
     }
 
     Ok((result_lines_rev, hit_marker))
@@ -336,6 +343,30 @@ mod tests {
         let (lines, hit_marker) = read_lines_from_tail_rev(&file_path, 10).unwrap();
         assert_eq!(lines, vec!["{\"message\":\"new\"}"]);
         assert!(hit_marker);
+    }
+
+    #[test]
+    fn test_read_lines_from_tail_rev_large_file_across_chunks() {
+        // Generate enough lines to exceed CHUNK_SIZE (64KB)
+        let mut content = String::new();
+        for i in 0..1000 {
+            content.push_str(&format!("log line number {i:04} with extra padding content\n"));
+        }
+        let (_dir, file_path) = create_temp_log_file(&content);
+
+        // Read 100 lines
+        let (lines, hit_marker) = read_lines_from_tail_rev(&file_path, 100).unwrap();
+        assert_eq!(lines.len(), 100);
+        assert_eq!(lines[0], "log line number 0999 with extra padding content");
+        assert_eq!(lines[99], "log line number 0900 with extra padding content");
+        assert!(!hit_marker);
+
+        // Read all 1000 lines (spans multiple 64KB chunks)
+        let (all_lines, hit_marker_all) = read_lines_from_tail_rev(&file_path, 1500).unwrap();
+        assert_eq!(all_lines.len(), 1000);
+        assert_eq!(all_lines[0], "log line number 0999 with extra padding content");
+        assert_eq!(all_lines[999], "log line number 0000 with extra padding content");
+        assert!(!hit_marker_all);
     }
 }
 

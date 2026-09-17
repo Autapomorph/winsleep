@@ -6,6 +6,8 @@ use windows_sys::Win32::UI::WindowsAndMessaging::{WM_NCDESTROY, WM_POWERBROADCAS
 const PBT_APMRESUMEAUTOMATIC: usize = 0x0012;
 const PBT_APMRESUMESTANDBY: usize = 0x000F;
 
+const POWER_EVENTS_SUBCLASS_ID: usize = 1;
+
 unsafe extern "system" fn power_subclass_proc(
     hwnd: HWND,
     msg: u32,
@@ -42,7 +44,12 @@ pub fn setup_power_events(window: &WebviewWindow) {
         let window_box = Box::new(window.clone());
         let ref_data = Box::into_raw(window_box) as usize;
         let success = unsafe {
-            SetWindowSubclass(hwnd, Some(power_subclass_proc), 12345, ref_data)
+            SetWindowSubclass(
+                hwnd,
+                Some(power_subclass_proc),
+                POWER_EVENTS_SUBCLASS_ID,
+                ref_data,
+            )
         };
         if success == 0 {
             tracing::error!("SetWindowSubclass failed for power events subclassing");

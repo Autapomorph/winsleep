@@ -104,10 +104,12 @@ pub fn atomic_write(path: &std::path::Path, content: &[u8]) -> Result<(), String
     drop(file);
 
     // If target path already exists, ensure it is not marked read-only on Windows
+    #[cfg(windows)]
     if path.exists() {
         if let Ok(metadata) = std::fs::metadata(path) {
             let mut permissions = metadata.permissions();
             if permissions.readonly() {
+                #[allow(clippy::permissions_set_readonly_false)]
                 permissions.set_readonly(false);
                 let _ = std::fs::set_permissions(path, permissions);
             }

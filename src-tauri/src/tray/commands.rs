@@ -11,7 +11,7 @@ static PAUSED_ICON: OnceLock<tauri::image::Image<'static>> = OnceLock::new();
 static DEFAULT_HAS_UPDATE_ICON: OnceLock<tauri::image::Image<'static>> = OnceLock::new();
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum IconKind {
+pub enum IconKind {
     Default,
     Running,
     Expiring,
@@ -19,8 +19,11 @@ enum IconKind {
     DefaultHasUpdate,
 }
 
-static LAST_ICON_KIND: std::sync::Mutex<Option<IconKind>> = std::sync::Mutex::new(None);
-static LAST_TOOLTIP: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
+#[derive(Default)]
+pub struct TrayState {
+    pub last_icon_kind: std::sync::Mutex<Option<IconKind>>,
+    pub last_tooltip: std::sync::Mutex<Option<String>>,
+}
 
 fn get_default_icon() -> tauri::image::Image<'static> {
     DEFAULT_ICON
@@ -101,9 +104,11 @@ pub struct PresetArgs {
     pub label: String,
 }
 
+#[allow(clippy::too_many_arguments)]
 #[tauri::command]
 pub fn update_tray_menu(
     app_handle: tauri::AppHandle,
+    tray_state: tauri::State<'_, TrayState>,
     tooltip: String,
     open_label: String,
     quit_label: String,
@@ -142,8 +147,11 @@ pub fn update_tray_menu(
             }
         };
 
-        let mut last_icon = LAST_ICON_KIND.lock().unwrap();
-        let should_set_icon = last_icon.map_or(true, |last| last != icon_kind);
+        let mut last_icon = tray_state
+            .last_icon_kind
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        let should_set_icon = last_icon.is_none_or(|last| last != icon_kind);
 
         if should_set_icon {
             let icon = match icon_kind {
@@ -157,7 +165,10 @@ pub fn update_tray_menu(
             *last_icon = Some(icon_kind);
         }
 
-        let mut last_tooltip = LAST_TOOLTIP.lock().unwrap();
+        let mut last_tooltip = tray_state
+            .last_tooltip
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let should_set_tooltip = last_tooltip.as_deref() != Some(&tooltip);
         if should_set_tooltip {
             tray.set_tooltip(Some(&tooltip))
