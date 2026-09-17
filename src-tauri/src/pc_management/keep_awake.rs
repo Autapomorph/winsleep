@@ -19,6 +19,19 @@ struct ActiveKeepAwake {
     display_required: bool,
 }
 
+impl Drop for ActiveKeepAwake {
+    fn drop(&mut self) {
+        unsafe {
+            let _ = PowerClearRequest(self.handle.0, PowerRequestSystemRequired);
+            if self.display_required {
+                let _ = PowerClearRequest(self.handle.0, PowerRequestDisplayRequired);
+            }
+            let _ = CloseHandle(self.handle.0);
+        }
+        tracing::info!("Released Windows Power Availability Request");
+    }
+}
+
 pub struct KeepAwakeManager {
     inner: Mutex<Option<ActiveKeepAwake>>,
 }
@@ -45,16 +58,8 @@ impl KeepAwakeManager {
             }
         }
 
-        // Release any existing request before creating a new one
-        if let Some(active) = guard.take() {
-            unsafe {
-                let _ = PowerClearRequest(active.handle.0, PowerRequestSystemRequired);
-                if active.display_required {
-                    let _ = PowerClearRequest(active.handle.0, PowerRequestDisplayRequired);
-                }
-                let _ = CloseHandle(active.handle.0);
-            }
-        }
+        // Release any existing request before creating a new one (Drop handles cleanup)
+        guard.take();
 
         let wide_reason: Vec<u16> = OsStr::new(reason)
             .encode_wide()
@@ -115,16 +120,7 @@ impl KeepAwakeManager {
             .lock()
             .map_err(|e| format!("Failed to lock KeepAwakeManager: {e}"))?;
 
-        if let Some(active) = guard.take() {
-            unsafe {
-                let _ = PowerClearRequest(active.handle.0, PowerRequestSystemRequired);
-                if active.display_required {
-                    let _ = PowerClearRequest(active.handle.0, PowerRequestDisplayRequired);
-                }
-                let _ = CloseHandle(active.handle.0);
-            }
-            tracing::info!("Released Windows Power Availability Request");
-        }
+        guard.take();
 
         Ok(())
     }

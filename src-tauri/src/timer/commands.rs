@@ -9,20 +9,24 @@ pub async fn start_timer(
     duration_ms: u64,
     target_timestamp_ms: Option<i64>,
 ) -> Result<(), String> {
-    tracing::info!("start_timer called: duration_ms={}, target_timestamp_ms={:?}", duration_ms, target_timestamp_ms);
+    tracing::info!(
+        "start_timer called: duration_ms={}, target_timestamp_ms={:?}",
+        duration_ms,
+        target_timestamp_ms
+    );
     let (tx, mut rx) = tokio::sync::oneshot::channel::<()>();
 
-    if let Ok(mut timer) = state.lock() {
-        if let Some(old_tx) = timer.cancel_tx.take() {
-            tracing::info!("Cancelling older running timer");
-            let _ = old_tx.send(());
-        }
-        timer.cancel_tx = Some(tx);
+    let mut timer = state.lock().unwrap_or_else(|e| e.into_inner());
+    if let Some(old_tx) = timer.cancel_tx.take() {
+        tracing::info!("Cancelling older running timer");
+        let _ = old_tx.send(());
     }
+    timer.cancel_tx = Some(tx);
 
     tokio::spawn(async move {
         tracing::info!("Backend timer thread spawned successfully");
         let mut interval = tokio::time::interval(Duration::from_millis(250));
+        interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
 
         let start_instant = Instant::now();
         let target_instant = start_instant + Duration::from_millis(duration_ms);
@@ -73,10 +77,9 @@ pub async fn start_timer(
 #[tauri::command]
 pub async fn cancel_timer(state: State<'_, ManagedTimer>) -> Result<(), String> {
     tracing::info!("cancel_timer called");
-    if let Ok(mut timer) = state.lock() {
-        if let Some(tx) = timer.cancel_tx.take() {
-            let _ = tx.send(());
-        }
+    let mut timer = state.lock().unwrap_or_else(|e| e.into_inner());
+    if let Some(tx) = timer.cancel_tx.take() {
+        let _ = tx.send(());
     }
     Ok(())
 }

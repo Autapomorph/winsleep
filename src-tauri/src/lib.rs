@@ -47,8 +47,9 @@ pub fn run() {
         .manage(AppSettings::default())
         .manage(timer::state::ManagedTimer::default())
         .manage(pc_management::KeepAwakeManager::default())
+        .manage(tray::TrayState::default())
         .setup(move |app| app::setup(app))
-        .on_window_event(|window, event| app::handle_window_event(window, event))
+        .on_window_event(app::handle_window_event)
         .invoke_handler(tauri::generate_handler![
             timer::commands::start_timer,
             timer::commands::cancel_timer,

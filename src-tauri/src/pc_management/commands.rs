@@ -60,7 +60,9 @@ pub fn pc_hibernate(keep_awake: State<'_, KeepAwakeManager>) -> Result<(), Strin
 }
 
 fn create_shutdown_command() -> Command {
-    let mut cmd = Command::new("shutdown");
+    let sys_root = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".to_string());
+    let shutdown_path = format!("{sys_root}\\System32\\shutdown.exe");
+    let mut cmd = Command::new(shutdown_path);
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
