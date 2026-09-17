@@ -1,12 +1,12 @@
 use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
+use std::hash::{DefaultHasher, Hasher};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
-use std::time::SystemTime;
 use tauri::{Emitter, Manager};
 
 pub struct AppSettings {
     pub is_tray_mode_enabled: AtomicBool,
-    pub last_write_time: Mutex<Option<SystemTime>>,
+    pub last_content_hash: Mutex<Option<u64>>,
     pub watcher: Mutex<Option<RecommendedWatcher>>,
 }
 
@@ -14,7 +14,7 @@ impl Default for AppSettings {
     fn default() -> Self {
         Self {
             is_tray_mode_enabled: AtomicBool::new(true),
-            last_write_time: Mutex::new(None),
+            last_content_hash: Mutex::new(None),
             watcher: Mutex::new(None),
         }
     }
@@ -70,6 +70,12 @@ impl AppSettings {
         false
     }
 
+    pub fn calculate_hash(bytes: &[u8]) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        hasher.write(bytes);
+        hasher.finish()
+    }
+
     pub fn setup_watcher(app_handle: &tauri::AppHandle) {
         // Load initial settings and synchronize in-memory tray mode state
         let is_tray_enabled = Self::load_initial_tray_mode(app_handle);
@@ -79,15 +85,15 @@ impl AppSettings {
             .is_tray_mode_enabled
             .store(is_tray_enabled, Ordering::Relaxed);
 
-        // Track the initial write time of settings.json
-        let initial_write_time = Self::get_settings_path(app_handle)
+        // Track the initial content hash of settings.json
+        let initial_hash = Self::get_settings_path(app_handle)
             .ok()
-            .and_then(|p| std::fs::metadata(p).ok())
-            .and_then(|m| m.modified().ok());
+            .and_then(|p| std::fs::read(p).ok())
+            .map(|bytes| Self::calculate_hash(&bytes));
 
-        if let Some(time) = initial_write_time {
-            if let Ok(mut guard) = settings_state.last_write_time.lock() {
-                *guard = Some(time);
+        if let Some(hash) = initial_hash {
+            if let Ok(mut guard) = settings_state.last_content_hash.lock() {
+                *guard = Some(hash);
             }
         }
 
@@ -129,23 +135,33 @@ impl AppSettings {
                         return;
                     }
 
-                    if let Ok(metadata) = std::fs::metadata(&target_settings_path) {
-                        if let Ok(modified) = metadata.modified() {
-                            let settings_state = app_handle_clone.state::<AppSettings>();
-                            let was_saved_by_user =
-                                if let Ok(guard) = settings_state.last_write_time.lock() {
-                                    *guard == Some(modified)
-                                } else {
-                                    false
-                                };
+                    let mut read_result = std::fs::read(&target_settings_path);
+                    if read_result.is_err() {
+                        // On Windows, the file might briefly have a sharing lock during write/rename
+                        std::thread::sleep(std::time::Duration::from_millis(20));
+                        read_result = std::fs::read(&target_settings_path);
+                    }
 
-                            if !was_saved_by_user {
-                                tracing::info!("External settings.json change detected via notify");
-                                if let Ok(mut guard) = settings_state.last_write_time.lock() {
-                                    *guard = Some(modified);
-                                }
-                                let _ = app_handle_clone.emit("settings-external-change", ());
+                    if let Ok(bytes) = read_result {
+                        if bytes.is_empty() {
+                            return;
+                        }
+
+                        let current_hash = Self::calculate_hash(&bytes);
+                        let settings_state = app_handle_clone.state::<AppSettings>();
+                        let is_same_content =
+                            if let Ok(guard) = settings_state.last_content_hash.lock() {
+                                *guard == Some(current_hash)
+                            } else {
+                                false
+                            };
+
+                        if !is_same_content {
+                            tracing::info!("External settings.json change detected via notify");
+                            if let Ok(mut guard) = settings_state.last_content_hash.lock() {
+                                *guard = Some(current_hash);
                             }
+                            let _ = app_handle_clone.emit("settings-external-change", ());
                         }
                     }
                 }
@@ -171,5 +187,20 @@ impl AppSettings {
                 tracing::error!("Failed to create file watcher: {e}");
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_calculate_hash_determinism_and_differences() {
+        let data1 = br#"{"selectedAction":"sleep"}"#;
+        let data2 = br#"{"selectedAction":"sleep"}"#;
+        let data3 = br#"{"selectedAction":"hibernate"}"#;
+
+        assert_eq!(AppSettings::calculate_hash(data1), AppSettings::calculate_hash(data2));
+        assert_ne!(AppSettings::calculate_hash(data1), AppSettings::calculate_hash(data3));
     }
 }
