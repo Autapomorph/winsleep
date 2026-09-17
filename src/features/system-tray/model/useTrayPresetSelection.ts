@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 
-import { useKeepAwakeStore } from '@/entities/keep-awake';
 import { useSessionStore } from '@/entities/session';
 import { useTimerStore } from '@/entities/timer';
 import { typedListen } from '@/shared/api';
@@ -16,46 +15,14 @@ export const useTrayPresetSelection = () => {
       }
 
       const seconds = event.payload;
-
       logger.info(`Preset clicked from tray menu: ${seconds}s`);
 
       const { timerAction } = useSessionStore.getState();
-      const { timerState, cancel, start, setExactTime } = useTimerStore.getState();
-      const { isIndefiniteActive, startIndefinite, stopIndefinite } = useKeepAwakeStore.getState();
+      const { setExactTime, setIndefinite } = useTimerStore.getState();
 
-      if (timerAction === 'keep-awake') {
-        if (seconds === 0) {
-          if (timerState === 'running') {
-            cancel();
-            setExactTime(0);
-            startIndefinite();
-            return;
-          }
-
-          if (timerState === 'paused') {
-            cancel();
-            setExactTime(0);
-            return;
-          }
-
-          if (isIndefiniteActive) {
-            return;
-          }
-
-          setExactTime(0);
-          return;
-        }
-
-        if (isIndefiniteActive) {
-          stopIndefinite();
-          setExactTime(seconds);
-          start();
-          return;
-        }
-      }
-
-      if (isIndefiniteActive) {
-        stopIndefinite();
+      if (timerAction === 'keep-awake' && seconds === 0) {
+        setIndefinite();
+        return;
       }
 
       setExactTime(seconds);

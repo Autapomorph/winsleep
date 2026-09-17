@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 
-import { useKeepAwakeStore } from '@/entities/keep-awake';
 import { useSettingsStore } from '@/entities/setting';
 import { DEFAULT_TIMER_STEP_SECONDS, useTimerStore } from '@/entities/timer';
 import { typedListen } from '@/shared/api';
@@ -15,7 +14,7 @@ export const useTrayStepControl = () => {
         return;
       }
 
-      if (useKeepAwakeStore.getState().isIndefiniteActive) {
+      if (useTimerStore.getState().timerMode !== 'duration') {
         return;
       }
 
@@ -32,7 +31,7 @@ export const useTrayStepControl = () => {
         return;
       }
 
-      if (useKeepAwakeStore.getState().isIndefiniteActive) {
+      if (useTimerStore.getState().timerMode !== 'duration') {
         return;
       }
 

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
 
-import { useKeepAwakeStore } from '@/entities/keep-awake';
 import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import {
@@ -18,12 +17,6 @@ import { formatDays, formatDurationShort, formatTime, logger } from '@/shared/li
 export const useTrayLanguageSync = () => {
   const { t } = useTranslation();
   const [syncTrigger, setSyncTrigger] = useState(0);
-
-  const { isIndefiniteActive } = useKeepAwakeStore(
-    useShallow(state => ({
-      isIndefiniteActive: state.isIndefiniteActive,
-    })),
-  );
 
   const { timerAction, isSettingsLocked } = useSessionStore(
     useShallow(state => ({
@@ -139,14 +132,15 @@ export const useTrayLanguageSync = () => {
 
   useEffect(() => {
     const currentTooltipAction = staticLabels.tooltipActionLabels[timerAction];
+    const isIndefinite = timerMode === 'indefinite';
 
-    const formattedRemainingTime = isIndefiniteActive
+    const formattedRemainingTime = isIndefinite
       ? t($ => $.tray.tooltip.remainingTime.indefinite)
       : (formatDays(remainingSeconds, t) ?? formatTime(remainingSeconds));
 
     let tooltip = t($ => $.tray.tooltip.default);
 
-    if (isIndefiniteActive || timerState === 'running') {
+    if (timerState === 'running') {
       tooltip = t($ => $.tray.tooltip.running, {
         action: currentTooltipAction,
         remainingTime: formattedRemainingTime,
@@ -164,8 +158,11 @@ export const useTrayLanguageSync = () => {
       plannedTime: formatDays(plannedSeconds, t) ?? formatTime(plannedSeconds),
     });
 
-    if (isIndefiniteActive) {
-      timerStatusLabel = t($ => $.timer.triggerAt.keepAwakeIndefiniteRunning);
+    if (isIndefinite) {
+      timerStatusLabel =
+        timerState === 'running'
+          ? t($ => $.timer.triggerAt.keepAwakeIndefiniteRunning)
+          : t($ => $.timer.triggerAt.keepAwakeIndefiniteIdle);
     } else if (timerState === 'running' || timerState === 'paused') {
       timerStatusLabel = `${staticLabels.timerActionLabels[timerAction]}: ${
         formatDays(remainingSeconds, t) ?? formatTime(remainingSeconds)
@@ -174,9 +171,7 @@ export const useTrayLanguageSync = () => {
 
     let startResumePauseTimerLabel = t($ => $.tray.menu.startTimer);
 
-    if (isIndefiniteActive) {
-      startResumePauseTimerLabel = t($ => $.tray.menu.pauseTimer);
-    } else if (timerState === 'paused') {
+    if (timerState === 'paused') {
       startResumePauseTimerLabel = t($ => $.tray.menu.resumeTimer);
     } else if (timerState === 'running') {
       startResumePauseTimerLabel = t($ => $.tray.menu.pauseTimer);
@@ -202,14 +197,14 @@ export const useTrayLanguageSync = () => {
     const updateLabel = getUpdateText();
 
     const isExpiring =
-      !isIndefiniteActive && timerState !== 'idle' && remainingSeconds <= DANGER_THRESHOLD_SECONDS;
+      !isIndefinite && timerState !== 'idle' && remainingSeconds <= DANGER_THRESHOLD_SECONDS;
 
     const payload: TrayMenuState = {
       tooltip,
       openLabel: staticLabels.openLabel,
       quitLabel: staticLabels.quitLabel,
-      timerState: isIndefiniteActive ? 'running' : timerState,
-      timerMode: isIndefiniteActive ? 'timestamp' : timerMode,
+      timerState,
+      timerMode,
       isExpiring,
       timerAction: {
         selectedTimerActionLabel,
@@ -245,7 +240,6 @@ export const useTrayLanguageSync = () => {
     plannedSeconds,
     timerState,
     timerMode,
-    isIndefiniteActive,
     isSettingsLocked,
     updateStatus,
     downloadProgress,

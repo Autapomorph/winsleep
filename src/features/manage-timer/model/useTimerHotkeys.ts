@@ -40,7 +40,7 @@ export const useTimerHotkeys = ({
     }
 
     if (timerState === 'running') {
-      if (timerMode === 'timestamp') {
+      if (timerMode !== 'duration') {
         return;
       }
 
@@ -56,11 +56,11 @@ export const useTimerHotkeys = ({
   });
 
   useAppHotkey(SHORTCUTS.TIMER.INCREASE, increaseTime, {
-    enabled: !isLocked && timerMode !== 'timestamp',
+    enabled: !isLocked && timerMode === 'duration',
   });
 
   useAppHotkey(SHORTCUTS.TIMER.DECREASE, decreaseTime, {
-    enabled: !isLocked && timerMode !== 'timestamp',
+    enabled: !isLocked && timerMode === 'duration',
   });
 
   useAppHotkey(SHORTCUTS.TIMER.INSTANT_EXECUTE, executeImmediately, {

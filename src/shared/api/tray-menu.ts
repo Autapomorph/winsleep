@@ -11,7 +11,7 @@ export type TrayMenuState = {
   openLabel: string;
   quitLabel: string;
   timerState: 'idle' | 'paused' | 'running';
-  timerMode: 'duration' | 'timestamp';
+  timerMode: 'duration' | 'timestamp' | 'indefinite';
   isExpiring: boolean;
   timerAction: {
     selectedTimerActionLabel: string;

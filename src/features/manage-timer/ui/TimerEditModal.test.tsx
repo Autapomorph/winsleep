@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { useKeepAwakeStore } from '@/entities/keep-awake';
 import { useTimerStore } from '@/entities/timer';
 import { TimerEditModal } from './TimerEditModal';
 
@@ -89,9 +88,6 @@ describe('TimerEditModal', () => {
       plannedSeconds: 300,
       remainingSeconds: 300,
     });
-    useKeepAwakeStore.setState({
-      isIndefiniteActive: false,
-    });
   });
 
   test('submits duration mode calling setExactTime with updated values', async () => {
@@ -145,9 +141,14 @@ describe('TimerEditModal', () => {
   });
 
   test('transitions from indefinite keep-awake to running timestamp timer on submit', async () => {
-    useKeepAwakeStore.setState({ isIndefiniteActive: true });
-    const stopIndefiniteSpy = vi.spyOn(useKeepAwakeStore.getState(), 'stopIndefinite');
-    const startSpy = vi.spyOn(useTimerStore.getState(), 'start');
+    useTimerStore.setState({
+      timerState: 'running',
+      timerMode: 'indefinite',
+      plannedSeconds: 0,
+      remainingSeconds: 0,
+      targetDateTime: null,
+    });
+    const setTargetDateTimeSpy = vi.spyOn(useTimerStore.getState(), 'setTargetDateTime');
 
     render(
       <TimerEditModal
@@ -170,9 +171,7 @@ describe('TimerEditModal', () => {
     });
     await userEvent.click(submitBtn);
 
-    expect(stopIndefiniteSpy).toHaveBeenCalled();
-    expect(startSpy).toHaveBeenCalled();
-    expect(useKeepAwakeStore.getState().isIndefiniteActive).toBe(false);
+    expect(setTargetDateTimeSpy).toHaveBeenCalledWith(1750000000000);
     expect(useTimerStore.getState().timerState).toBe('running');
     expect(useTimerStore.getState().timerMode).toBe('timestamp');
     expect(useTimerStore.getState().targetDateTime).toBe(1750000000000);

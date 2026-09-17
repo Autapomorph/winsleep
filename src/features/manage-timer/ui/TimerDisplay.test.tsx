@@ -31,7 +31,7 @@ const baseProps = {
 
 describe('TimerDisplay', () => {
   beforeEach(() => {
-    useTimerStore.setState({ timerState: 'idle' });
+    useTimerStore.setState({ timerState: 'idle', timerMode: 'duration' });
     useSettingsStore.setState({ isCustomTimerStepsEnabled: false });
   });
 
@@ -85,7 +85,8 @@ describe('TimerDisplay', () => {
     expect(screen.queryByTestId('timer-edit-modal')).not.toBeInTheDocument();
   });
 
-  test('displays Keep Awake and disables +/- buttons when action is keep-awake and currentSeconds is 0', async () => {
+  test('displays Keep Awake and disables +/- buttons when action is keep-awake and mode is indefinite', async () => {
+    useTimerStore.setState({ timerMode: 'indefinite', timerState: 'running' });
     render(<TimerDisplay {...baseProps} currentSeconds={0} action="keep-awake" />);
 
     expect(screen.getByText('timer.indefiniteLabel.text')).toBeInTheDocument();

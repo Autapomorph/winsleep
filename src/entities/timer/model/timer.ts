@@ -1,6 +1,6 @@
 export type TimerState = 'idle' | 'running' | 'paused';
 
-export type TimerMode = 'duration' | 'timestamp';
+export type TimerMode = 'duration' | 'timestamp' | 'indefinite';
 
 export const MIN_SECONDS = 1; // Minimum timer value in seconds (1 second)
 

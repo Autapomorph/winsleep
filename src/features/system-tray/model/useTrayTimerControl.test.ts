@@ -1,6 +1,5 @@
 import { renderHook } from '@testing-library/react';
 
-import { useKeepAwakeStore } from '@/entities/keep-awake';
 import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import { useTimerStore } from '@/entities/timer';
@@ -26,6 +25,7 @@ describe('useTrayTimerControl', () => {
 
     useTimerStore.setState({
       timerState: 'idle',
+      timerMode: 'duration',
     });
 
     useSettingsStore.setState({
@@ -162,53 +162,54 @@ describe('useTrayTimerControl', () => {
 
   describe('keep-awake indefinite mode', () => {
     beforeEach(() => {
-      useKeepAwakeStore.setState({ isIndefiniteActive: false });
       useSessionStore.setState({ timerAction: 'keep-awake' });
       useTimerStore.setState({
         timerState: 'idle',
         plannedSeconds: 0,
         remainingSeconds: 0,
-        timerMode: 'duration',
+        timerMode: 'indefinite',
       });
     });
 
-    test('starts indefinite keep-awake instead of 0s timer when action is keep-awake and plannedSeconds is 0', () => {
+    test('starts indefinite keep-awake when action is keep-awake and mode is indefinite', () => {
       renderHook(() => useTrayTimerControl());
 
       mockListeners['tray-timer-start-resume-pause-clicked']({ payload: null });
 
-      expect(useKeepAwakeStore.getState().isIndefiniteActive).toBe(true);
-      expect(useTimerStore.getState().timerState).toBe('idle');
+      expect(useTimerStore.getState().timerState).toBe('running');
+      expect(useTimerStore.getState().timerMode).toBe('indefinite');
     });
 
     test('ignores start/resume/pause click while indefinite is active since pause is disabled', () => {
-      useKeepAwakeStore.setState({ isIndefiniteActive: true });
+      useTimerStore.setState({ timerState: 'running', timerMode: 'indefinite' });
 
       renderHook(() => useTrayTimerControl());
 
       mockListeners['tray-timer-start-resume-pause-clicked']({ payload: null });
 
-      expect(useKeepAwakeStore.getState().isIndefiniteActive).toBe(true);
+      expect(useTimerStore.getState().timerState).toBe('running');
+      expect(useTimerStore.getState().timerMode).toBe('indefinite');
     });
 
     test('stops indefinite keep-awake when cancel is clicked', () => {
-      useKeepAwakeStore.setState({ isIndefiniteActive: true });
+      useTimerStore.setState({ timerState: 'running', timerMode: 'indefinite' });
 
       renderHook(() => useTrayTimerControl());
 
       mockListeners['tray-timer-cancel-clicked']({ payload: null });
 
-      expect(useKeepAwakeStore.getState().isIndefiniteActive).toBe(false);
+      expect(useTimerStore.getState().timerState).toBe('idle');
+      expect(useTimerStore.getState().timerMode).toBe('indefinite');
     });
 
     test('stops indefinite keep-awake and starts timer when a positive preset is selected', () => {
-      useKeepAwakeStore.setState({ isIndefiniteActive: true });
+      useTimerStore.setState({ timerState: 'running', timerMode: 'indefinite' });
 
       renderHook(() => useTrayTimerControl());
 
       mockListeners['tray-preset-selected']({ payload: 600 });
 
-      expect(useKeepAwakeStore.getState().isIndefiniteActive).toBe(false);
+      expect(useTimerStore.getState().timerMode).toBe('duration');
       expect(useTimerStore.getState().plannedSeconds).toBe(600);
       expect(useTimerStore.getState().timerState).toBe('running');
     });
@@ -216,17 +217,17 @@ describe('useTrayTimerControl', () => {
     test('switches running countdown to indefinite keep-awake when preset 0 is selected', () => {
       useTimerStore.setState({
         timerState: 'running',
+        timerMode: 'duration',
         plannedSeconds: 600,
         remainingSeconds: 300,
       });
-      useKeepAwakeStore.setState({ isIndefiniteActive: false });
 
       renderHook(() => useTrayTimerControl());
 
       mockListeners['tray-preset-selected']({ payload: 0 });
 
-      expect(useKeepAwakeStore.getState().isIndefiniteActive).toBe(true);
-      expect(useTimerStore.getState().timerState).toBe('idle');
+      expect(useTimerStore.getState().timerMode).toBe('indefinite');
+      expect(useTimerStore.getState().timerState).toBe('running');
       expect(useTimerStore.getState().plannedSeconds).toBe(0);
     });
 
@@ -234,23 +235,26 @@ describe('useTrayTimerControl', () => {
       useSessionStore.setState({ timerAction: 'keep-awake' });
       useTimerStore.setState({
         timerState: 'paused',
+        timerMode: 'duration',
         plannedSeconds: 600,
         remainingSeconds: 300,
       });
-      useKeepAwakeStore.setState({ isIndefiniteActive: false });
 
       renderHook(() => useTrayTimerControl());
 
       mockListeners['tray-preset-selected']({ payload: 0 });
 
-      expect(useKeepAwakeStore.getState().isIndefiniteActive).toBe(false);
+      expect(useTimerStore.getState().timerMode).toBe('indefinite');
       expect(useTimerStore.getState().timerState).toBe('idle');
       expect(useTimerStore.getState().plannedSeconds).toBe(0);
     });
 
     test('ignores increase and decrease clicks while indefinite is active', () => {
-      useKeepAwakeStore.setState({ isIndefiniteActive: true });
-      useTimerStore.setState({ plannedSeconds: 0 });
+      useTimerStore.setState({
+        timerState: 'running',
+        timerMode: 'indefinite',
+        plannedSeconds: 0,
+      });
 
       renderHook(() => useTrayTimerControl());
 

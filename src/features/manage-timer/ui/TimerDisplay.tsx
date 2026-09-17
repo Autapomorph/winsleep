@@ -3,8 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Button, cn, Kbd, Tooltip, useOverlayState } from '@heroui/react';
 import { FaMinus, FaPlus } from 'react-icons/fa6';
 
-import { useKeepAwakeStore } from '@/entities/keep-awake';
-import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import {
   DANGER_THRESHOLD_SECONDS,
@@ -28,7 +26,7 @@ interface Props {
 }
 
 export const TimerDisplay = ({
-  action,
+  action: _action,
   currentSeconds,
   formattedTime,
   increaseTime,
@@ -42,12 +40,6 @@ export const TimerDisplay = ({
   const modalState = useOverlayState();
   const decreaseTimeBtnLongPressProps = useLongPress(decreaseTime);
   const increaseTimeBtnLongPressProps = useLongPress(increaseTime);
-  const sessionAction = useSessionStore(state => state.timerAction);
-  const isIndefiniteActive = useKeepAwakeStore(state => state.isIndefiniteActive);
-
-  const currentAction = action ?? sessionAction;
-  const isIndefiniteMode =
-    currentAction === 'keep-awake' && (isIndefiniteActive || currentSeconds === 0);
 
   const { timerState, timerMode } = useTimerStore(
     useShallow(state => ({
@@ -55,10 +47,12 @@ export const TimerDisplay = ({
       timerMode: state.timerMode,
     })),
   );
-  const isPaused = !isIndefiniteMode && timerState === 'paused';
+
+  const isIndefiniteMode = timerMode === 'indefinite';
+  const isPaused = timerState === 'paused';
   const isExpiring =
     !isIndefiniteMode && timerState === 'running' && currentSeconds <= DANGER_THRESHOLD_SECONDS;
-  const isTimestampMode = timerMode === 'timestamp';
+  const isStepAllowed = timerMode === 'duration';
 
   const { isCustomTimerStepsEnabled, timerStepIncrease, timerStepDecrease } = useSettingsStore(
     useShallow(state => ({
@@ -78,7 +72,7 @@ export const TimerDisplay = ({
       {/* Decrease time button */}
       <Tooltip delay={TOOLTIP_DELAY_LONG} closeDelay={TOOLTIP_CLOSE_DELAY_DEFAULT}>
         <Button
-          isDisabled={!isDecreaseAllowed || isLocked || isTimestampMode || isIndefiniteMode}
+          isDisabled={!isDecreaseAllowed || isLocked || !isStepAllowed}
           isIconOnly
           {...decreaseTimeBtnLongPressProps}
           aria-label={t($ => $.timer.decreaseTimeBtn.aria.label, {
@@ -139,7 +133,7 @@ export const TimerDisplay = ({
       {/* Increase time button */}
       <Tooltip delay={TOOLTIP_DELAY_LONG} closeDelay={TOOLTIP_CLOSE_DELAY_DEFAULT}>
         <Button
-          isDisabled={!isIncreaseAllowed || isLocked || isTimestampMode || isIndefiniteMode}
+          isDisabled={!isIncreaseAllowed || isLocked || !isStepAllowed}
           isIconOnly
           {...increaseTimeBtnLongPressProps}
           aria-label={t($ => $.timer.increaseTimeBtn.aria.label, {

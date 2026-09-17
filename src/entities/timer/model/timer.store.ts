@@ -6,9 +6,9 @@ import { DEFAULT_TIMER_SECONDS, DEFAULT_TIMER_STEP_SECONDS } from '@/shared/conf
 import { getDateNow, logger } from '@/shared/lib';
 import { type TimerMode, type TimerState, MAX_SECONDS, MIN_SECONDS } from './timer';
 
-type TimerStore = TimerStoreState & TimerActions;
+export type TimerStore = TimerStoreState & TimerActions;
 
-interface TimerStoreState {
+export interface TimerStoreState {
   timerState: TimerState;
   timerMode: TimerMode;
   targetDateTime: number | null;
@@ -18,7 +18,7 @@ interface TimerStoreState {
   isListenersInitialized: boolean;
 }
 
-interface TimerActions {
+export interface TimerActions {
   start: () => void;
   pause: () => void;
   resume: () => void;
@@ -28,7 +28,10 @@ interface TimerActions {
   setTimerMode: (mode: TimerMode) => void;
   setExactTime: (seconds: number) => void;
   setTargetDateTime: (timestamp: number | null) => void;
+  setIndefinite: () => void;
+  resetToDefaultDuration: (defaultSeconds?: number) => void;
   restoreScheduledTimer: (targetDateTime: number) => void;
+  restoreIndefiniteTimer: () => void;
 }
 
 const initialState: TimerStoreState = {
@@ -51,6 +54,24 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
     const { plannedSeconds, targetDateTime, timerMode, timerState } = get();
 
     if (timerState !== 'idle') {
+      return;
+    }
+
+    if (timerMode === 'indefinite') {
+      logger.info('Timer started in indefinite mode');
+      typedInvoke('cancel_timer').catch(err => {
+        logger.error(`Failed to cancel backend timer on indefinite start: ${err}`);
+      });
+      set(
+        {
+          endTime: null,
+          remainingSeconds: 0,
+          timerState: 'running',
+        },
+        false,
+        'timer/start',
+      );
+
       return;
     }
 
@@ -78,12 +99,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
   pause: () => {
     const { endTime, timerMode, timerState } = get();
 
-    if (timerState !== 'running' || !endTime) {
-      return;
-    }
-
-    if (timerMode === 'timestamp') {
-      get().cancel();
+    if (timerState !== 'running' || timerMode !== 'duration' || !endTime) {
       return;
     }
 
@@ -106,9 +122,9 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
   },
 
   resume: () => {
-    const { remainingSeconds, timerState } = get();
+    const { remainingSeconds, timerMode, timerState } = get();
 
-    if (timerState !== 'paused') {
+    if (timerState !== 'paused' || timerMode !== 'duration') {
       return;
     }
 
@@ -136,7 +152,9 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
     }
 
     let clampedPlanned = plannedSeconds;
-    if (timerMode === 'timestamp' && targetDateTime) {
+    if (timerMode === 'indefinite') {
+      clampedPlanned = 0;
+    } else if (timerMode === 'timestamp' && targetDateTime) {
       clampedPlanned = Math.max(0, Math.ceil((targetDateTime - getDateNow()) / 1000));
     } else if (timerMode === 'duration') {
       clampedPlanned = Math.min(plannedSeconds, MAX_SECONDS);
@@ -145,7 +163,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
     set(
       {
         endTime: null,
-        plannedSeconds: clampedPlanned,
+        plannedSeconds: timerMode === 'indefinite' ? plannedSeconds : clampedPlanned,
         remainingSeconds: clampedPlanned,
         timerState: 'idle',
       },
@@ -155,7 +173,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
   },
 
   increaseTime: step => {
-    if (get().timerMode === 'timestamp') {
+    if (get().timerMode !== 'duration') {
       return;
     }
 
@@ -192,7 +210,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
   },
 
   decreaseTime: step => {
-    if (get().timerMode === 'timestamp') {
+    if (get().timerMode !== 'duration') {
       return;
     }
 
@@ -229,7 +247,207 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
   },
 
   setTimerMode: mode => {
-    set({ timerMode: mode }, false, 'timer/setTimerMode');
+    const { plannedSeconds, remainingSeconds, targetDateTime, timerMode, timerState } = get();
+
+    if (mode === timerMode) {
+      return;
+    }
+
+    // Transition rule 1: If timer was paused in duration, switching to timestamp or indefinite causes idle
+    if (timerState === 'paused') {
+      logger.info(
+        `Timer switched mode from ${timerMode} to ${mode} while paused -> transitioning to idle`,
+      );
+      typedInvoke('cancel_timer').catch(err => {
+        logger.error(`Failed to cancel backend timer on mode switch: ${err}`);
+      });
+
+      if (mode === 'indefinite') {
+        set(
+          {
+            endTime: null,
+            plannedSeconds: 0,
+            remainingSeconds: 0,
+            targetDateTime: null,
+            timerMode: 'indefinite',
+            timerState: 'idle',
+          },
+          false,
+          'timer/setTimerMode',
+        );
+
+        return;
+      }
+
+      if (mode === 'timestamp') {
+        const timestamp = targetDateTime ?? getDateNow() + 30 * 60 * 1000;
+        const seconds = Math.max(0, Math.ceil((timestamp - getDateNow()) / 1000));
+        set(
+          {
+            endTime: null,
+            plannedSeconds: seconds,
+            remainingSeconds: seconds,
+            targetDateTime: timestamp,
+            timerMode: 'timestamp',
+            timerState: 'idle',
+          },
+          false,
+          'timer/setTimerMode',
+        );
+
+        return;
+      }
+
+      // mode === 'duration'
+      set(
+        {
+          endTime: null,
+          remainingSeconds: plannedSeconds,
+          targetDateTime: null,
+          timerMode: 'duration',
+          timerState: 'idle',
+        },
+        false,
+        'timer/setTimerMode',
+      );
+
+      return;
+    }
+
+    // Transition rule 2 & 3: If timer was running, switching mode immediately starts/runs in the new mode
+    if (timerState === 'running') {
+      logger.info(
+        `Timer switched mode from ${timerMode} to ${mode} while running -> continuing running in ${mode}`,
+      );
+
+      if (mode === 'indefinite') {
+        typedInvoke('cancel_timer').catch(err => {
+          logger.error(`Failed to cancel backend countdown on indefinite mode: ${err}`);
+        });
+
+        set(
+          {
+            endTime: null,
+            plannedSeconds: 0,
+            remainingSeconds: 0,
+            targetDateTime: null,
+            timerMode: 'indefinite',
+            timerState: 'running',
+          },
+          false,
+          'timer/setTimerMode',
+        );
+
+        return;
+      }
+
+      if (mode === 'timestamp') {
+        const fallbackTimestamp =
+          getDateNow() + Math.round((remainingSeconds > 0 ? remainingSeconds : 30 * 60) * 1000);
+        const timestamp =
+          targetDateTime && targetDateTime > getDateNow() ? targetDateTime : fallbackTimestamp;
+        const seconds = Math.max(0, Math.ceil((timestamp - getDateNow()) / 1000));
+
+        set(
+          {
+            endTime: timestamp,
+            plannedSeconds: seconds,
+            remainingSeconds: seconds,
+            targetDateTime: timestamp,
+            timerMode: 'timestamp',
+            timerState: 'running',
+          },
+          false,
+          'timer/setTimerMode',
+        );
+
+        typedInvoke('start_timer', {
+          durationMs: seconds * 1000,
+          targetTimestampMs: timestamp,
+        }).catch(err => {
+          logger.error(`Failed to start backend timer on switch to timestamp: ${err}`);
+        });
+
+        return;
+      }
+
+      // mode === 'duration'
+      let durationSecs = plannedSeconds > 0 ? plannedSeconds : DEFAULT_TIMER_SECONDS;
+      if (timerMode === 'timestamp' && remainingSeconds > 0) {
+        durationSecs = Math.round(remainingSeconds);
+      }
+
+      const endTime = getDateNow() + durationSecs * 1000;
+      set(
+        {
+          endTime,
+          plannedSeconds: durationSecs,
+          remainingSeconds: durationSecs,
+          targetDateTime: null,
+          timerMode: 'duration',
+          timerState: 'running',
+        },
+        false,
+        'timer/setTimerMode',
+      );
+
+      typedInvoke('start_timer', {
+        durationMs: Math.round(durationSecs * 1000),
+        targetTimestampMs: null,
+      }).catch(err => {
+        logger.error(`Failed to start backend timer on switch to duration: ${err}`);
+      });
+
+      return;
+    }
+
+    // timerState === 'idle'
+    if (mode === 'indefinite') {
+      set(
+        {
+          endTime: null,
+          plannedSeconds: 0,
+          remainingSeconds: 0,
+          targetDateTime: null,
+          timerMode: 'indefinite',
+        },
+        false,
+        'timer/setTimerMode',
+      );
+
+      return;
+    }
+
+    if (mode === 'timestamp') {
+      let seconds = plannedSeconds;
+      if (targetDateTime) {
+        seconds = Math.max(0, Math.ceil((targetDateTime - getDateNow()) / 1000));
+      }
+
+      set(
+        {
+          endTime: null,
+          remainingSeconds: seconds,
+          timerMode: 'timestamp',
+        },
+        false,
+        'timer/setTimerMode',
+      );
+
+      return;
+    }
+
+    // mode === 'duration'
+    set(
+      {
+        endTime: null,
+        remainingSeconds: plannedSeconds > 0 ? plannedSeconds : DEFAULT_TIMER_SECONDS,
+        targetDateTime: null,
+        timerMode: 'duration',
+      },
+      false,
+      'timer/setTimerMode',
+    );
   },
 
   setExactTime: seconds => {
@@ -241,37 +459,61 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
 
       set(
         {
+          endTime: null,
           plannedSeconds: validSeconds,
           remainingSeconds: validSeconds,
           targetDateTime: null,
           timerMode: 'duration',
-        },
-        false,
-        'timer/setExactTime',
-      );
-    } else {
-      logger.info(`Timer remaining duration set to: ${validSeconds}s`);
-      const endTime = getDateNow() + validSeconds * 1000;
-      set(
-        {
-          endTime,
-          plannedSeconds: validSeconds,
-          remainingSeconds: validSeconds,
-          targetDateTime: null,
-          timerMode: 'duration',
-          timerState: 'running',
+          timerState: 'idle',
         },
         false,
         'timer/setExactTime',
       );
 
-      typedInvoke('start_timer', {
-        durationMs: validSeconds * 1000,
-        targetTimestampMs: null,
-      }).catch(err => {
-        logger.error(`Failed to update backend timer on setExactTime: ${err}`);
-      });
+      return;
     }
+
+    if (timerState === 'paused') {
+      logger.info(`Timer duration updated while paused: ${validSeconds}s`);
+
+      set(
+        {
+          endTime: null,
+          plannedSeconds: validSeconds,
+          remainingSeconds: validSeconds,
+          targetDateTime: null,
+          timerMode: 'duration',
+          timerState: 'paused',
+        },
+        false,
+        'timer/setExactTime',
+      );
+
+      return;
+    }
+
+    // timerState === 'running'
+    logger.info(`Timer remaining duration set to: ${validSeconds}s`);
+    const endTime = getDateNow() + validSeconds * 1000;
+    set(
+      {
+        endTime,
+        plannedSeconds: validSeconds,
+        remainingSeconds: validSeconds,
+        targetDateTime: null,
+        timerMode: 'duration',
+        timerState: 'running',
+      },
+      false,
+      'timer/setExactTime',
+    );
+
+    typedInvoke('start_timer', {
+      durationMs: validSeconds * 1000,
+      targetTimestampMs: null,
+    }).catch(err => {
+      logger.error(`Failed to update backend timer on setExactTime: ${err}`);
+    });
   },
 
   setTargetDateTime: timestamp => {
@@ -296,38 +538,84 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
 
       set(
         {
+          endTime: null,
           plannedSeconds: seconds,
           remainingSeconds: seconds,
           targetDateTime: timestamp,
           timerMode: 'timestamp',
+          timerState: 'idle',
         },
         false,
         'timer/setTargetDateTime',
       );
-    } else {
-      logger.info(`Timer target timestamp updated to: ${timestamp} (${seconds}s remaining)`);
 
-      const endTime = timestamp;
+      return;
+    }
+
+    if (timerState === 'paused') {
+      logger.info(`Timer reset from paused to idle with target timestamp: ${timestamp}`);
+
       set(
         {
-          endTime,
+          endTime: null,
           plannedSeconds: seconds,
           remainingSeconds: seconds,
           targetDateTime: timestamp,
           timerMode: 'timestamp',
-          timerState: 'running',
+          timerState: 'idle',
         },
         false,
         'timer/setTargetDateTime',
       );
 
-      typedInvoke('start_timer', {
-        durationMs: seconds * 1000,
-        targetTimestampMs: timestamp,
-      }).catch(err => {
-        logger.error(`Failed to update backend timer on setTargetDateTime: ${err}`);
-      });
+      return;
     }
+
+    // timerState === 'running'
+    logger.info(`Timer target timestamp updated to: ${timestamp} (${seconds}s remaining)`);
+    set(
+      {
+        endTime: timestamp,
+        plannedSeconds: seconds,
+        remainingSeconds: seconds,
+        targetDateTime: timestamp,
+        timerMode: 'timestamp',
+        timerState: 'running',
+      },
+      false,
+      'timer/setTargetDateTime',
+    );
+
+    typedInvoke('start_timer', {
+      durationMs: seconds * 1000,
+      targetTimestampMs: timestamp,
+    }).catch(err => {
+      logger.error(`Failed to update backend timer on setTargetDateTime: ${err}`);
+    });
+  },
+
+  setIndefinite: () => {
+    get().setTimerMode('indefinite');
+  },
+
+  resetToDefaultDuration: defaultSeconds => {
+    const seconds = defaultSeconds ?? DEFAULT_TIMER_SECONDS;
+    typedInvoke('cancel_timer').catch(err => {
+      logger.error(`Failed to cancel backend timer on resetToDefaultDuration: ${err}`);
+    });
+
+    set(
+      {
+        endTime: null,
+        plannedSeconds: seconds,
+        remainingSeconds: seconds,
+        targetDateTime: null,
+        timerMode: 'duration',
+        timerState: 'idle',
+      },
+      false,
+      'timer/resetToDefaultDuration',
+    );
   },
 
   restoreScheduledTimer: targetDateTime => {
@@ -355,6 +643,27 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
     }).catch(err => {
       logger.error(`Failed to start backend timer on restoreScheduledTimer: ${err}`);
     });
+  },
+
+  restoreIndefiniteTimer: () => {
+    logger.info('Restoring indefinite timer from disk');
+
+    typedInvoke('cancel_timer').catch(err => {
+      logger.error(`Failed to cancel backend timer on restoreIndefiniteTimer: ${err}`);
+    });
+
+    set(
+      {
+        endTime: null,
+        plannedSeconds: 0,
+        remainingSeconds: 0,
+        targetDateTime: null,
+        timerMode: 'indefinite',
+        timerState: 'running',
+      },
+      false,
+      'timer/restoreIndefiniteTimer',
+    );
   },
 });
 

@@ -7,7 +7,11 @@ import {
   TimerTriggerLabel,
   useTimerHotkeys,
 } from '@/features/manage-timer';
-import { TimerActionSwitch, useTimerActionHotkeys } from '@/features/select-timer-action';
+import {
+  changeTimerAction,
+  TimerActionSwitch,
+  useTimerActionHotkeys,
+} from '@/features/select-timer-action';
 import { useSessionStore } from '@/entities/session';
 import { MAX_SECONDS, MIN_SECONDS } from '@/entities/timer';
 import { SHORTCUT_SCOPES } from '@/shared/config';
@@ -17,11 +21,10 @@ import { useTimerDefaults } from '../model/useTimerDefaults';
 import { useTimerOrchestrator } from '../model/useTimerOrchestrator';
 
 export const Timer = () => {
-  const { action, isLocked, setAction, setIsLocked } = useSessionStore(
+  const { action, isLocked, setIsLocked } = useSessionStore(
     useShallow(state => ({
       action: state.timerAction,
       isLocked: state.isLocked,
-      setAction: state.setTimerAction,
       setIsLocked: state.setIsLocked,
     })),
   );
@@ -38,6 +41,7 @@ export const Timer = () => {
     handleResume,
     handleCancel,
     handleSetExactTime,
+    handleSetIndefinite,
     executeImmediately,
   } = useTimerOrchestrator();
 
@@ -66,7 +70,7 @@ export const Timer = () => {
 
   useTimerActionHotkeys({
     isLocked,
-    onActionChange: setAction,
+    onActionChange: changeTimerAction,
   });
 
   useTimerDefaults({ setExactTime: handleSetExactTime });
@@ -87,9 +91,14 @@ export const Timer = () => {
 
       <TimerTriggerLabel action={action} currentSeconds={currentSeconds} />
 
-      <TimerActionSwitch action={action} isLocked={isLocked} onActionChange={setAction} />
+      <TimerActionSwitch action={action} isLocked={isLocked} onActionChange={changeTimerAction} />
 
-      <TimerPresets action={action} isLocked={isLocked} setExactTime={handleSetExactTime} />
+      <TimerPresets
+        action={action}
+        isLocked={isLocked}
+        setExactTime={handleSetExactTime}
+        setIndefinite={handleSetIndefinite}
+      />
 
       <TimerControls
         timerState={effectiveTimerState}

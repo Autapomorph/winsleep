@@ -30,6 +30,8 @@ describe('timerStore', () => {
       isListenersInitialized: false,
       plannedSeconds: DEFAULT_TIMER_SECONDS,
       remainingSeconds: DEFAULT_TIMER_SECONDS,
+      targetDateTime: null,
+      timerMode: 'duration',
       timerState: 'idle',
     });
     initTimerListeners();
@@ -43,9 +45,11 @@ describe('timerStore', () => {
     const state = useTimerStore.getState();
 
     expect(state.timerState).toBe('idle');
+    expect(state.timerMode).toBe('duration');
     expect(state.plannedSeconds).toBe(DEFAULT_TIMER_SECONDS);
     expect(state.remainingSeconds).toBe(DEFAULT_TIMER_SECONDS);
     expect(state.endTime).toBeNull();
+    expect(state.targetDateTime).toBeNull();
   });
 
   test('should change exact time when idle', () => {
@@ -55,7 +59,7 @@ describe('timerStore', () => {
     expect(useTimerStore.getState().remainingSeconds).toBe(120);
   });
 
-  test('should increase and decrease time', () => {
+  test('should increase and decrease time in duration mode', () => {
     const initial = useTimerStore.getState().plannedSeconds;
 
     useTimerStore.getState().increaseTime(60);
@@ -63,6 +67,34 @@ describe('timerStore', () => {
 
     useTimerStore.getState().decreaseTime(30);
     expect(useTimerStore.getState().plannedSeconds).toBe(initial + 30);
+  });
+
+  test('should not increase or decrease time in indefinite or timestamp mode', () => {
+    useTimerStore.setState({
+      timerMode: 'indefinite',
+      plannedSeconds: 0,
+      remainingSeconds: 0,
+    });
+
+    useTimerStore.getState().increaseTime(60);
+    expect(useTimerStore.getState().plannedSeconds).toBe(0);
+    expect(useTimerStore.getState().remainingSeconds).toBe(0);
+
+    useTimerStore.getState().decreaseTime(30);
+    expect(useTimerStore.getState().plannedSeconds).toBe(0);
+    expect(useTimerStore.getState().remainingSeconds).toBe(0);
+
+    useTimerStore.setState({
+      timerMode: 'timestamp',
+      plannedSeconds: 300,
+      remainingSeconds: 300,
+    });
+
+    useTimerStore.getState().increaseTime(60);
+    expect(useTimerStore.getState().plannedSeconds).toBe(300);
+
+    useTimerStore.getState().decreaseTime(30);
+    expect(useTimerStore.getState().plannedSeconds).toBe(300);
   });
 
   test('should transition to running state when started', () => {
@@ -114,7 +146,7 @@ describe('timerStore', () => {
     unsubscribe();
   });
 
-  test('should pause and resume ticking', () => {
+  test('should pause and resume ticking in duration mode', () => {
     useTimerStore.getState().setExactTime(5);
     useTimerStore.getState().start();
 
@@ -137,6 +169,25 @@ describe('timerStore', () => {
 
     triggerTick(2);
     expect(useTimerStore.getState().remainingSeconds).toBe(2);
+  });
+
+  test('should not pause in indefinite or timestamp mode', () => {
+    useTimerStore.setState({
+      timerMode: 'indefinite',
+      timerState: 'running',
+    });
+
+    useTimerStore.getState().pause();
+    expect(useTimerStore.getState().timerState).toBe('running');
+
+    useTimerStore.setState({
+      timerMode: 'timestamp',
+      timerState: 'running',
+      endTime: Date.now() + 60000,
+    });
+
+    useTimerStore.getState().pause();
+    expect(useTimerStore.getState().timerState).toBe('running');
   });
 
   test('should cancel timer and reset to idle', () => {
@@ -180,6 +231,24 @@ describe('timerStore', () => {
     expect(useTimerStore.getState().endTime).toBeGreaterThan(Date.now());
   });
 
+  test('should retain paused state and update duration when setExactTime is called while paused', () => {
+    useTimerStore.setState({
+      endTime: null,
+      plannedSeconds: 30,
+      remainingSeconds: 30,
+      timerMode: 'duration',
+      timerState: 'paused',
+    });
+    useTimerStore.getState().setExactTime(120);
+
+    const state = useTimerStore.getState();
+    expect(state.timerState).toBe('paused');
+    expect(state.timerMode).toBe('duration');
+    expect(state.plannedSeconds).toBe(120);
+    expect(state.remainingSeconds).toBe(120);
+    expect(state.endTime).toBeNull();
+  });
+
   test('should restore scheduled timer correctly', () => {
     const targetDateTime = Date.now() + 60000;
 
@@ -191,5 +260,95 @@ describe('timerStore', () => {
     expect(state.targetDateTime).toBe(targetDateTime);
     expect(state.endTime).toBe(targetDateTime);
     expect(state.remainingSeconds).toBe(60);
+  });
+
+  test('should restore indefinite timer correctly', () => {
+    useTimerStore.getState().restoreIndefiniteTimer();
+
+    const state = useTimerStore.getState();
+    expect(state.timerState).toBe('running');
+    expect(state.timerMode).toBe('indefinite');
+    expect(state.targetDateTime).toBeNull();
+    expect(state.endTime).toBeNull();
+    expect(state.plannedSeconds).toBe(0);
+    expect(state.remainingSeconds).toBe(0);
+  });
+
+  test('should set indefinite mode from idle, running, and paused', () => {
+    // 1. From idle
+    useTimerStore.setState({ timerState: 'idle', timerMode: 'duration' });
+    useTimerStore.getState().setIndefinite();
+
+    expect(useTimerStore.getState().timerState).toBe('idle');
+    expect(useTimerStore.getState().timerMode).toBe('indefinite');
+    expect(useTimerStore.getState().plannedSeconds).toBe(0);
+    expect(useTimerStore.getState().remainingSeconds).toBe(0);
+
+    // 2. From running
+    useTimerStore.setState({ timerState: 'running', timerMode: 'duration' });
+    useTimerStore.getState().setIndefinite();
+
+    expect(useTimerStore.getState().timerState).toBe('running');
+    expect(useTimerStore.getState().timerMode).toBe('indefinite');
+
+    // 3. From paused
+    useTimerStore.setState({ timerState: 'paused', timerMode: 'duration' });
+    useTimerStore.getState().setIndefinite();
+
+    expect(useTimerStore.getState().timerState).toBe('idle');
+    expect(useTimerStore.getState().timerMode).toBe('indefinite');
+  });
+
+  test('should reset to default duration', () => {
+    useTimerStore.setState({
+      timerMode: 'indefinite',
+      timerState: 'running',
+      plannedSeconds: 0,
+      remainingSeconds: 0,
+    });
+
+    useTimerStore.getState().resetToDefaultDuration();
+
+    expect(useTimerStore.getState().timerState).toBe('idle');
+    expect(useTimerStore.getState().timerMode).toBe('duration');
+    expect(useTimerStore.getState().plannedSeconds).toBe(DEFAULT_TIMER_SECONDS);
+    expect(useTimerStore.getState().remainingSeconds).toBe(DEFAULT_TIMER_SECONDS);
+  });
+
+  test('should handle mode transitions correctly', () => {
+    // Paused duration -> timestamp: resets to idle
+    useTimerStore.setState({
+      timerMode: 'duration',
+      timerState: 'paused',
+      remainingSeconds: 300,
+    });
+    useTimerStore.getState().setTimerMode('timestamp');
+    expect(useTimerStore.getState().timerState).toBe('idle');
+    expect(useTimerStore.getState().timerMode).toBe('timestamp');
+
+    // Running duration -> timestamp: remains running
+    useTimerStore.setState({
+      timerMode: 'duration',
+      timerState: 'running',
+      remainingSeconds: 300,
+    });
+    useTimerStore.getState().setTimerMode('timestamp');
+    expect(useTimerStore.getState().timerState).toBe('running');
+    expect(useTimerStore.getState().timerMode).toBe('timestamp');
+
+    // Running timestamp -> duration: remains running
+    useTimerStore.getState().setTimerMode('duration');
+    expect(useTimerStore.getState().timerState).toBe('running');
+    expect(useTimerStore.getState().timerMode).toBe('duration');
+
+    // Running duration -> indefinite: remains running
+    useTimerStore.getState().setTimerMode('indefinite');
+    expect(useTimerStore.getState().timerState).toBe('running');
+    expect(useTimerStore.getState().timerMode).toBe('indefinite');
+
+    // Running indefinite -> duration: remains running
+    useTimerStore.getState().setTimerMode('duration');
+    expect(useTimerStore.getState().timerState).toBe('running');
+    expect(useTimerStore.getState().timerMode).toBe('duration');
   });
 });

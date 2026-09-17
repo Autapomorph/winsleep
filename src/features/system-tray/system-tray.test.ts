@@ -1,6 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { useKeepAwakeStore } from '@/entities/keep-awake';
 import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import { useTimerStore } from '@/entities/timer';
@@ -87,6 +86,7 @@ describe('system-tray feature model hooks', () => {
     mockCapturedListeners = {};
     useTimerStore.setState({
       timerState: 'idle',
+      timerMode: 'duration',
       plannedSeconds: 0,
       remainingSeconds: 0,
     });
@@ -201,15 +201,14 @@ describe('system-tray feature model hooks', () => {
       );
     });
 
-    test('sets timerMode to timestamp when indefinite keep-awake is active', () => {
+    test('sets timerMode to indefinite when indefinite keep-awake is active', () => {
       useSessionStore.setState({ timerAction: 'keep-awake' });
-      useTimerStore.setState({ timerState: 'idle', plannedSeconds: 0 });
-      useKeepAwakeStore.setState({ isIndefiniteActive: true });
+      useTimerStore.setState({ timerState: 'running', timerMode: 'indefinite', plannedSeconds: 0 });
       renderHook(() => useTrayLanguageSync());
       expect(typedInvoke).toHaveBeenCalledWith(
         'update_tray_menu',
         expect.objectContaining({
-          timerMode: 'timestamp',
+          timerMode: 'indefinite',
           timerState: 'running',
           tooltip: 'tray.tooltip.running',
         }),
