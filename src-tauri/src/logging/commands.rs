@@ -119,7 +119,7 @@ fn read_lines_from_tail_rev(
     let mut result_lines_rev = Vec::new();
     let mut hit_marker = false;
     let mut current_end = file_len;
-    let mut remainder = String::new();
+    let mut remainder: Vec<u8> = Vec::new();
 
     // Read in chunks backwards until max_lines satisfied, marker hit, or file beginning reached
     const CHUNK_SIZE: u64 = 64 * 1024;
@@ -131,26 +131,39 @@ fn read_lines_from_tail_rev(
         file.seek(SeekFrom::Start(seek_pos))
             .map_err(|e| format!("Failed to seek in log file {:?}: {e}", path.file_name()))?;
 
-        let mut buffer = vec![0u8; read_len as usize];
-        file.read_exact(&mut buffer)
+        let mut chunk = vec![0u8; read_len as usize];
+        file.read_exact(&mut chunk)
             .map_err(|e| format!("Failed to read log file {:?}: {e}", path.file_name()))?;
 
-        let mut raw_text = String::from_utf8_lossy(&buffer).replace('\0', "");
         if !remainder.is_empty() {
-            raw_text.push_str(&remainder);
+            chunk.extend_from_slice(&remainder);
             remainder.clear();
         }
 
-        let mut chunk_lines: Vec<&str> = raw_text.lines().collect();
+        let mut slice = &chunk[..];
 
-        // If we sought into the middle of the file (seek_pos > 0), the first line
-        // might be incomplete and continues into the previous chunk.
-        if seek_pos > 0 && !chunk_lines.is_empty() {
-            remainder = chunk_lines.remove(0).to_string();
+        // If we sought into the middle of the file (seek_pos > 0), the bytes before the
+        // first newline might be an incomplete line that continues into the preceding chunk.
+        if seek_pos > 0 {
+            if let Some(first_newline_idx) = slice.iter().position(|&b| b == b'\n') {
+                remainder = slice[..first_newline_idx].to_vec();
+                slice = &slice[first_newline_idx + 1..];
+            } else {
+                remainder = slice.to_vec();
+                current_end = seek_pos;
+                continue;
+            }
         }
 
-        for line in chunk_lines.into_iter().rev() {
-            let trimmed = line.trim();
+        for line_bytes in slice.split(|&b| b == b'\n').rev() {
+            let line_bytes = if line_bytes.ends_with(b"\r") {
+                &line_bytes[..line_bytes.len() - 1]
+            } else {
+                line_bytes
+            };
+
+            let line_str = String::from_utf8_lossy(line_bytes).replace('\0', "");
+            let trimmed = line_str.trim();
             if trimmed.is_empty() {
                 continue;
             }
@@ -195,15 +208,7 @@ pub fn read_logs(
     let mut has_more = false;
 
     for path in files {
-        if collected_rev.len() == limit && has_more {
-            break;
-        }
-
         let max_for_this_file = needed.saturating_sub(skipped + collected_rev.len());
-        if max_for_this_file == 0 && has_more {
-            break;
-        }
-
         let (lines_rev, hit_marker) = read_lines_from_tail_rev(&path, max_for_this_file + 1)?;
 
         for line in lines_rev {
@@ -220,6 +225,10 @@ pub fn read_logs(
         if hit_marker {
             // All logs before this marker are considered cleared, so no more can exist
             has_more = false;
+            break;
+        }
+
+        if has_more {
             break;
         }
     }
@@ -249,6 +258,19 @@ pub fn clear_logs(app_handle: tauri::AppHandle) -> Result<(), String> {
 
     // Mark the active log as cleared without corrupting the open file handle in tracing-appender
     tracing::info!("{CLEAR_LOGS_MARKER}");
+
+    // Wait briefly until the marker is flushed to disk by the non-blocking worker,
+    // ensuring an immediate subsequent read_logs call will observe the cleared state.
+    if let Some(active_file) = files.first() {
+        for _ in 0..20 {
+            std::thread::sleep(std::time::Duration::from_millis(10));
+            if let Ok((_, hit_marker)) = read_lines_from_tail_rev(active_file, 5) {
+                if hit_marker {
+                    break;
+                }
+            }
+        }
+    }
 
     Ok(())
 }
@@ -367,6 +389,26 @@ mod tests {
         assert_eq!(all_lines[0], "log line number 0999 with extra padding content");
         assert_eq!(all_lines[999], "log line number 0000 with extra padding content");
         assert!(!hit_marker_all);
+    }
+
+    #[test]
+    fn test_read_lines_from_tail_rev_multibyte_utf8_across_chunks() {
+        // Position a 2-byte Cyrillic character exactly across the 64KB (65536 bytes) chunk boundary
+        // Total bytes after boundary: 65536
+        // Preceding part: padding to place a multi-byte UTF-8 character right at the 64KB boundary
+        let mut content = "A".repeat(65536 - 3);
+        // "Тест" in UTF-8 is 8 bytes (2 bytes per character)
+        content.push_str("Тест многобайтового UTF-8\n");
+        content.push_str("Вторая строка кириллицы\n");
+
+        let (_dir, file_path) = create_temp_log_file(&content);
+        let (lines, hit_marker) = read_lines_from_tail_rev(&file_path, 10).unwrap();
+
+        assert_eq!(lines.len(), 2);
+        assert_eq!(lines[0], "Вторая строка кириллицы");
+        assert!(lines[1].ends_with("Тест многобайтового UTF-8"));
+        assert!(!lines[1].contains('\u{FFFD}'), "UTF-8 corrupted with replacement char");
+        assert!(!hit_marker);
     }
 }
 
