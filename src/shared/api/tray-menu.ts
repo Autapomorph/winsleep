@@ -6,6 +6,11 @@ export type SetIsTrayModeEnabledCommandArgs = {
 };
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type UpdateTrayMenuCommandArgs = {
+  payload: TrayMenuState;
+};
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type TrayMenuState = {
   tooltip: string;
   openLabel: string;
