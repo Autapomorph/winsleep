@@ -39,8 +39,28 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
                         if window.is_visible().unwrap_or(false) {
                             let _ = window.emit("tray-menu-close-request", ());
                         } else {
-                            // Position the window
-                            let monitor = window.current_monitor().ok().flatten();
+                            // Position the window on the monitor where the tray icon was clicked
+                            let (click_x, click_y) = match rect.position {
+                                tauri::Position::Physical(p) => (p.x, p.y),
+                                tauri::Position::Logical(l) => (l.x as i32, l.y as i32),
+                            };
+
+                            let monitor = app
+                                .available_monitors()
+                                .ok()
+                                .and_then(|monitors| {
+                                    monitors.into_iter().find(|m| {
+                                        let pos = m.position();
+                                        let size = m.size();
+                                        click_x >= pos.x
+                                            && click_x < pos.x + size.width as i32
+                                            && click_y >= pos.y
+                                            && click_y < pos.y + size.height as i32
+                                    })
+                                })
+                                .or_else(|| app.primary_monitor().ok().flatten())
+                                .or_else(|| window.current_monitor().ok().flatten());
+
                             let scale_factor =
                                 monitor.as_ref().map(|m| m.scale_factor()).unwrap_or(1.0);
 
