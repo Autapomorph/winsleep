@@ -52,24 +52,27 @@ impl AppSettings {
         true
     }
 
+    pub fn parse_start_minimized(bytes: &[u8]) -> Option<bool> {
+        serde_json::from_slice::<serde_json::Value>(bytes)
+            .ok()
+            .and_then(|json| json.get("isStartMinimizedEnabled").and_then(|v| v.as_bool()))
+    }
+
     pub fn load_initial_start_minimized(app_handle: &tauri::AppHandle) -> bool {
         let path = match Self::get_settings_path(app_handle) {
             Ok(p) => p,
-            Err(_) => return false,
+            Err(_) => {
+                return false;
+            }
         };
 
         if !path.exists() {
             return false;
         }
 
-        if let Ok(content) = std::fs::read_to_string(path) {
-            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
-                if let Some(is_enabled) = json
-                    .get("isStartMinimizedEnabled")
-                    .and_then(|v| v.as_bool())
-                {
-                    return is_enabled;
-                }
+        if let Ok(bytes) = std::fs::read(path) {
+            if let Some(is_enabled) = Self::parse_start_minimized(&bytes) {
+                return is_enabled;
             }
         }
 
@@ -233,5 +236,23 @@ mod tests {
 
         let invalid_json = b"not json";
         assert_eq!(AppSettings::parse_tray_mode(invalid_json), None);
+    }
+
+    #[test]
+    fn test_parse_start_minimized() {
+        let enabled = br#"{"isStartMinimizedEnabled": true, "selectedAction": "sleep"}"#;
+        assert_eq!(AppSettings::parse_start_minimized(enabled), Some(true));
+
+        let disabled = br#"{"isStartMinimizedEnabled": false, "selectedAction": "sleep"}"#;
+        assert_eq!(AppSettings::parse_start_minimized(disabled), Some(false));
+
+        let missing = br#"{"selectedAction": "sleep"}"#;
+        assert_eq!(AppSettings::parse_start_minimized(missing), None);
+
+        let non_boolean = br#"{"isStartMinimizedEnabled": "yes"}"#;
+        assert_eq!(AppSettings::parse_start_minimized(non_boolean), None);
+
+        let invalid_json = b"not json";
+        assert_eq!(AppSettings::parse_start_minimized(invalid_json), None);
     }
 }
