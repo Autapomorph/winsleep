@@ -39,6 +39,14 @@ static IS_EXIT_IN_PROGRESS: AtomicBool = AtomicBool::new(false);
 
 pub fn handle_window_event(window: &tauri::Window, event: &tauri::WindowEvent) {
     if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+        if window.label() == "tray_menu" {
+            api.prevent_close();
+            if let Err(e) = window.hide() {
+                tracing::error!("Failed to hide tray menu window: {e}");
+            }
+            return;
+        }
+
         if window.label() == "main" {
             let app_handle = window.app_handle();
             let settings = app_handle.state::<AppSettings>();

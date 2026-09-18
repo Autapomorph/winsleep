@@ -89,6 +89,16 @@ pub struct LogChunk {
     pub has_more: bool,
 }
 
+fn is_clear_marker_line(line: &str) -> bool {
+    if let Ok(value) = serde_json::from_str::<serde_json::Value>(line) {
+        if let Some(msg) = value.get("message").and_then(|m| m.as_str()) {
+            return msg == CLEAR_LOGS_MARKER;
+        }
+    }
+
+    line == CLEAR_LOGS_MARKER
+}
+
 /// Reads up to `max_lines` from the tail of the log file at `path` in reverse order
 /// (newest line first).
 /// Returns `(lines_rev, hit_clear_marker)`.
@@ -168,7 +178,7 @@ fn read_lines_from_tail_rev(
                 continue;
             }
 
-            if trimmed.contains(CLEAR_LOGS_MARKER) {
+            if trimmed.contains(CLEAR_LOGS_MARKER) && is_clear_marker_line(trimmed) {
                 hit_marker = true;
                 break;
             }
@@ -277,6 +287,12 @@ pub fn clear_logs(app_handle: tauri::AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 pub fn log_message(level: String, message: String) {
+    let message = if message == CLEAR_LOGS_MARKER {
+        format!("[sanitized] {message}")
+    } else {
+        message
+    };
+
     match level.to_uppercase().as_str() {
         "TRACE" => tracing::trace!("{}", message),
         "DEBUG" => tracing::debug!("{}", message),
@@ -408,6 +424,40 @@ mod tests {
         assert_eq!(lines[0], "Вторая строка кириллицы");
         assert!(lines[1].ends_with("Тест многобайтового UTF-8"));
         assert!(!lines[1].contains('\u{FFFD}'), "UTF-8 corrupted with replacement char");
+        assert!(!hit_marker);
+    }
+
+    #[test]
+    fn test_read_lines_from_tail_rev_ignores_marker_substring_in_json() {
+        let content = format!(
+            "{{\"message\":\"line 1\"}}\n{{\"message\":\"Warning: contains {CLEAR_LOGS_MARKER} as substring\"}}\n{{\"message\":\"line 2\"}}\n"
+        );
+        let (_dir, file_path) = create_temp_log_file(&content);
+        let (lines, hit_marker) = read_lines_from_tail_rev(&file_path, 10).unwrap();
+        assert_eq!(
+            lines,
+            vec![
+                "{\"message\":\"line 2\"}",
+                &format!("{{\"message\":\"Warning: contains {CLEAR_LOGS_MARKER} as substring\"}}"),
+                "{\"message\":\"line 1\"}"
+            ]
+        );
+        assert!(!hit_marker);
+    }
+
+    #[test]
+    fn test_read_lines_from_tail_rev_ignores_marker_substring_in_plain_text() {
+        let content = format!("line 1\nsome error: {CLEAR_LOGS_MARKER} not found\nline 2\n");
+        let (_dir, file_path) = create_temp_log_file(&content);
+        let (lines, hit_marker) = read_lines_from_tail_rev(&file_path, 10).unwrap();
+        assert_eq!(
+            lines,
+            vec![
+                "line 2",
+                &format!("some error: {CLEAR_LOGS_MARKER} not found"),
+                "line 1"
+            ]
+        );
         assert!(!hit_marker);
     }
 }

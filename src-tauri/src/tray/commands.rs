@@ -181,6 +181,8 @@ pub fn update_tray_menu(
                 .map_err(|e| e.to_string())?;
             *last_tooltip = Some(payload.tooltip.clone());
         }
+    } else {
+        tracing::warn!("Tray icon with id 'main' not found during update_tray_menu");
     }
 
     // Emit the state to the frontend tray window

@@ -1,6 +1,6 @@
 use crate::timer::state::ManagedTimer;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 
 #[tauri::command]
 pub async fn start_timer(
@@ -16,12 +16,18 @@ pub async fn start_timer(
     );
     let (tx, mut rx) = tokio::sync::oneshot::channel::<()>();
 
-    let mut timer = state.lock().unwrap_or_else(|e| e.into_inner());
-    if let Some(old_tx) = timer.cancel_tx.take() {
+    let (timer_id, old_tx) = {
+        let mut timer = state.lock().unwrap_or_else(|e| e.into_inner());
+        let old_tx = timer.cancel_tx.take();
+        timer.current_id = timer.current_id.wrapping_add(1);
+        timer.cancel_tx = Some(tx);
+        (timer.current_id, old_tx)
+    };
+
+    if let Some(old_tx) = old_tx {
         tracing::info!("Cancelling older running timer");
         let _ = old_tx.send(());
     }
-    timer.cancel_tx = Some(tx);
 
     tokio::spawn(async move {
         tracing::info!("Backend timer thread spawned successfully");
@@ -45,6 +51,11 @@ pub async fn start_timer(
                         if now_ms >= target_ms {
                             tracing::info!("Target timestamp reached. Emitting timer-complete");
                             let _ = app_handle.emit("timer-complete", ());
+                            let managed_timer = app_handle.state::<ManagedTimer>();
+                            managed_timer
+                                .lock()
+                                .unwrap_or_else(|e| e.into_inner())
+                                .clear_if_matches(timer_id);
                             break;
                         }
                         ((target_ms - now_ms) as f64 / 1000.0).max(0.0).ceil() as u64
@@ -53,6 +64,11 @@ pub async fn start_timer(
                         if now_instant >= target_instant {
                             tracing::info!("Target instant reached. Emitting timer-complete");
                             let _ = app_handle.emit("timer-complete", ());
+                            let managed_timer = app_handle.state::<ManagedTimer>();
+                            managed_timer
+                                .lock()
+                                .unwrap_or_else(|e| e.into_inner())
+                                .clear_if_matches(timer_id);
                             break;
                         }
                         target_instant.duration_since(now_instant).as_secs_f64().ceil() as u64
