@@ -1,5 +1,6 @@
 {
   "auto-format-file": {
+    "enabled": false,
     "PostToolUse": [
       {
         "matcher": "replace_file_content|write_to_file",
@@ -14,6 +15,7 @@
     ]
   },
   "pre-completion-checks": {
+    "enabled": false,
     "Stop": [
       {
         "type": "command",

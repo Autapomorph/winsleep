@@ -25,21 +25,27 @@ impl AppSettings {
         crate::paths::get_settings_path(app_handle)
     }
 
+    pub fn parse_tray_mode(bytes: &[u8]) -> Option<bool> {
+        serde_json::from_slice::<serde_json::Value>(bytes)
+            .ok()
+            .and_then(|json| json.get("isTrayModeEnabled").and_then(|v| v.as_bool()))
+    }
+
     pub fn load_initial_tray_mode(app_handle: &tauri::AppHandle) -> bool {
         let path = match Self::get_settings_path(app_handle) {
             Ok(p) => p,
-            Err(_) => return true,
+            Err(_) => {
+                return true;
+            }
         };
 
         if !path.exists() {
             return true;
         }
 
-        if let Ok(content) = std::fs::read_to_string(path) {
-            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
-                if let Some(is_enabled) = json.get("isTrayModeEnabled").and_then(|v| v.as_bool()) {
-                    return is_enabled;
-                }
+        if let Ok(bytes) = std::fs::read(path) {
+            if let Some(is_enabled) = Self::parse_tray_mode(&bytes) {
+                return is_enabled;
             }
         }
 
@@ -161,6 +167,13 @@ impl AppSettings {
                             if let Ok(mut guard) = settings_state.last_content_hash.lock() {
                                 *guard = Some(current_hash);
                             }
+
+                            if let Some(is_enabled) = Self::parse_tray_mode(&bytes) {
+                                settings_state
+                                    .is_tray_mode_enabled
+                                    .store(is_enabled, Ordering::Relaxed);
+                            }
+
                             let _ = app_handle_clone.emit("settings-external-change", ());
                         }
                     }
@@ -202,5 +215,23 @@ mod tests {
 
         assert_eq!(AppSettings::calculate_hash(data1), AppSettings::calculate_hash(data2));
         assert_ne!(AppSettings::calculate_hash(data1), AppSettings::calculate_hash(data3));
+    }
+
+    #[test]
+    fn test_parse_tray_mode() {
+        let enabled = br#"{"isTrayModeEnabled": true, "selectedAction": "sleep"}"#;
+        assert_eq!(AppSettings::parse_tray_mode(enabled), Some(true));
+
+        let disabled = br#"{"isTrayModeEnabled": false, "selectedAction": "sleep"}"#;
+        assert_eq!(AppSettings::parse_tray_mode(disabled), Some(false));
+
+        let missing = br#"{"selectedAction": "sleep"}"#;
+        assert_eq!(AppSettings::parse_tray_mode(missing), None);
+
+        let non_boolean = br#"{"isTrayModeEnabled": "yes"}"#;
+        assert_eq!(AppSettings::parse_tray_mode(non_boolean), None);
+
+        let invalid_json = b"not json";
+        assert_eq!(AppSettings::parse_tray_mode(invalid_json), None);
     }
 }

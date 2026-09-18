@@ -104,48 +104,54 @@ pub struct PresetArgs {
     pub label: String,
 }
 
-#[allow(clippy::too_many_arguments)]
+#[derive(serde::Deserialize, serde::Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateTrayMenuPayload {
+    pub tooltip: String,
+    pub open_label: String,
+    pub quit_label: String,
+    pub timer_state: String,
+    pub timer_mode: String,
+    pub is_expiring: bool,
+    pub timer_action: TimerActionMenuArgs,
+    pub timer_status_label: String,
+    pub start_resume_pause_timer_label: String,
+    pub cancel_timer_label: String,
+    pub timer_increase_label: String,
+    pub timer_decrease_label: String,
+    pub presets_label: String,
+    pub is_settings_locked: bool,
+    pub timer_presets: Vec<PresetArgs>,
+    pub lock_settings_label: String,
+    pub update_label: String,
+    pub update_status: String,
+}
+
 #[tauri::command]
 pub fn update_tray_menu(
     app_handle: tauri::AppHandle,
     tray_state: tauri::State<'_, TrayState>,
-    tooltip: String,
-    open_label: String,
-    quit_label: String,
-    timer_state: String,
-    timer_mode: String,
-    is_expiring: bool,
-    timer_action: TimerActionMenuArgs,
-    timer_status_label: String,
-    start_resume_pause_timer_label: String,
-    cancel_timer_label: String,
-    timer_increase_label: String,
-    timer_decrease_label: String,
-    presets_label: String,
-    is_settings_locked: bool,
-    timer_presets: Vec<PresetArgs>,
-    lock_settings_label: String,
-    update_label: String,
-    update_status: String,
+    payload: UpdateTrayMenuPayload,
 ) -> Result<(), String> {
     // Swap the tray icon dynamically
     if let Some(tray) = app_handle.tray_by_id("main") {
-        let icon_kind = if timer_state == "idle" && update_status == "readyToInstall" {
-            IconKind::DefaultHasUpdate
-        } else {
-            match timer_state.as_str() {
-                "idle" => IconKind::Default,
-                "paused" => IconKind::Paused,
-                "running" => {
-                    if is_expiring {
-                        IconKind::Expiring
-                    } else {
-                        IconKind::Running
+        let icon_kind =
+            if payload.timer_state == "idle" && payload.update_status == "readyToInstall" {
+                IconKind::DefaultHasUpdate
+            } else {
+                match payload.timer_state.as_str() {
+                    "idle" => IconKind::Default,
+                    "paused" => IconKind::Paused,
+                    "running" => {
+                        if payload.is_expiring {
+                            IconKind::Expiring
+                        } else {
+                            IconKind::Running
+                        }
                     }
+                    _ => IconKind::Default,
                 }
-                _ => IconKind::Default,
-            }
-        };
+            };
 
         let mut last_icon = tray_state
             .last_icon_kind
@@ -169,60 +175,16 @@ pub fn update_tray_menu(
             .last_tooltip
             .lock()
             .unwrap_or_else(|e| e.into_inner());
-        let should_set_tooltip = last_tooltip.as_deref() != Some(&tooltip);
+        let should_set_tooltip = last_tooltip.as_deref() != Some(&payload.tooltip);
         if should_set_tooltip {
-            tray.set_tooltip(Some(&tooltip))
+            tray.set_tooltip(Some(&payload.tooltip))
                 .map_err(|e| e.to_string())?;
-            *last_tooltip = Some(tooltip.clone());
+            *last_tooltip = Some(payload.tooltip.clone());
         }
     }
 
     // Emit the state to the frontend tray window
-    #[derive(serde::Serialize, Clone)]
-    #[serde(rename_all = "camelCase")]
-    struct TrayStatePayload<'a> {
-        tooltip: &'a str,
-        open_label: &'a str,
-        quit_label: &'a str,
-        timer_state: &'a str,
-        timer_mode: &'a str,
-        is_expiring: bool,
-        timer_action: &'a TimerActionMenuArgs,
-        timer_status_label: &'a str,
-        start_resume_pause_timer_label: &'a str,
-        cancel_timer_label: &'a str,
-        timer_increase_label: &'a str,
-        timer_decrease_label: &'a str,
-        presets_label: &'a str,
-        is_settings_locked: bool,
-        timer_presets: &'a [PresetArgs],
-        lock_settings_label: &'a str,
-        update_label: &'a str,
-        update_status: &'a str,
-    }
-
-    let payload = TrayStatePayload {
-        tooltip: &tooltip,
-        open_label: &open_label,
-        quit_label: &quit_label,
-        timer_state: &timer_state,
-        timer_mode: &timer_mode,
-        is_expiring,
-        timer_action: &timer_action,
-        timer_status_label: &timer_status_label,
-        start_resume_pause_timer_label: &start_resume_pause_timer_label,
-        cancel_timer_label: &cancel_timer_label,
-        timer_increase_label: &timer_increase_label,
-        timer_decrease_label: &timer_decrease_label,
-        presets_label: &presets_label,
-        is_settings_locked,
-        timer_presets: &timer_presets,
-        lock_settings_label: &lock_settings_label,
-        update_label: &update_label,
-        update_status: &update_status,
-    };
-
-    let _ = app_handle.emit("tray-state-updated", payload);
+    let _ = app_handle.emit("tray-state-updated", &payload);
 
     Ok(())
 }

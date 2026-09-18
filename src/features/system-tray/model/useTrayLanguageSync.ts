@@ -230,7 +230,7 @@ export const useTrayLanguageSync = () => {
       updateStatus,
     };
 
-    typedInvoke('update_tray_menu', payload).catch(err => {
+    typedInvoke('update_tray_menu', { payload }).catch(err => {
       logger.error(`Failed to update tray menu: ${err}`);
     });
   }, [
