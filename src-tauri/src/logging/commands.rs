@@ -92,11 +92,11 @@ pub struct LogChunk {
 fn is_clear_marker_line(line: &str) -> bool {
     if let Ok(value) = serde_json::from_str::<serde_json::Value>(line) {
         if let Some(msg) = value.get("message").and_then(|m| m.as_str()) {
-            return msg == CLEAR_LOGS_MARKER;
+            return msg.trim() == CLEAR_LOGS_MARKER;
         }
     }
 
-    line == CLEAR_LOGS_MARKER
+    line.trim() == CLEAR_LOGS_MARKER
 }
 
 /// Reads up to `max_lines` from the tail of the log file at `path` in reverse order
@@ -285,13 +285,17 @@ pub fn clear_logs(app_handle: tauri::AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-#[tauri::command]
-pub fn log_message(level: String, message: String) {
-    let message = if message == CLEAR_LOGS_MARKER {
+pub fn sanitize_log_message(message: &str) -> String {
+    if message.trim() == CLEAR_LOGS_MARKER {
         format!("[sanitized] {message}")
     } else {
-        message
-    };
+        message.to_string()
+    }
+}
+
+#[tauri::command]
+pub fn log_message(level: String, message: String) {
+    let message = sanitize_log_message(&message);
 
     match level.to_uppercase().as_str() {
         "TRACE" => tracing::trace!("{}", message),
@@ -459,6 +463,22 @@ mod tests {
             ]
         );
         assert!(!hit_marker);
+    }
+
+    #[test]
+    fn test_sanitize_log_message() {
+        assert_eq!(
+            sanitize_log_message(CLEAR_LOGS_MARKER),
+            format!("[sanitized] {CLEAR_LOGS_MARKER}")
+        );
+        assert_eq!(
+            sanitize_log_message(&format!("  {CLEAR_LOGS_MARKER}  ")),
+            format!("[sanitized]   {CLEAR_LOGS_MARKER}  ")
+        );
+        assert_eq!(
+            sanitize_log_message("Regular log message"),
+            "Regular log message"
+        );
     }
 }
 
