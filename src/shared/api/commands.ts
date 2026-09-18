@@ -29,6 +29,7 @@ export type Commands = CommandsShape<{
   get_keep_awake_status: CommandDef<boolean>;
   play_notification_sound: CommandDef<void>;
   quit_app: CommandDef<void>;
+  set_is_critical_operation_in_progress: CommandDef<void, { isInProgress: boolean }>;
   set_is_tray_mode_enabled: CommandDef<void, SetIsTrayModeEnabledCommandArgs>;
   update_tray_menu: CommandDef<void, { payload: TrayMenuState }>;
   load_settings: CommandDef<Record<string, unknown> | null>;

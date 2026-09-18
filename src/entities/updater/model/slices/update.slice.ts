@@ -2,6 +2,7 @@ import { relaunch } from '@tauri-apps/plugin-process';
 import { type Update, check } from '@tauri-apps/plugin-updater';
 import { type StateCreator } from 'zustand';
 
+import { typedInvoke } from '@/shared/api';
 import { config } from '@/shared/config';
 import { delay, logger, showErrorToast } from '@/shared/lib';
 import { initialChangelogState } from './changelog.slice';
@@ -171,6 +172,12 @@ export const createUpdateSlice: StateCreator<
       logger.info('Starting update install...');
 
       try {
+        await typedInvoke('set_is_critical_operation_in_progress', { isInProgress: true });
+      } catch (error) {
+        logger.error(`Failed to set critical operation in progress: ${error}`);
+      }
+
+      try {
         await updateInfo.install(options);
         logger.info('Update installed');
       } catch (error) {
@@ -179,6 +186,12 @@ export const createUpdateSlice: StateCreator<
 
         set({ errorMessage: message, status: 'error' }, false, 'updater/installError');
         showErrorToast($ => $.titlebar.updateBtn.notifications.installFailed);
+      } finally {
+        try {
+          await typedInvoke('set_is_critical_operation_in_progress', { isInProgress: false });
+        } catch (error) {
+          logger.error(`Failed to clear critical operation status: ${error}`);
+        }
       }
     },
 

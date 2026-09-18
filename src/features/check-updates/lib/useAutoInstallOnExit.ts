@@ -29,9 +29,21 @@ export const useAutoInstallOnExit = () => {
         logger.info('Auto-installing downloaded update on application exit...');
 
         try {
+          await typedInvoke('set_is_critical_operation_in_progress', { isInProgress: true });
+        } catch (error) {
+          logger.error(`Failed to set critical operation in progress: ${error}`);
+        }
+
+        try {
           await installUpdate({ restartAfterInstall: false });
         } catch (error) {
           logger.error(`Failed to install update on exit: ${error}`);
+        } finally {
+          try {
+            await typedInvoke('set_is_critical_operation_in_progress', { isInProgress: false });
+          } catch (error) {
+            logger.error(`Failed to clear critical operation status: ${error}`);
+          }
         }
       }
 

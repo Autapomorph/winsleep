@@ -36,6 +36,15 @@ pub fn setup_window(app_handle: &tauri::AppHandle) -> Result<(), Box<dyn std::er
 use std::sync::atomic::{AtomicBool, Ordering};
 
 static IS_EXIT_IN_PROGRESS: AtomicBool = AtomicBool::new(false);
+static IS_CRITICAL_OPERATION_IN_PROGRESS: AtomicBool = AtomicBool::new(false);
+
+pub fn set_critical_operation_in_progress(in_progress: bool) {
+    IS_CRITICAL_OPERATION_IN_PROGRESS.store(in_progress, Ordering::SeqCst);
+}
+
+pub fn is_critical_operation_in_progress() -> bool {
+    IS_CRITICAL_OPERATION_IN_PROGRESS.load(Ordering::SeqCst)
+}
 
 pub fn handle_window_event(window: &tauri::Window, event: &tauri::WindowEvent) {
     if let tauri::WindowEvent::CloseRequested { api, .. } = event {
@@ -75,8 +84,38 @@ pub fn handle_window_event(window: &tauri::Window, event: &tauri::WindowEvent) {
                 // Spawn a fallback watchdog to force exit if frontend hangs or fails to respond
                 let app_handle_clone = app_handle.clone();
                 std::thread::spawn(move || {
-                    std::thread::sleep(std::time::Duration::from_millis(2500));
-                    tracing::warn!("Frontend did not complete exit in time, forcing application exit via watchdog");
+                    const POLL_INTERVAL: std::time::Duration = std::time::Duration::from_millis(500);
+                    const BASE_TIMEOUT_MS: u64 = 15_000;
+                    const MAX_CRITICAL_TIMEOUT_MS: u64 = 120_000;
+
+                    let start = std::time::Instant::now();
+
+                    loop {
+                        std::thread::sleep(POLL_INTERVAL);
+
+                        let elapsed = start.elapsed();
+                        let is_critical = is_critical_operation_in_progress();
+
+                        if is_critical {
+                            if elapsed >= std::time::Duration::from_millis(MAX_CRITICAL_TIMEOUT_MS) {
+                                tracing::warn!(
+                                    "Critical operation exceeded safety cap ({} ms), forcing application exit via watchdog",
+                                    MAX_CRITICAL_TIMEOUT_MS
+                                );
+                                break;
+                            }
+                            continue;
+                        }
+
+                        if elapsed >= std::time::Duration::from_millis(BASE_TIMEOUT_MS) {
+                            tracing::warn!(
+                                "Frontend did not complete exit in time ({} ms), forcing application exit via watchdog",
+                                BASE_TIMEOUT_MS
+                            );
+                            break;
+                        }
+                    }
+
                     crate::app::commands::quit_app(app_handle_clone);
                 });
             }
