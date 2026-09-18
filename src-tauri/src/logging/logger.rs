@@ -14,10 +14,14 @@ struct JsonLogEntry<'a> {
     timestamp: &'a str,
     level: &'a str,
     message: &'a str,
+    #[serde(flatten, skip_serializing_if = "serde_json::Map::is_empty")]
+    fields: serde_json::Map<String, serde_json::Value>,
 }
 
+#[derive(Default)]
 struct MessageVisitor {
     message: String,
+    fields: serde_json::Map<String, serde_json::Value>,
 }
 
 impl tracing::field::Visit for MessageVisitor {
@@ -25,12 +29,80 @@ impl tracing::field::Visit for MessageVisitor {
         if field.name() == "message" {
             use std::fmt::Write;
             let _ = write!(&mut self.message, "{:?}", value);
+        } else {
+            self.fields.insert(
+                field.name().to_string(),
+                serde_json::Value::String(format!("{value:?}")),
+            );
         }
     }
 
     fn record_str(&mut self, field: &tracing::field::Field, value: &str) {
         if field.name() == "message" {
             self.message.push_str(value);
+        } else {
+            self.fields.insert(
+                field.name().to_string(),
+                serde_json::Value::String(value.to_string()),
+            );
+        }
+    }
+
+    fn record_bool(&mut self, field: &tracing::field::Field, value: bool) {
+        if field.name() == "message" {
+            use std::fmt::Write;
+            let _ = write!(&mut self.message, "{value}");
+        } else {
+            self.fields
+                .insert(field.name().to_string(), serde_json::Value::Bool(value));
+        }
+    }
+
+    fn record_i64(&mut self, field: &tracing::field::Field, value: i64) {
+        if field.name() == "message" {
+            use std::fmt::Write;
+            let _ = write!(&mut self.message, "{value}");
+        } else {
+            self.fields.insert(
+                field.name().to_string(),
+                serde_json::Value::Number(value.into()),
+            );
+        }
+    }
+
+    fn record_u64(&mut self, field: &tracing::field::Field, value: u64) {
+        if field.name() == "message" {
+            use std::fmt::Write;
+            let _ = write!(&mut self.message, "{value}");
+        } else {
+            self.fields.insert(
+                field.name().to_string(),
+                serde_json::Value::Number(value.into()),
+            );
+        }
+    }
+
+    fn record_f64(&mut self, field: &tracing::field::Field, value: f64) {
+        if field.name() == "message" {
+            use std::fmt::Write;
+            let _ = write!(&mut self.message, "{value}");
+        } else if let Some(n) = serde_json::Number::from_f64(value) {
+            self.fields
+                .insert(field.name().to_string(), serde_json::Value::Number(n));
+        }
+    }
+
+    fn record_error(
+        &mut self,
+        field: &tracing::field::Field,
+        value: &(dyn std::error::Error + 'static),
+    ) {
+        let err_str = value.to_string();
+        if field.name() == "message" {
+            self.message.push_str(&err_str);
+        } else {
+            self.fields
+                .insert(field.name().to_string(), serde_json::Value::String(err_str));
         }
     }
 }
@@ -50,9 +122,7 @@ where
     ) -> std_fmt::Result {
         let metadata = event.metadata();
 
-        let mut visitor = MessageVisitor {
-            message: String::new(),
-        };
+        let mut visitor = MessageVisitor::default();
         event.record(&mut visitor);
 
         let timestamp = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
@@ -62,6 +132,7 @@ where
             timestamp: &timestamp,
             level: &level,
             message: &visitor.message,
+            fields: visitor.fields,
         };
 
         if let Ok(json) = serde_json::to_string(&entry) {
@@ -184,5 +255,34 @@ mod tests {
         let entry4: serde_json::Value = serde_json::from_str(lines[4]).unwrap();
         assert_eq!(entry4["level"], "WARN");
         assert_eq!(entry4["message"], "Warning: line 1\nline 2");
+    }
+
+    #[test]
+    fn test_json_formatter_structured_fields() {
+        let buffer = Arc::new(Mutex::new(Vec::new()));
+        let writer = BufferWriter(Arc::clone(&buffer));
+
+        let layer = fmt::layer()
+            .with_writer(writer)
+            .with_ansi(false)
+            .event_format(JsonFormatter);
+
+        let subscriber = tracing_subscriber::registry().with(layer);
+
+        tracing::subscriber::with_default(subscriber, || {
+            tracing::info!(code = 404, user = "alice", is_active = true, "Operation status");
+        });
+
+        let output = String::from_utf8(buffer.lock().unwrap().clone()).unwrap();
+        let lines: Vec<&str> = output.lines().filter(|l| !l.trim().is_empty()).collect();
+
+        assert_eq!(lines.len(), 1);
+
+        let entry: serde_json::Value = serde_json::from_str(lines[0]).unwrap();
+        assert_eq!(entry["level"], "INFO");
+        assert_eq!(entry["message"], "Operation status");
+        assert_eq!(entry["code"], 404);
+        assert_eq!(entry["user"], "alice");
+        assert_eq!(entry["is_active"], true);
     }
 }
