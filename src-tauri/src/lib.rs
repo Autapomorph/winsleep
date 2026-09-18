@@ -63,6 +63,7 @@ pub fn run() {
             pc_management::commands::get_keep_awake_status,
             notifications::commands::play_notification_sound,
             app::commands::quit_app,
+            app::commands::set_is_critical_operation_in_progress,
             tray::commands::set_is_tray_mode_enabled,
             tray::commands::update_tray_menu,
             settings::commands::load_settings,

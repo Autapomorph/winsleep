@@ -94,6 +94,12 @@ describe('useAutoInstallOnExit', () => {
     await mockListeners['app-exit-requested']({ payload: undefined });
 
     expect(installUpdateMock).toHaveBeenCalledWith({ restartAfterInstall: false });
+    expect(typedInvoke).toHaveBeenCalledWith('set_is_critical_operation_in_progress', {
+      isInProgress: true,
+    });
+    expect(typedInvoke).toHaveBeenCalledWith('set_is_critical_operation_in_progress', {
+      isInProgress: false,
+    });
     expect(typedInvoke).toHaveBeenCalledWith('quit_app');
   });
 
@@ -112,6 +118,12 @@ describe('useAutoInstallOnExit', () => {
     await mockListeners['app-exit-requested']({ payload: undefined });
 
     expect(installUpdateMock).toHaveBeenCalledWith({ restartAfterInstall: false });
+    expect(typedInvoke).toHaveBeenCalledWith('set_is_critical_operation_in_progress', {
+      isInProgress: true,
+    });
+    expect(typedInvoke).toHaveBeenCalledWith('set_is_critical_operation_in_progress', {
+      isInProgress: false,
+    });
     expect(typedInvoke).toHaveBeenCalledWith('quit_app');
   });
 
@@ -130,6 +142,12 @@ describe('useAutoInstallOnExit', () => {
     await mockListeners['app-exit-requested']({ payload: undefined });
 
     expect(installUpdateMock).toHaveBeenCalledTimes(1);
+    expect(typedInvoke).toHaveBeenCalledWith('set_is_critical_operation_in_progress', {
+      isInProgress: true,
+    });
+    expect(typedInvoke).toHaveBeenCalledWith('set_is_critical_operation_in_progress', {
+      isInProgress: false,
+    });
     expect(typedInvoke).toHaveBeenCalledWith('quit_app');
   });
 
@@ -149,6 +167,7 @@ describe('useAutoInstallOnExit', () => {
     await mockListeners['app-exit-requested']({ payload: undefined });
 
     expect(installUpdateMock).toHaveBeenCalledTimes(1);
-    expect(typedInvoke).toHaveBeenCalledTimes(1);
+    expect(typedInvoke).toHaveBeenCalledTimes(3);
+    expect(typedInvoke).toHaveBeenLastCalledWith('quit_app');
   });
 });
