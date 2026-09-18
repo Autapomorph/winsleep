@@ -1,4 +1,7 @@
 const { execSync } = require('child_process');
+const path = require('path');
+
+const rootDir = path.resolve(__dirname, '../../');
 
 const isClaude =
   process.argv.includes('--claude') ||
@@ -7,7 +10,14 @@ const isClaude =
 
 function runCommand(cmd) {
   try {
-    return { ok: true, output: execSync(cmd, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }) };
+    return {
+      ok: true,
+      output: execSync(cmd, {
+        cwd: rootDir,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      }),
+    };
   } catch (err) {
     const errorOutput = (err.stdout || '') + '\n' + (err.stderr || '') + '\n' + err.message;
     return { ok: false, output: errorOutput.trim() };
@@ -15,7 +25,10 @@ function runCommand(cmd) {
 }
 
 try {
-  const statusOutput = execSync('git status --porcelain', { encoding: 'utf8' });
+  const statusOutput = execSync('git status --porcelain', {
+    cwd: rootDir,
+    encoding: 'utf8',
+  });
 
   const files = statusOutput
     .split('\n')
