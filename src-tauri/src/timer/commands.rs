@@ -71,7 +71,10 @@ pub async fn start_timer(
                                 .clear_if_matches(timer_id);
                             break;
                         }
-                        target_instant.duration_since(now_instant).as_secs_f64().ceil() as u64
+                        target_instant
+                            .saturating_duration_since(now_instant)
+                            .as_secs_f64()
+                            .ceil() as u64
                     };
 
                     if last_emitted != Some(remaining) {
