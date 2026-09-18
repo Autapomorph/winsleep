@@ -170,7 +170,7 @@ describe('system-tray feature model hooks', () => {
       renderHook(() => useTrayLanguageSync());
 
       expect(typedListen).toHaveBeenCalledWith('tray-sync-request', expect.any(Function));
-      expect(typedInvoke).toHaveBeenCalledWith('update_tray_menu', expect.any(Object));
+      expect(typedInvoke).toHaveBeenCalledWith('update_tray_menu', { payload: expect.any(Object) });
 
       // Trigger sync request listener
       const cb = mockCapturedListeners['tray-sync-request'];
@@ -178,7 +178,9 @@ describe('system-tray feature model hooks', () => {
         cb({});
       });
 
-      expect(typedInvoke).toHaveBeenNthCalledWith(2, 'update_tray_menu', expect.any(Object));
+      expect(typedInvoke).toHaveBeenNthCalledWith(2, 'update_tray_menu', {
+        payload: expect.any(Object),
+      });
 
       // Error catching
       vi.mocked(typedInvoke).mockRejectedValueOnce(new Error('Invoke error'));
@@ -192,27 +194,25 @@ describe('system-tray feature model hooks', () => {
       useSessionStore.setState({ timerAction: 'sleep' });
       useTimerStore.setState({ timerState: 'paused', remainingSeconds: 20 });
       renderHook(() => useTrayLanguageSync());
-      expect(typedInvoke).toHaveBeenCalledWith(
-        'update_tray_menu',
-        expect.objectContaining({
+      expect(typedInvoke).toHaveBeenCalledWith('update_tray_menu', {
+        payload: expect.objectContaining({
           timerState: 'paused',
           tooltip: 'tray.tooltip.paused',
         }),
-      );
+      });
     });
 
     test('sets timerMode to indefinite when indefinite keep-awake is active', () => {
       useSessionStore.setState({ timerAction: 'keep-awake' });
       useTimerStore.setState({ timerState: 'running', timerMode: 'indefinite', plannedSeconds: 0 });
       renderHook(() => useTrayLanguageSync());
-      expect(typedInvoke).toHaveBeenCalledWith(
-        'update_tray_menu',
-        expect.objectContaining({
+      expect(typedInvoke).toHaveBeenCalledWith('update_tray_menu', {
+        payload: expect.objectContaining({
           timerMode: 'indefinite',
           timerState: 'running',
           tooltip: 'tray.tooltip.running',
         }),
-      );
+      });
     });
 
     test('does not throw if unsubscribe fails on unmount', async () => {

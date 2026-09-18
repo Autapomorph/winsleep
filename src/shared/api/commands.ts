@@ -30,7 +30,7 @@ export type Commands = CommandsShape<{
   play_notification_sound: CommandDef<void>;
   quit_app: CommandDef<void>;
   set_is_tray_mode_enabled: CommandDef<void, SetIsTrayModeEnabledCommandArgs>;
-  update_tray_menu: CommandDef<void, TrayMenuState>;
+  update_tray_menu: CommandDef<void, { payload: TrayMenuState }>;
   load_settings: CommandDef<Record<string, unknown> | null>;
   save_settings: CommandDef<void, { settings: Record<string, unknown> }>;
   open_settings_dir: CommandDef<void>;
