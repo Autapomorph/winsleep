@@ -25,8 +25,9 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
                     if let Some(window) = app.get_webview_window("main") {
                         let is_visible = window.is_visible().unwrap_or(false);
                         let is_minimized = window.is_minimized().unwrap_or(false);
+                        let is_focused = window.is_focused().unwrap_or(false);
 
-                        if is_visible && !is_minimized {
+                        if is_visible && !is_minimized && is_focused {
                             let _ = window.hide();
                         } else {
                             let _ = window.unminimize();
