@@ -41,6 +41,11 @@ pub async fn start_timer(
 
         loop {
             tokio::select! {
+                biased;
+                _ = &mut rx => {
+                    tracing::info!("Timer loop received cancel signal, exiting");
+                    break;
+                }
                 _ = interval.tick() => {
                     let now_ms = SystemTime::now()
                         .duration_since(UNIX_EPOCH)
@@ -81,10 +86,6 @@ pub async fn start_timer(
                         let _ = app_handle.emit("timer-tick", remaining);
                         last_emitted = Some(remaining);
                     }
-                }
-                _ = &mut rx => {
-                    tracing::info!("Timer loop received cancel signal, exiting");
-                    break;
                 }
             }
         }
