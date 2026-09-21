@@ -133,6 +133,7 @@ fn read_lines_from_tail_rev(
 
     // Read in chunks backwards until max_lines satisfied, marker hit, or file beginning reached
     const CHUNK_SIZE: u64 = 64 * 1024;
+    let mut chunk = Vec::with_capacity(CHUNK_SIZE as usize + 4096);
 
     while current_end > 0 && result_lines_rev.len() < max_lines && !hit_marker {
         let read_len = current_end.min(CHUNK_SIZE);
@@ -141,8 +142,8 @@ fn read_lines_from_tail_rev(
         file.seek(SeekFrom::Start(seek_pos))
             .map_err(|e| format!("Failed to seek in log file {:?}: {e}", path.file_name()))?;
 
-        let mut chunk = vec![0u8; read_len as usize];
-        file.read_exact(&mut chunk)
+        chunk.resize(read_len as usize, 0);
+        file.read_exact(&mut chunk[..read_len as usize])
             .map_err(|e| format!("Failed to read log file {:?}: {e}", path.file_name()))?;
 
         if !remainder.is_empty() {
@@ -156,10 +157,12 @@ fn read_lines_from_tail_rev(
         // first newline might be an incomplete line that continues into the preceding chunk.
         if seek_pos > 0 {
             if let Some(first_newline_idx) = slice.iter().position(|&b| b == b'\n') {
-                remainder = slice[..first_newline_idx].to_vec();
+                remainder.clear();
+                remainder.extend_from_slice(&slice[..first_newline_idx]);
                 slice = &slice[first_newline_idx + 1..];
             } else {
-                remainder = slice.to_vec();
+                remainder.clear();
+                remainder.extend_from_slice(slice);
                 current_end = seek_pos;
                 continue;
             }
