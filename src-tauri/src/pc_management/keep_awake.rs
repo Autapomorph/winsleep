@@ -91,6 +91,7 @@ impl KeepAwakeManager {
             ));
         }
 
+        let mut display_acquired = false;
         if prevent_display_sleep {
             let res_disp = unsafe { PowerSetRequest(handle, PowerRequestDisplayRequired) };
             if res_disp == 0 {
@@ -98,17 +99,20 @@ impl KeepAwakeManager {
                 tracing::warn!(
                     "PowerSetRequest(DisplayRequired) failed with code {err}, continuing with system sleep prevention only"
                 );
+            } else {
+                display_acquired = true;
             }
         }
 
         tracing::info!(
-            "Acquired Windows Power Availability Request (prevent_display_sleep: {})",
-            prevent_display_sleep
+            "Acquired Windows Power Availability Request (prevent_display_sleep: {}, display_acquired: {})",
+            prevent_display_sleep,
+            display_acquired
         );
 
         *guard = Some(ActiveKeepAwake {
             handle: SafeHandle(handle),
-            display_required: prevent_display_sleep,
+            display_required: display_acquired,
         });
 
         Ok(())
@@ -138,3 +142,31 @@ impl Drop for KeepAwakeManager {
         let _ = self.release();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_keep_awake_manager_default_state() {
+        let manager = KeepAwakeManager::default();
+        assert!(!manager.is_active());
+        assert!(manager.release().is_ok());
+        assert!(!manager.is_active());
+    }
+
+    #[test]
+    fn test_keep_awake_manager_acquire_and_release() {
+        let manager = KeepAwakeManager::default();
+        assert!(!manager.is_active());
+
+        // In Windows desktop environment with power APIs available
+        let acquire_res = manager.acquire(false, "WinSleep test reason");
+        if acquire_res.is_ok() {
+            assert!(manager.is_active());
+            assert!(manager.release().is_ok());
+            assert!(!manager.is_active());
+        }
+    }
+}
+
