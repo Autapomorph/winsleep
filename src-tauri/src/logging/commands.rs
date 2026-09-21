@@ -269,8 +269,9 @@ pub fn clear_logs(app_handle: tauri::AppHandle) -> Result<(), String> {
         let _ = fs::remove_file(path);
     }
 
-    // Mark the active log as cleared without corrupting the open file handle in tracing-appender
-    tracing::info!("{CLEAR_LOGS_MARKER}");
+    // Mark the active log as cleared without corrupting the open file handle in tracing-appender.
+    // Using CLEAR_LOGS_TARGET ensures this marker bypasses any user-defined EnvFilter log levels.
+    tracing::info!(target: super::CLEAR_LOGS_TARGET, "{CLEAR_LOGS_MARKER}");
 
     // Wait briefly until the marker is flushed to disk by the non-blocking worker,
     // ensuring an immediate subsequent read_logs call will observe the cleared state.
