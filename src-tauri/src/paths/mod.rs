@@ -141,13 +141,21 @@ pub fn atomic_write(path: &std::path::Path, content: &[u8]) -> Result<(), String
 mod tests {
     use super::*;
 
+    static TEST_COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
     #[test]
     fn test_atomic_write_new_and_overwrite() {
+        let counter = TEST_COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         let unique_id = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_nanos();
-        let temp_dir = std::env::temp_dir().join(format!("winsleep_test_{}_{}", std::process::id(), unique_id));
+        let temp_dir = std::env::temp_dir().join(format!(
+            "winsleep_test_{}_{}_{}",
+            std::process::id(),
+            unique_id,
+            counter
+        ));
         let test_file = temp_dir.join("test_file.json");
 
         let content = b"{\"key\":\"value\"}";
