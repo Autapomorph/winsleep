@@ -65,17 +65,26 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
                             let scale_factor =
                                 monitor.as_ref().map(|m| m.scale_factor()).unwrap_or(1.0);
 
+                            let fallback_width = (320.0 * scale_factor) as u32;
+                            let fallback_height = (480.0 * scale_factor) as u32;
+
                             let size = window
                                 .outer_size()
                                 .or_else(|_| window.inner_size())
                                 .unwrap_or_else(|_| {
-                                    tauri::PhysicalSize::new(
-                                        (320.0 * scale_factor) as u32,
-                                        (480.0 * scale_factor) as u32,
-                                    )
+                                    tauri::PhysicalSize::new(fallback_width, fallback_height)
                                 });
-                            let win_width = size.width as f64;
-                            let win_height = size.height as f64;
+
+                            let win_width = if size.width > 0 {
+                                size.width as f64
+                            } else {
+                                fallback_width as f64
+                            };
+                            let win_height = if size.height > 0 {
+                                size.height as f64
+                            } else {
+                                fallback_height as f64
+                            };
 
                             let (pos_x, pos_y) = match rect.position {
                                 tauri::Position::Physical(p) => (p.x as f64, p.y as f64),
