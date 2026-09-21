@@ -84,9 +84,17 @@ pub const MAX_PAGE_LIMIT: usize = 2000;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
+pub struct LogCursor {
+    pub file_name: String,
+    pub byte_offset: u64,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct LogChunk {
     pub data: String,
     pub has_more: bool,
+    pub cursor: Option<LogCursor>,
 }
 
 fn is_clear_marker_line(line: &str) -> bool {
@@ -99,19 +107,21 @@ fn is_clear_marker_line(line: &str) -> bool {
     line.trim() == CLEAR_LOGS_MARKER
 }
 
-/// Reads up to `max_lines` from the tail of the log file at `path` in reverse order
+/// Reads up to `max_lines` from the log file at `path` before `end_offset` in reverse order
 /// (newest line first).
-/// Returns `(lines_rev, hit_clear_marker)`.
+/// Returns `(lines_rev, hit_clear_marker, oldest_line_offset)`.
 /// If `hit_clear_marker` is true, all logs before the marker in this and older files should be ignored.
-fn read_lines_from_tail_rev(
+/// `oldest_line_offset` is the file byte offset where the oldest collected line starts, or 0 if start of file reached.
+fn read_lines_before_offset_rev(
     path: &std::path::Path,
+    end_offset: u64,
     max_lines: usize,
-) -> Result<(Vec<String>, bool), String> {
+) -> Result<(Vec<String>, bool, u64), String> {
     use std::fs::File;
     use std::io::{Read, Seek, SeekFrom};
 
-    if max_lines == 0 {
-        return Ok((Vec::new(), false));
+    if max_lines == 0 || end_offset == 0 {
+        return Ok((Vec::new(), false, 0));
     }
 
     let mut file = File::open(path)
@@ -123,13 +133,14 @@ fn read_lines_from_tail_rev(
         .len();
 
     if file_len == 0 {
-        return Ok((Vec::new(), false));
+        return Ok((Vec::new(), false, 0));
     }
 
     let mut result_lines_rev = Vec::new();
     let mut hit_marker = false;
-    let mut current_end = file_len;
+    let mut current_end = end_offset.min(file_len);
     let mut remainder: Vec<u8> = Vec::new();
+    let mut oldest_line_offset = current_end;
 
     // Read in chunks backwards until max_lines satisfied, marker hit, or file beginning reached
     const CHUNK_SIZE: u64 = 64 * 1024;
@@ -151,24 +162,38 @@ fn read_lines_from_tail_rev(
             remainder.clear();
         }
 
-        let mut slice = &chunk[..];
-
-        // If we sought into the middle of the file (seek_pos > 0), the bytes before the
-        // first newline might be an incomplete line that continues into the preceding chunk.
-        if seek_pos > 0 {
-            if let Some(first_newline_idx) = slice.iter().position(|&b| b == b'\n') {
+        let (slice_start, slice_file_offset) = if seek_pos > 0 {
+            if let Some(first_newline_idx) = chunk.iter().position(|&b| b == b'\n') {
                 remainder.clear();
-                remainder.extend_from_slice(&slice[..first_newline_idx]);
-                slice = &slice[first_newline_idx + 1..];
+                remainder.extend_from_slice(&chunk[..first_newline_idx]);
+                (first_newline_idx + 1, seek_pos + (first_newline_idx + 1) as u64)
             } else {
                 remainder.clear();
-                remainder.extend_from_slice(slice);
+                remainder.extend_from_slice(&chunk);
                 current_end = seek_pos;
                 continue;
             }
+        } else {
+            (0, 0u64)
+        };
+
+        let slice = &chunk[slice_start..];
+
+        // Find all line boundaries in slice
+        let mut line_ranges = Vec::new();
+        let mut line_start = 0;
+        for (i, &b) in slice.iter().enumerate() {
+            if b == b'\n' {
+                line_ranges.push((line_start, i));
+                line_start = i + 1;
+            }
+        }
+        if line_start < slice.len() {
+            line_ranges.push((line_start, slice.len()));
         }
 
-        for line_bytes in slice.split(|&b| b == b'\n').rev() {
+        for (start, end) in line_ranges.into_iter().rev() {
+            let line_bytes = &slice[start..end];
             let line_bytes = if line_bytes.ends_with(b"\r") {
                 &line_bytes[..line_bytes.len() - 1]
             } else {
@@ -183,10 +208,13 @@ fn read_lines_from_tail_rev(
 
             if trimmed.contains(CLEAR_LOGS_MARKER) && is_clear_marker_line(trimmed) {
                 hit_marker = true;
+                oldest_line_offset = slice_file_offset + start as u64;
                 break;
             }
 
             result_lines_rev.push(trimmed.to_string());
+            oldest_line_offset = slice_file_offset + start as u64;
+
             if result_lines_rev.len() >= max_lines {
                 break;
             }
@@ -195,7 +223,23 @@ fn read_lines_from_tail_rev(
         current_end = seek_pos;
     }
 
-    Ok((result_lines_rev, hit_marker))
+    if current_end == 0 && !hit_marker && result_lines_rev.len() < max_lines {
+        oldest_line_offset = 0;
+    }
+
+    Ok((result_lines_rev, hit_marker, oldest_line_offset))
+}
+
+/// Reads up to `max_lines` from the tail of the log file at `path` in reverse order
+/// (newest line first).
+/// Returns `(lines_rev, hit_clear_marker)`.
+/// If `hit_clear_marker` is true, all logs before the marker in this and older files should be ignored.
+fn read_lines_from_tail_rev(
+    path: &std::path::Path,
+    max_lines: usize,
+) -> Result<(Vec<String>, bool), String> {
+    let (lines, hit_marker, _) = read_lines_before_offset_rev(path, u64::MAX, max_lines)?;
+    Ok((lines, hit_marker))
 }
 
 #[tauri::command]
@@ -203,31 +247,123 @@ pub fn read_logs(
     app_handle: tauri::AppHandle,
     offset: Option<usize>,
     limit: Option<usize>,
+    cursor: Option<LogCursor>,
 ) -> Result<LogChunk, String> {
     let files = get_sorted_log_files(&app_handle)?;
     if files.is_empty() {
         return Ok(LogChunk {
             data: String::new(),
             has_more: false,
+            cursor: None,
         });
     }
 
-    let offset = offset.unwrap_or(0);
     let limit = limit.unwrap_or(DEFAULT_PAGE_LIMIT).clamp(1, MAX_PAGE_LIMIT);
-    let needed = offset + limit + 1; // +1 to probe if more lines exist
 
-    let mut skipped = 0;
+    // If offset > 0 without a cursor is explicitly requested, preserve legacy offset-from-tail logic
+    if offset.unwrap_or(0) > 0 && cursor.is_none() {
+        let offset = offset.unwrap();
+        let needed = offset + limit + 1; // +1 to probe if more lines exist
+
+        let mut skipped = 0;
+        let mut collected_rev = Vec::with_capacity(limit);
+        let mut has_more = false;
+
+        for path in files {
+            let max_for_this_file = needed.saturating_sub(skipped + collected_rev.len());
+            let (lines_rev, hit_marker) = read_lines_from_tail_rev(&path, max_for_this_file + 1)?;
+
+            for line in lines_rev {
+                if skipped < offset {
+                    skipped += 1;
+                } else if collected_rev.len() < limit {
+                    collected_rev.push(line);
+                } else {
+                    has_more = true;
+                    break;
+                }
+            }
+
+            if hit_marker {
+                has_more = false;
+                break;
+            }
+
+            if has_more {
+                break;
+            }
+        }
+
+        collected_rev.reverse();
+        let mut data = collected_rev.join("\n");
+        if !data.is_empty() {
+            data.push('\n');
+        }
+
+        return Ok(LogChunk {
+            data,
+            has_more,
+            cursor: None,
+        });
+    }
+
+    // Cursor-based or initial tail read
+    let (start_file_idx, initial_offset) = if let Some(ref cur) = cursor {
+        let idx = files
+            .iter()
+            .position(|p| {
+                p.file_name().map(|n| n.to_string_lossy()) == Some(cur.file_name.as_str().into())
+            })
+            .or_else(|| {
+                // If cursor file was deleted/rotated, advance to the next older file
+                files.iter().position(|p| {
+                    let name = p.file_name().unwrap_or_default().to_string_lossy();
+                    name.as_ref() < cur.file_name.as_str()
+                })
+            });
+
+        match idx {
+            Some(i) => (i, cur.byte_offset),
+            None => {
+                return Ok(LogChunk {
+                    data: String::new(),
+                    has_more: false,
+                    cursor: None,
+                });
+            }
+        }
+    } else {
+        (0, u64::MAX)
+    };
+
     let mut collected_rev = Vec::with_capacity(limit);
     let mut has_more = false;
+    let mut next_cursor: Option<LogCursor> = None;
 
-    for path in files {
-        let max_for_this_file = needed.saturating_sub(skipped + collected_rev.len());
-        let (lines_rev, hit_marker) = read_lines_from_tail_rev(&path, max_for_this_file + 1)?;
+    for (i, path) in files.iter().enumerate().skip(start_file_idx) {
+        let file_name = path
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string();
+
+        let end_offset = if i == start_file_idx && cursor.as_ref().map(|c| c.file_name.as_str()) == Some(&file_name) {
+            initial_offset
+        } else {
+            u64::MAX
+        };
+
+        if end_offset == 0 {
+            // Already read this file to its start, continue to older files
+            continue;
+        }
+
+        let needed_for_this_file = (limit - collected_rev.len()) + 1;
+        let (lines_rev, hit_marker, oldest_offset) =
+            read_lines_before_offset_rev(path, end_offset, needed_for_this_file)?;
 
         for line in lines_rev {
-            if skipped < offset {
-                skipped += 1;
-            } else if collected_rev.len() < limit {
+            if collected_rev.len() < limit {
                 collected_rev.push(line);
             } else {
                 has_more = true;
@@ -235,8 +371,14 @@ pub fn read_logs(
             }
         }
 
+        if !collected_rev.is_empty() {
+            next_cursor = Some(LogCursor {
+                file_name: file_name.clone(),
+                byte_offset: oldest_offset,
+            });
+        }
+
         if hit_marker {
-            // All logs before this marker are considered cleared, so no more can exist
             has_more = false;
             break;
         }
@@ -244,9 +386,27 @@ pub fn read_logs(
         if has_more {
             break;
         }
+
+        if oldest_offset > 0 && collected_rev.len() >= limit {
+            has_more = true;
+            break;
+        }
     }
 
-    // Reverse collected lines to return them in chronological order (oldest first)
+    if !has_more && !collected_rev.is_empty() {
+        if let Some(cur) = &next_cursor {
+            if cur.byte_offset > 0 {
+                has_more = true;
+            } else if let Some(cur_idx) = files.iter().position(|p| {
+                p.file_name().map(|n| n.to_string_lossy()) == Some(cur.file_name.as_str().into())
+            }) {
+                if cur_idx + 1 < files.len() {
+                    has_more = true;
+                }
+            }
+        }
+    }
+
     collected_rev.reverse();
 
     let mut data = collected_rev.join("\n");
@@ -254,7 +414,15 @@ pub fn read_logs(
         data.push('\n');
     }
 
-    Ok(LogChunk { data, has_more })
+    if !has_more {
+        next_cursor = None;
+    }
+
+    Ok(LogChunk {
+        data,
+        has_more,
+        cursor: next_cursor,
+    })
 }
 
 #[tauri::command]
@@ -483,6 +651,73 @@ mod tests {
             sanitize_log_message("Regular log message"),
             "Regular log message"
         );
+    }
+
+    #[test]
+    fn test_read_lines_before_offset_rev_pagination_exactness() {
+        let content = "line 0\nline 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline 9\n";
+        let (_dir, file_path) = create_temp_log_file(content);
+
+        // Batch 1: newest 4 lines
+        let (batch1_rev, hit_marker1, offset1) =
+            read_lines_before_offset_rev(&file_path, u64::MAX, 4).unwrap();
+        assert!(!hit_marker1);
+        assert_eq!(batch1_rev, vec!["line 9", "line 8", "line 7", "line 6"]);
+        assert!(offset1 > 0);
+
+        // Batch 2: next 4 older lines before offset1
+        let (batch2_rev, hit_marker2, offset2) =
+            read_lines_before_offset_rev(&file_path, offset1, 4).unwrap();
+        assert!(!hit_marker2);
+        assert_eq!(batch2_rev, vec!["line 5", "line 4", "line 3", "line 2"]);
+        assert!(offset2 > 0);
+
+        // Batch 3: remaining lines before offset2
+        let (batch3_rev, hit_marker3, offset3) =
+            read_lines_before_offset_rev(&file_path, offset2, 4).unwrap();
+        assert!(!hit_marker3);
+        assert_eq!(batch3_rev, vec!["line 1", "line 0"]);
+        assert_eq!(offset3, 0); // Reached start of file
+
+        // Batch 4: reading before offset 0 returns empty
+        let (batch4_rev, hit_marker4, offset4) =
+            read_lines_before_offset_rev(&file_path, offset3, 4).unwrap();
+        assert!(!hit_marker4);
+        assert!(batch4_rev.is_empty());
+        assert_eq!(offset4, 0);
+    }
+
+    #[test]
+    fn test_cursor_pagination_immune_to_appended_lines() {
+        let (_dir, file_path) = create_temp_log_file("line 0\nline 1\nline 2\nline 3\nline 4\n");
+
+        // Step 1: Read latest 2 lines (lines 4 and 3)
+        let (batch1_rev, _, offset1) =
+            read_lines_before_offset_rev(&file_path, u64::MAX, 2).unwrap();
+        assert_eq!(batch1_rev, vec!["line 4", "line 3"]);
+
+        // Step 2: Append 3 NEW lines to the tail of the log file
+        {
+            let mut file = std::fs::OpenOptions::new()
+                .append(true)
+                .open(&file_path)
+                .unwrap();
+            file.write_all(b"line 5 (new)\nline 6 (new)\nline 7 (new)\n")
+                .unwrap();
+            file.flush().unwrap();
+        }
+
+        // Step 3: Read older lines using the offset saved from Step 1.
+        // Even though new lines were added at the tail, reading before offset1 MUST yield lines 2 and 1!
+        let (batch2_rev, _, offset2) =
+            read_lines_before_offset_rev(&file_path, offset1, 2).unwrap();
+        assert_eq!(batch2_rev, vec!["line 2", "line 1"]);
+
+        // Step 4: Read oldest remaining line
+        let (batch3_rev, _, offset3) =
+            read_lines_before_offset_rev(&file_path, offset2, 2).unwrap();
+        assert_eq!(batch3_rev, vec!["line 0"]);
+        assert_eq!(offset3, 0);
     }
 }
 

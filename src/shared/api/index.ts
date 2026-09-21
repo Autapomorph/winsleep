@@ -14,7 +14,7 @@ export type {
 export { pcHibernate, pcLock, pcReboot, pcShutdown, pcSignout, pcSleep } from './actions';
 export type { SetIsCriticalOperationInProgressCommandArgs } from './app';
 export type { SaveAppStateCommandArgs } from './app-state';
-export type { LogChunk, LogMessageCommandArgs, ReadLogsCommandArgs } from './logs';
+export type { LogChunk, LogCursor, LogMessageCommandArgs, ReadLogsCommandArgs } from './logs';
 export type { SaveSettingsCommandArgs } from './settings';
 export type { StartTimerCommandArgs } from './timer';
 export type {
