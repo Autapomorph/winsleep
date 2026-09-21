@@ -143,6 +143,8 @@ where
     }
 }
 
+pub const CLEAR_LOGS_TARGET: &str = "winsleep_system";
+
 pub fn init(app_handle: &tauri::AppHandle) -> Result<WorkerGuard, Box<dyn std::error::Error>> {
     let log_dir = crate::paths::get_log_dir(app_handle)?;
 
@@ -156,13 +158,17 @@ pub fn init(app_handle: &tauri::AppHandle) -> Result<WorkerGuard, Box<dyn std::e
 
     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
-    let filter = EnvFilter::try_from_env("WINSLEEP_LOG").unwrap_or_else(|_| {
+    let mut filter = EnvFilter::try_from_env("WINSLEEP_LOG").unwrap_or_else(|_| {
         EnvFilter::new(if cfg!(debug_assertions) {
             "debug"
         } else {
             "info"
         })
     });
+
+    if let Ok(directive) = format!("{CLEAR_LOGS_TARGET}=trace").parse() {
+        filter = filter.add_directive(directive);
+    }
 
     let file_layer = fmt::layer()
         .with_writer(non_blocking)
@@ -284,5 +290,35 @@ mod tests {
         assert_eq!(entry["code"], 404);
         assert_eq!(entry["user"], "alice");
         assert_eq!(entry["is_active"], true);
+    }
+
+    #[test]
+    fn test_clear_logs_marker_bypasses_restrictive_env_filter() {
+        let buffer = Arc::new(Mutex::new(Vec::new()));
+        let writer = BufferWriter(Arc::clone(&buffer));
+
+        let mut filter = EnvFilter::new("off");
+        if let Ok(directive) = format!("{CLEAR_LOGS_TARGET}=trace").parse() {
+            filter = filter.add_directive(directive);
+        }
+
+        let layer = fmt::layer()
+            .with_writer(writer)
+            .with_ansi(false)
+            .event_format(JsonFormatter);
+
+        let subscriber = tracing_subscriber::registry().with(filter).with(layer);
+
+        tracing::subscriber::with_default(subscriber, || {
+            tracing::error!("Regular error should be filtered out by off");
+            tracing::info!(target: CLEAR_LOGS_TARGET, "__WINSLEEP_LOGS_CLEARED__");
+        });
+
+        let output = String::from_utf8(buffer.lock().unwrap().clone()).unwrap();
+        let lines: Vec<&str> = output.lines().filter(|l| !l.trim().is_empty()).collect();
+
+        assert_eq!(lines.len(), 1);
+        let entry: serde_json::Value = serde_json::from_str(lines[0]).unwrap();
+        assert_eq!(entry["message"], "__WINSLEEP_LOGS_CLEARED__");
     }
 }
