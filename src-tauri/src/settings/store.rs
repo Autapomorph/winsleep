@@ -20,15 +20,22 @@ impl Default for AppSettings {
     }
 }
 
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SettingsFlags {
+    is_tray_mode_enabled: Option<bool>,
+    is_start_minimized_enabled: Option<bool>,
+}
+
 impl AppSettings {
     pub fn get_settings_path(app_handle: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
         crate::paths::get_settings_path(app_handle)
     }
 
     pub fn parse_tray_mode(bytes: &[u8]) -> Option<bool> {
-        serde_json::from_slice::<serde_json::Value>(bytes)
+        serde_json::from_slice::<SettingsFlags>(bytes)
             .ok()
-            .and_then(|json| json.get("isTrayModeEnabled").and_then(|v| v.as_bool()))
+            .and_then(|flags| flags.is_tray_mode_enabled)
     }
 
     pub fn load_initial_tray_mode(app_handle: &tauri::AppHandle) -> bool {
@@ -53,9 +60,9 @@ impl AppSettings {
     }
 
     pub fn parse_start_minimized(bytes: &[u8]) -> Option<bool> {
-        serde_json::from_slice::<serde_json::Value>(bytes)
+        serde_json::from_slice::<SettingsFlags>(bytes)
             .ok()
-            .and_then(|json| json.get("isStartMinimizedEnabled").and_then(|v| v.as_bool()))
+            .and_then(|flags| flags.is_start_minimized_enabled)
     }
 
     pub fn load_initial_start_minimized(app_handle: &tauri::AppHandle) -> bool {
