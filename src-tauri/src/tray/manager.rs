@@ -41,22 +41,17 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
                             let _ = window.emit("tray-menu-close-request", ());
                         } else {
                             // Position the window on the monitor where the tray icon was clicked
-                            let (click_x, click_y) = match rect.position {
-                                tauri::Position::Physical(p) => (p.x, p.y),
-                                tauri::Position::Logical(l) => (l.x as i32, l.y as i32),
-                            };
-
                             let monitor = app
                                 .available_monitors()
                                 .ok()
                                 .and_then(|monitors| {
                                     monitors.into_iter().find(|m| {
-                                        let pos = m.position();
-                                        let size = m.size();
-                                        click_x >= pos.x
-                                            && click_x < pos.x + size.width as i32
-                                            && click_y >= pos.y
-                                            && click_y < pos.y + size.height as i32
+                                        is_point_inside_monitor(
+                                            &rect.position,
+                                            *m.position(),
+                                            *m.size(),
+                                            m.scale_factor(),
+                                        )
                                     })
                                 })
                                 .or_else(|| app.primary_monitor().ok().flatten())
@@ -147,4 +142,78 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         .build(app)?;
 
     Ok(())
+}
+
+pub fn is_point_inside_monitor(
+    pos: &tauri::Position,
+    monitor_pos: tauri::PhysicalPosition<i32>,
+    monitor_size: tauri::PhysicalSize<u32>,
+    scale_factor: f64,
+) -> bool {
+    let (px, py) = match *pos {
+        tauri::Position::Physical(p) => (p.x as f64, p.y as f64),
+        tauri::Position::Logical(l) => (l.x * scale_factor, l.y * scale_factor),
+    };
+
+    let min_x = monitor_pos.x as f64;
+    let max_x = min_x + monitor_size.width as f64;
+    let min_y = monitor_pos.y as f64;
+    let max_y = min_y + monitor_size.height as f64;
+
+    px >= min_x && px < max_x && py >= min_y && py < max_y
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_point_inside_monitor_physical_coords() {
+        let monitor_pos = tauri::PhysicalPosition::new(0, 0);
+        let monitor_size = tauri::PhysicalSize::new(1920, 1080);
+        let scale_factor = 1.0;
+
+        let inside = tauri::Position::Physical(tauri::PhysicalPosition::new(500, 500));
+        assert!(is_point_inside_monitor(&inside, monitor_pos, monitor_size, scale_factor));
+
+        let outside_x = tauri::Position::Physical(tauri::PhysicalPosition::new(2000, 500));
+        assert!(!is_point_inside_monitor(&outside_x, monitor_pos, monitor_size, scale_factor));
+
+        let outside_y = tauri::Position::Physical(tauri::PhysicalPosition::new(500, 1200));
+        assert!(!is_point_inside_monitor(&outside_y, monitor_pos, monitor_size, scale_factor));
+    }
+
+    #[test]
+    fn test_is_point_inside_monitor_logical_coords_with_scaling() {
+        let monitor_pos = tauri::PhysicalPosition::new(0, 0);
+        let monitor_size = tauri::PhysicalSize::new(3840, 2160); // 4K physical
+        let scale_factor = 2.0; // 200% scaling -> 1920x1080 logical
+
+        // Logical (1000, 500) * 2.0 = Physical (2000, 1000) -> inside 3840x2160
+        let inside = tauri::Position::Logical(tauri::LogicalPosition::new(1000.0, 500.0));
+        assert!(is_point_inside_monitor(&inside, monitor_pos, monitor_size, scale_factor));
+
+        // Logical (2000, 500) * 2.0 = Physical (4000, 1000) -> outside 3840x2160
+        let outside = tauri::Position::Logical(tauri::LogicalPosition::new(2000.0, 500.0));
+        assert!(!is_point_inside_monitor(&outside, monitor_pos, monitor_size, scale_factor));
+    }
+
+    #[test]
+    fn test_is_point_inside_monitor_secondary_monitor_offset() {
+        // Second monitor placed to the right of the primary: x starts at 1920, 150% scaling
+        let monitor_pos = tauri::PhysicalPosition::new(1920, 0);
+        let monitor_size = tauri::PhysicalSize::new(2560, 1440);
+        let scale_factor = 1.5;
+
+        // Physical coordinates on secondary monitor
+        let inside_physical = tauri::Position::Physical(tauri::PhysicalPosition::new(2500, 700));
+        assert!(is_point_inside_monitor(&inside_physical, monitor_pos, monitor_size, scale_factor));
+
+        let on_primary = tauri::Position::Physical(tauri::PhysicalPosition::new(1000, 500));
+        assert!(!is_point_inside_monitor(&on_primary, monitor_pos, monitor_size, scale_factor));
+
+        // Logical coordinates: (2000.0, 500.0) * 1.5 = (3000.0, 750.0) -> inside [1920..4480, 0..1440]
+        let inside_logical = tauri::Position::Logical(tauri::LogicalPosition::new(2000.0, 500.0));
+        assert!(is_point_inside_monitor(&inside_logical, monitor_pos, monitor_size, scale_factor));
+    }
 }
