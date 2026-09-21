@@ -59,9 +59,15 @@ pub fn pc_hibernate(keep_awake: State<'_, KeepAwakeManager>) -> Result<(), Strin
     Ok(())
 }
 
+pub fn get_shutdown_exe_path() -> std::path::PathBuf {
+    let sys_root = std::env::var_os("SystemRoot")
+        .or_else(|| std::env::var_os("windir"))
+        .unwrap_or_else(|| "C:\\Windows".into());
+    std::path::Path::new(&sys_root).join("System32").join("shutdown.exe")
+}
+
 fn create_shutdown_command() -> Command {
-    let sys_root = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".to_string());
-    let shutdown_path = format!("{sys_root}\\System32\\shutdown.exe");
+    let shutdown_path = get_shutdown_exe_path();
     let mut cmd = Command::new(shutdown_path);
     #[cfg(windows)]
     {
@@ -165,4 +171,17 @@ pub fn pc_signout(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_shutdown_exe_path() {
+        let path = get_shutdown_exe_path();
+        assert!(path.ends_with(std::path::Path::new("System32").join("shutdown.exe")));
+        assert!(path.is_absolute());
+    }
+}
+
 
