@@ -492,15 +492,19 @@ mod tests {
         }
     }
 
+    static TEST_COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
     fn create_temp_log_file(content: &str) -> (TempDirGuard, std::path::PathBuf) {
+        let counter = TEST_COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         let unique_id = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_nanos();
         let temp_dir = std::env::temp_dir().join(format!(
-            "winsleep_log_test_{}_{}",
+            "winsleep_log_test_{}_{}_{}",
             std::process::id(),
-            unique_id
+            unique_id,
+            counter
         ));
         std::fs::create_dir_all(&temp_dir).expect("failed to create temp dir");
         let file_path = temp_dir.join("WinSleep.2026-09-16.log");
