@@ -9,7 +9,11 @@ describe('debugLogsStore', () => {
   beforeEach(() => {
     useDebugLogsStore.setState({
       error: null,
+      hasMore: true,
       isLoading: false,
+      isLoadingOlder: false,
+      loadedLinesCount: 0,
+      oldestCursor: null,
       parsedEntries: [],
       rawLogs: '',
       searchQuery: '',
@@ -23,6 +27,7 @@ describe('debugLogsStore', () => {
     expect(state.rawLogs).toBe('');
     expect(state.parsedEntries).toEqual([]);
     expect(state.isLoading).toBe(false);
+    expect(state.oldestCursor).toBeNull();
     expect(state.selectedLevel).toBe('ALL');
   });
 
@@ -31,6 +36,7 @@ describe('debugLogsStore', () => {
       '{"timestamp":"1970-01-01T00:00:00Z","level":"info","message":"Tauri started"}\nInvalid JSON line';
 
     vi.mocked(typedInvoke).mockResolvedValueOnce({
+      cursor: { fileName: 'WinSleep.1970-01-01.log', byteOffset: 123 },
       data: mockLogs,
       hasMore: false,
     });
@@ -42,6 +48,10 @@ describe('debugLogsStore', () => {
     expect(state.rawLogs).toBe(mockLogs);
     expect(state.isLoading).toBe(false);
     expect(state.error).toBeNull();
+    expect(state.oldestCursor).toEqual({
+      fileName: 'WinSleep.1970-01-01.log',
+      byteOffset: 123,
+    });
     expect(state.parsedEntries).toHaveLength(2);
     expect(state.parsedEntries[0]).toEqual({
       id: '1970-01-01T00:00:00Z-0',
@@ -67,6 +77,7 @@ describe('debugLogsStore', () => {
 
   test('should clear logs and reset state', async () => {
     useDebugLogsStore.setState({
+      oldestCursor: { fileName: 'test.log', byteOffset: 456 },
       parsedEntries: [{ id: '1', message: 'test' }],
       rawLogs: 'some logs',
       searchQuery: 'test',
@@ -81,6 +92,7 @@ describe('debugLogsStore', () => {
 
     expect(state.rawLogs).toBe('');
     expect(state.parsedEntries).toEqual([]);
+    expect(state.oldestCursor).toBeNull();
     expect(state.searchQuery).toBe('');
     expect(state.selectedLevel).toBe('ALL');
   });
@@ -105,11 +117,14 @@ describe('debugLogsStore', () => {
     expect(state.selectedLevel).toBe('ALL');
   });
 
-  test('should load older logs and prepend them', async () => {
+  test('should load older logs with cursor and prepend them', async () => {
+    const initialCursor = { fileName: 'WinSleep.1970-01-01.log', byteOffset: 500 };
+
     useDebugLogsStore.setState({
       hasMore: true,
       isLoadingOlder: false,
       loadedLinesCount: 1,
+      oldestCursor: initialCursor,
       parsedEntries: [
         {
           id: '1970-01-01T00:00:01Z-0',
@@ -121,19 +136,27 @@ describe('debugLogsStore', () => {
     });
 
     const mockOlderLogs = '{"timestamp":"1970-01-01T00:00:00Z","level":"info","message":"Line 1"}';
+    const nextCursor = { fileName: 'WinSleep.1970-01-01.log', byteOffset: 100 };
 
     vi.mocked(typedInvoke).mockResolvedValueOnce({
+      cursor: nextCursor,
       data: mockOlderLogs,
       hasMore: false,
     });
 
     const added = await useDebugLogsStore.getState().loadOlderLogs();
 
+    expect(typedInvoke).toHaveBeenCalledWith('read_logs', {
+      cursor: initialCursor,
+      limit: 1000,
+    });
     expect(added).toBe(1);
+
     const state = useDebugLogsStore.getState();
     expect(state.parsedEntries).toHaveLength(2);
     expect(state.parsedEntries[0].message).toBe('Line 1');
     expect(state.parsedEntries[1].message).toBe('Line 2');
+    expect(state.oldestCursor).toEqual(nextCursor);
     expect(state.hasMore).toBe(false);
   });
 });

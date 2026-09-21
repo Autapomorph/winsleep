@@ -57,6 +57,7 @@ export const useDebugLogs = (
         isLoading: false,
         isLoadingOlder: false,
         loadedLinesCount: 0,
+        oldestCursor: null,
         parsedEntries: [],
         rawLogs: '',
         searchQuery: '',

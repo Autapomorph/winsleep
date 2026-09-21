@@ -1,7 +1,7 @@
 import { type StateCreator, create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-import { type LogChunk, typedInvoke } from '@/shared/api';
+import { type LogChunk, type LogCursor, typedInvoke } from '@/shared/api';
 import { type LogEntry, type LogLevel, logger, parseLogLine } from '@/shared/lib';
 
 export type DebugLogsStore = DebugLogsState & DebugLogsActions;
@@ -13,6 +13,7 @@ interface DebugLogsState {
   isLoadingOlder: boolean;
   hasMore: boolean;
   loadedLinesCount: number;
+  oldestCursor: LogCursor | null;
   error: string | null;
   searchQuery: string;
   selectedLevel: LogLevelFilter;
@@ -37,6 +38,7 @@ const initialState: DebugLogsState = {
   isLoading: false,
   isLoadingOlder: false,
   loadedLinesCount: 0,
+  oldestCursor: null,
   parsedEntries: [],
   rawLogs: '',
   searchQuery: '',
@@ -77,6 +79,7 @@ const debugLogsSlice: StateCreator<
             error: null,
             hasMore: chunk.hasMore,
             loadedLinesCount: parsed.length,
+            oldestCursor: chunk.cursor ?? null,
             parsedEntries: parsed,
             rawLogs: chunk.data,
           },
@@ -139,7 +142,7 @@ const debugLogsSlice: StateCreator<
   },
 
   loadOlderLogs: async () => {
-    const { hasMore, isLoadingOlder, loadedLinesCount, parsedEntries } = get();
+    const { hasMore, isLoadingOlder, loadedLinesCount, oldestCursor, parsedEntries } = get();
 
     if (isLoadingOlder || !hasMore) {
       return 0;
@@ -149,7 +152,7 @@ const debugLogsSlice: StateCreator<
 
     try {
       const res = await typedInvoke('read_logs', {
-        offset: loadedLinesCount,
+        cursor: oldestCursor ?? undefined,
         limit: LOGS_PAGE_LIMIT,
       });
       const chunk: LogChunk = typeof res === 'string' ? { data: res, hasMore: false } : res;
@@ -160,7 +163,11 @@ const debugLogsSlice: StateCreator<
         .filter(Boolean);
 
       if (lines.length === 0) {
-        set({ hasMore: false, isLoadingOlder: false }, false, 'debugLogs/loadOlderLogs/settled');
+        set(
+          { hasMore: false, isLoadingOlder: false, oldestCursor: null },
+          false,
+          'debugLogs/loadOlderLogs/settled',
+        );
         return 0;
       }
 
@@ -173,6 +180,7 @@ const debugLogsSlice: StateCreator<
           hasMore: chunk.hasMore,
           isLoadingOlder: false,
           loadedLinesCount: loadedLinesCount + olderParsed.length,
+          oldestCursor: chunk.cursor ?? null,
           parsedEntries: [...olderParsed, ...parsedEntries],
         },
         false,
@@ -203,6 +211,7 @@ const debugLogsSlice: StateCreator<
           hasMore: false,
           isLoadingOlder: false,
           loadedLinesCount: 0,
+          oldestCursor: null,
           parsedEntries: [],
           rawLogs: '',
           searchQuery: '',
