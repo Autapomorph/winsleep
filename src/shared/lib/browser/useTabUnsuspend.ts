@@ -12,13 +12,17 @@ export const useTabUnsuspend = () => {
   }, []);
 
   useEffect(() => {
+    if (!('locks' in navigator) || !navigator.locks) {
+      return undefined;
+    }
+
     const listener = () => {
       if (!document.hidden) {
         resetDeferred();
       }
 
       navigator.locks
-        .request(lockId, async () => {
+        ?.request(lockId, async () => {
           await deferred.current.promise;
         })
         .catch(error => logger.error(`useTabUnsuspend: lock request failed: ${error}`));
