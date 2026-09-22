@@ -1,6 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import { useTimerStore } from '@/entities/timer';
 import { sendSystemNotification, showWarningToast } from '@/shared/lib';
@@ -21,10 +20,6 @@ describe('useTimerNotification', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    useSessionStore.setState({
-      timerAction: 'sleep',
-    });
-
     useSettingsStore.setState({
       isNotificationsEnabled: true,
       notificationTimes: [
@@ -36,6 +31,7 @@ describe('useTimerNotification', () => {
     });
 
     useTimerStore.setState({
+      timerAction: 'sleep',
       timerState: 'idle',
       remainingSeconds: 0,
       endTime: null,

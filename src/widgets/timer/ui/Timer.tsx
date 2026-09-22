@@ -13,7 +13,7 @@ import {
   useTimerActionHotkeys,
 } from '@/features/select-timer-action';
 import { useSessionStore } from '@/entities/session';
-import { MAX_SECONDS, MIN_SECONDS } from '@/entities/timer';
+import { MAX_SECONDS, MIN_SECONDS, useTimerStore } from '@/entities/timer';
 import { SHORTCUT_SCOPES } from '@/shared/config';
 import { useHotkeysScope } from '@/shared/lib';
 import { useFormattedTimerTime } from './useFormattedTimerTime';
@@ -21,9 +21,9 @@ import { useTimerDefaults } from '../model/useTimerDefaults';
 import { useTimerOrchestrator } from '../model/useTimerOrchestrator';
 
 export const Timer = () => {
-  const { action, isLocked, setIsLocked } = useSessionStore(
+  const action = useTimerStore(state => state.timerAction);
+  const { isLocked, setIsLocked } = useSessionStore(
     useShallow(state => ({
-      action: state.timerAction,
       isLocked: state.isLocked,
       setIsLocked: state.setIsLocked,
     })),

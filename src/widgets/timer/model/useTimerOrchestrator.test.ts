@@ -22,8 +22,9 @@ vi.mock('@/features/manage-timer', async importOriginal => {
 describe('useTimerOrchestrator', () => {
   beforeEach(() => {
     mockExecute.mockClear();
-    useSessionStore.setState({ timerAction: 'sleep', isLocked: false });
+    useSessionStore.setState({ isLocked: false });
     useTimerStore.setState({
+      timerAction: 'sleep',
       timerState: 'idle',
       timerMode: 'duration',
       plannedSeconds: 1800,
@@ -33,8 +34,8 @@ describe('useTimerOrchestrator', () => {
   });
 
   test('computes effectiveTimerState and isIndefiniteMode correctly', () => {
-    useSessionStore.setState({ timerAction: 'keep-awake' });
     useTimerStore.setState({
+      timerAction: 'keep-awake',
       timerMode: 'indefinite',
       timerState: 'idle',
       plannedSeconds: 0,
@@ -71,8 +72,8 @@ describe('useTimerOrchestrator', () => {
   });
 
   test('handleStart starts indefinite when in indefinite mode', () => {
-    useSessionStore.setState({ timerAction: 'keep-awake' });
     useTimerStore.setState({
+      timerAction: 'keep-awake',
       timerMode: 'indefinite',
       timerState: 'idle',
       plannedSeconds: 0,
@@ -90,8 +91,8 @@ describe('useTimerOrchestrator', () => {
   });
 
   test('handleStart starts normal timer when in duration mode', () => {
-    useSessionStore.setState({ timerAction: 'sleep' });
     useTimerStore.setState({
+      timerAction: 'sleep',
       timerMode: 'duration',
       timerState: 'idle',
       plannedSeconds: 60,

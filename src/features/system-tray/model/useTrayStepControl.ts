@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 
 import { useSettingsStore } from '@/entities/setting';
-import { DEFAULT_TIMER_STEP_SECONDS, useTimerStore } from '@/entities/timer';
+import { useTimerStore } from '@/entities/timer';
 import { typedListen } from '@/shared/api';
+import { DEFAULT_TIMER_STEP_SECONDS } from '@/shared/config';
 import { logger } from '@/shared/lib';
 
 export const useTrayStepControl = () => {

@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 
-import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
+import { useTimerStore } from '@/entities/timer';
 import { pcHibernate, pcLock, pcReboot, pcShutdown, pcSignout, pcSleep } from '@/shared/api';
 import { config } from '@/shared/config';
 import * as sharedLib from '@/shared/lib';
@@ -28,7 +28,7 @@ vi.mock('@/shared/lib', async importOriginal => {
 
 describe('useTimerExecution', () => {
   beforeEach(() => {
-    useSessionStore.setState({ timerAction: 'sleep' });
+    useTimerStore.setState({ timerAction: 'sleep' });
     useSettingsStore.setState({ isForceActionEnabled: false });
     vi.clearAllMocks();
   });
@@ -37,7 +37,7 @@ describe('useTimerExecution', () => {
     const originalProd = config.isProd;
     config.isProd = true;
 
-    useSessionStore.setState({ timerAction: 'sleep' });
+    useTimerStore.setState({ timerAction: 'sleep' });
     const { result } = renderHook(() => useTimerExecution());
 
     await result.current.execute();
@@ -51,7 +51,7 @@ describe('useTimerExecution', () => {
     const originalProd = config.isProd;
     config.isProd = false;
 
-    useSessionStore.setState({ timerAction: 'shutdown' });
+    useTimerStore.setState({ timerAction: 'shutdown' });
     const { result } = renderHook(() => useTimerExecution());
 
     await result.current.execute();
@@ -66,7 +66,7 @@ describe('useTimerExecution', () => {
     const originalProd = config.isProd;
     config.isProd = true;
 
-    useSessionStore.setState({ timerAction: 'shutdown' });
+    useTimerStore.setState({ timerAction: 'shutdown' });
     useSettingsStore.setState({ isForceActionEnabled: true });
     const { result } = renderHook(() => useTimerExecution());
 
@@ -83,19 +83,19 @@ describe('useTimerExecution', () => {
 
     const { result } = renderHook(() => useTimerExecution());
 
-    useSessionStore.setState({ timerAction: 'hibernate' });
+    useTimerStore.setState({ timerAction: 'hibernate' });
     await result.current.execute();
     expect(pcHibernate).toHaveBeenCalledTimes(1);
 
-    useSessionStore.setState({ timerAction: 'reboot' });
+    useTimerStore.setState({ timerAction: 'reboot' });
     await result.current.execute();
     expect(pcReboot).toHaveBeenCalledWith({ isForce: false });
 
-    useSessionStore.setState({ timerAction: 'lock' });
+    useTimerStore.setState({ timerAction: 'lock' });
     await result.current.execute();
     expect(pcLock).toHaveBeenCalledTimes(1);
 
-    useSessionStore.setState({ timerAction: 'signout' });
+    useTimerStore.setState({ timerAction: 'signout' });
     await result.current.execute();
     expect(pcSignout).toHaveBeenCalledWith({ isForce: false });
 
@@ -103,7 +103,7 @@ describe('useTimerExecution', () => {
   });
 
   test('shows info toast and sends system notification on keep-awake finished', async () => {
-    useSessionStore.setState({ timerAction: 'keep-awake' });
+    useTimerStore.setState({ timerAction: 'keep-awake' });
     const { result } = renderHook(() => useTimerExecution());
 
     await result.current.execute();
@@ -117,7 +117,7 @@ describe('useTimerExecution', () => {
     config.isProd = true;
 
     vi.mocked(pcSleep).mockRejectedValueOnce(new Error('Sleep API failure'));
-    useSessionStore.setState({ timerAction: 'sleep' });
+    useTimerStore.setState({ timerAction: 'sleep' });
     const { result } = renderHook(() => useTimerExecution());
 
     await result.current.execute();

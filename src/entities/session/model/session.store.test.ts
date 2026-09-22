@@ -1,4 +1,4 @@
-import { DEFAULT_IS_LOCKED_BY_DEFAULT, DEFAULT_TIMER_ACTION } from '@/shared/config';
+import { DEFAULT_IS_LOCKED_BY_DEFAULT } from '@/shared/config';
 import { useSessionStore } from './session.store';
 
 describe('sessionStore', () => {
@@ -6,25 +6,18 @@ describe('sessionStore', () => {
     useSessionStore.setState({
       isInitialized: false,
       isLocked: DEFAULT_IS_LOCKED_BY_DEFAULT,
-      timerAction: DEFAULT_TIMER_ACTION,
     });
   });
 
   test('should initialize with default state', () => {
     const state = useSessionStore.getState();
     expect(state.isInitialized).toBe(false);
-    expect(state.timerAction).toBe(DEFAULT_TIMER_ACTION);
     expect(state.isLocked).toBe(DEFAULT_IS_LOCKED_BY_DEFAULT);
   });
 
   test('should set isInitialized', () => {
     useSessionStore.getState().setIsInitialized(true);
     expect(useSessionStore.getState().isInitialized).toBe(true);
-  });
-
-  test('should set timerAction', () => {
-    useSessionStore.getState().setTimerAction('shutdown');
-    expect(useSessionStore.getState().timerAction).toBe('shutdown');
   });
 
   test('should set isLocked', () => {

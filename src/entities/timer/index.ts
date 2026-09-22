@@ -7,5 +7,3 @@ export {
   MAX_SECONDS,
   MIN_SECONDS,
 } from './model/timer';
-
-export { DEFAULT_TIMER_SECONDS, DEFAULT_TIMER_STEP_SECONDS } from '@/shared/config';

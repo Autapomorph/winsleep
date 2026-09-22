@@ -4,29 +4,25 @@ import { useTranslation } from 'react-i18next';
 
 import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
-import {
-  DANGER_THRESHOLD_SECONDS,
-  DEFAULT_TIMER_STEP_SECONDS,
-  useTimerStore,
-} from '@/entities/timer';
+import { DANGER_THRESHOLD_SECONDS, useTimerStore } from '@/entities/timer';
 import { useUpdateStore } from '@/entities/updater';
 import { type TrayMenuState, typedInvoke, typedListen } from '@/shared/api';
-import { type TimerAction, DEFAULT_TIMER_PRESETS } from '@/shared/config';
+import {
+  type TimerAction,
+  DEFAULT_TIMER_PRESETS,
+  DEFAULT_TIMER_STEP_SECONDS,
+} from '@/shared/config';
 import { formatDays, formatDurationShort, formatTime, logger } from '@/shared/lib';
 
 export const useTrayLanguageSync = () => {
   const { t } = useTranslation();
   const [syncTrigger, setSyncTrigger] = useState(0);
 
-  const { timerAction, isSettingsLocked } = useSessionStore(
+  const isSettingsLocked = useSessionStore(state => state.isLocked);
+
+  const { timerAction, timerState, timerMode, remainingSeconds, plannedSeconds } = useTimerStore(
     useShallow(state => ({
       timerAction: state.timerAction,
-      isSettingsLocked: state.isLocked,
-    })),
-  );
-
-  const { timerState, timerMode, remainingSeconds, plannedSeconds } = useTimerStore(
-    useShallow(state => ({
       timerState: state.timerState,
       timerMode: state.timerMode,
       remainingSeconds: state.remainingSeconds,

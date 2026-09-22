@@ -11,7 +11,6 @@ describe('useTimerDefaults', () => {
 
   beforeEach(() => {
     useSessionStore.setState({
-      timerAction: 'sleep',
       isInitialized: false,
       isLocked: false,
     });
@@ -25,6 +24,7 @@ describe('useTimerDefaults', () => {
     });
     useAppStateStore.setState({ scheduledTimer: null });
     useTimerStore.setState({
+      timerAction: 'sleep',
       timerMode: 'duration',
       plannedSeconds: 1800,
     });
@@ -33,14 +33,14 @@ describe('useTimerDefaults', () => {
   test('applies default action, seconds and lock state on initial mount when no scheduled timer', () => {
     renderHook(() => useTimerDefaults({ setExactTime }));
 
-    expect(useSessionStore.getState().timerAction).toBe('hibernate');
+    expect(useTimerStore.getState().timerAction).toBe('hibernate');
     expect(setExactTime).toHaveBeenCalledWith(3600);
     expect(useSessionStore.getState().isLocked).toBe(true);
     expect(useSessionStore.getState().isInitialized).toBe(true);
   });
 
   test('does not overwrite action and time if restorable scheduled timer exists', () => {
-    useSessionStore.setState({ timerAction: 'sleep' });
+    useTimerStore.setState({ timerAction: 'sleep' });
     useAppStateStore.setState({
       scheduledTimer: {
         targetDateTime: Date.now() + 60000,
@@ -51,13 +51,13 @@ describe('useTimerDefaults', () => {
 
     renderHook(() => useTimerDefaults({ setExactTime }));
 
-    expect(useSessionStore.getState().timerAction).toBe('sleep');
+    expect(useTimerStore.getState().timerAction).toBe('sleep');
     expect(setExactTime).not.toHaveBeenCalled();
     expect(useSessionStore.getState().isInitialized).toBe(true);
   });
 
   test('does not overwrite action and time if restorable indefinite keep-awake exists', () => {
-    useSessionStore.setState({ timerAction: 'keep-awake' });
+    useTimerStore.setState({ timerAction: 'keep-awake' });
     useAppStateStore.setState({
       scheduledTimer: {
         targetDateTime: null,
@@ -68,7 +68,7 @@ describe('useTimerDefaults', () => {
 
     renderHook(() => useTimerDefaults({ setExactTime }));
 
-    expect(useSessionStore.getState().timerAction).toBe('keep-awake');
+    expect(useTimerStore.getState().timerAction).toBe('keep-awake');
     expect(setExactTime).not.toHaveBeenCalled();
     expect(useSessionStore.getState().isInitialized).toBe(true);
   });
@@ -93,7 +93,7 @@ describe('useTimerDefaults', () => {
     renderHook(() => useTimerDefaults({ setExactTime }));
 
     act(() => {
-      useSessionStore.setState({ timerAction: 'lock' });
+      useTimerStore.setState({ timerAction: 'lock' });
     });
 
     expect(useSettingsStore.getState().defaultTimerAction).toBe('lock');

@@ -4,12 +4,13 @@ import { Button, cn, Kbd, Tooltip, useOverlayState } from '@heroui/react';
 import { FaMinus, FaPlus } from 'react-icons/fa6';
 
 import { useSettingsStore } from '@/entities/setting';
+import { DANGER_THRESHOLD_SECONDS, useTimerStore } from '@/entities/timer';
 import {
-  DANGER_THRESHOLD_SECONDS,
+  type TimerAction,
   DEFAULT_TIMER_STEP_SECONDS,
-  useTimerStore,
-} from '@/entities/timer';
-import { type TimerAction, TOOLTIP_CLOSE_DELAY_DEFAULT, TOOLTIP_DELAY_LONG } from '@/shared/config';
+  TOOLTIP_CLOSE_DELAY_DEFAULT,
+  TOOLTIP_DELAY_LONG,
+} from '@/shared/config';
 import { formatDurationShort, useLongPress } from '@/shared/lib';
 import { TimerEditModal } from './TimerEditModal';
 

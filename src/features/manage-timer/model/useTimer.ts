@@ -3,7 +3,8 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
-import { DEFAULT_TIMER_STEP_SECONDS, useTimerStore } from '@/entities/timer';
+import { useTimerStore } from '@/entities/timer';
+import { DEFAULT_TIMER_STEP_SECONDS } from '@/shared/config';
 
 export const useTimer = () => {
   const {

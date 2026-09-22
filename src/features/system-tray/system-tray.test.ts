@@ -1,6 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import { useTimerStore } from '@/entities/timer';
 import { typedInvoke, typedListen } from '@/shared/api';
@@ -85,6 +84,7 @@ describe('system-tray feature model hooks', () => {
   beforeEach(() => {
     mockCapturedListeners = {};
     useTimerStore.setState({
+      timerAction: 'sleep',
       timerState: 'idle',
       timerMode: 'duration',
       plannedSeconds: 0,
@@ -93,9 +93,6 @@ describe('system-tray feature model hooks', () => {
     useSettingsStore.setState({
       hasSeenTrayNotification: false,
       isTrayModeEnabled: false,
-    });
-    useSessionStore.setState({
-      timerAction: 'sleep',
     });
   });
 
@@ -139,7 +136,7 @@ describe('system-tray feature model hooks', () => {
   });
 
   describe('useTrayActionSelection', () => {
-    test('sets timer action in session store when action is selected from tray', () => {
+    test('sets timer action in timer store when action is selected from tray', () => {
       renderHook(() => useTrayActionSelection());
 
       expect(typedListen).toHaveBeenCalledWith('tray-timer-action-selected', expect.any(Function));
@@ -147,7 +144,7 @@ describe('system-tray feature model hooks', () => {
       const cb = mockCapturedListeners['tray-timer-action-selected'];
       cb({ payload: 'hibernate' });
 
-      expect(useSessionStore.getState().timerAction).toBe('hibernate');
+      expect(useTimerStore.getState().timerAction).toBe('hibernate');
     });
 
     test('does not throw if unsubscribe fails', async () => {
@@ -191,8 +188,7 @@ describe('system-tray feature model hooks', () => {
 
     test('handles different update statuses and timer states', () => {
       // 1. Paused timer
-      useSessionStore.setState({ timerAction: 'sleep' });
-      useTimerStore.setState({ timerState: 'paused', remainingSeconds: 20 });
+      useTimerStore.setState({ timerAction: 'sleep', timerState: 'paused', remainingSeconds: 20 });
       renderHook(() => useTrayLanguageSync());
       expect(typedInvoke).toHaveBeenCalledWith('update_tray_menu', {
         payload: expect.objectContaining({
@@ -203,8 +199,12 @@ describe('system-tray feature model hooks', () => {
     });
 
     test('sets timerMode to indefinite when indefinite keep-awake is active', () => {
-      useSessionStore.setState({ timerAction: 'keep-awake' });
-      useTimerStore.setState({ timerState: 'running', timerMode: 'indefinite', plannedSeconds: 0 });
+      useTimerStore.setState({
+        timerAction: 'keep-awake',
+        timerState: 'running',
+        timerMode: 'indefinite',
+        plannedSeconds: 0,
+      });
       renderHook(() => useTrayLanguageSync());
       expect(typedInvoke).toHaveBeenCalledWith('update_tray_menu', {
         payload: expect.objectContaining({
