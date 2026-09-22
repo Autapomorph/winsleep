@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 
-import { useSessionStore } from '@/entities/session';
 import { useTimerStore } from '@/entities/timer';
 import { typedListen } from '@/shared/api';
 import { logger } from '@/shared/lib';
@@ -17,8 +16,7 @@ export const useTrayPresetSelection = () => {
       const seconds = event.payload;
       logger.info(`Preset clicked from tray menu: ${seconds}s`);
 
-      const { timerAction } = useSessionStore.getState();
-      const { setExactTime, setIndefinite } = useTimerStore.getState();
+      const { timerAction, setExactTime, setIndefinite } = useTimerStore.getState();
 
       if (timerAction === 'keep-awake' && seconds === 0) {
         setIndefinite();

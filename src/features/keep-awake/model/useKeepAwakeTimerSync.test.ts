@@ -1,6 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import { useTimerStore } from '@/entities/timer';
 import { useKeepAwakeTimerSync } from './useKeepAwakeTimerSync';
@@ -12,8 +11,7 @@ vi.mock('../api/keepAwake', () => ({
 
 describe('useKeepAwakeTimerSync', () => {
   beforeEach(() => {
-    useTimerStore.setState({ timerState: 'idle', timerMode: 'duration' });
-    useSessionStore.setState({ timerAction: 'sleep' });
+    useTimerStore.setState({ timerState: 'idle', timerMode: 'duration', timerAction: 'sleep' });
     useSettingsStore.setState({
       isPreventPCSleepDuringTimerEnabled: true,
       isPreventDisplaySleepDuringTimerEnabled: false,
@@ -39,7 +37,7 @@ describe('useKeepAwakeTimerSync', () => {
     useSettingsStore.setState({
       isPreventPCSleepDuringTimerEnabled: false,
     });
-    useSessionStore.setState({
+    useTimerStore.setState({
       timerAction: 'keep-awake',
     });
 
@@ -56,8 +54,11 @@ describe('useKeepAwakeTimerSync', () => {
   });
 
   test('enables keep-awake when action is keep-awake in indefinite mode and running', () => {
-    useSessionStore.setState({ timerAction: 'keep-awake' });
-    useTimerStore.setState({ timerMode: 'indefinite', timerState: 'idle' });
+    useTimerStore.setState({
+      timerAction: 'keep-awake',
+      timerMode: 'indefinite',
+      timerState: 'idle',
+    });
 
     renderHook(() => useKeepAwakeTimerSync());
 

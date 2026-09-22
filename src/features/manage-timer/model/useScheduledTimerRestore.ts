@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 
 import { useAppStateStore } from '@/entities/app-state';
-import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import { useTimerStore } from '@/entities/timer';
 import { getDateNow, logger, showInfoToast, showWarningToast } from '@/shared/lib';
@@ -31,7 +30,7 @@ export const useScheduledTimerRestore = () => {
       if (rawAction === 'keep-awake') {
         logger.info('Restoring saved indefinite keep-awake from disk');
 
-        useSessionStore.getState().setTimerAction('keep-awake');
+        useTimerStore.getState().setTimerAction('keep-awake');
         useTimerStore.getState().restoreIndefiniteTimer();
 
         showInfoToast($ => $.timer.notifications.keepAwakeRestored.title);
@@ -52,7 +51,7 @@ export const useScheduledTimerRestore = () => {
         `Restoring saved scheduled timer from disk for target timestamp: ${scheduledTimer.targetDateTime}`,
       );
 
-      useSessionStore.getState().setTimerAction(scheduledTimer.timerAction);
+      useTimerStore.getState().setTimerAction(scheduledTimer.timerAction);
       useTimerStore.getState().restoreScheduledTimer(scheduledTimer.targetDateTime);
 
       showInfoToast($ => $.timer.notifications.scheduledTimerRestored.title);

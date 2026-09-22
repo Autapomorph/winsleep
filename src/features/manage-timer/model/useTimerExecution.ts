@@ -2,8 +2,8 @@ import { useCallback } from 'react';
 import type { SelectorParam } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
-import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
+import { useTimerStore } from '@/entities/timer';
 import { pcHibernate, pcLock, pcReboot, pcShutdown, pcSignout, pcSleep } from '@/shared/api';
 import { type TimerAction, config } from '@/shared/config';
 import { logger, sendSystemNotification, showErrorToast, showInfoToast } from '@/shared/lib';
@@ -12,7 +12,7 @@ export const useTimerExecution = () => {
   const { t } = useTranslation();
 
   const execute = useCallback(async () => {
-    const currentTimerAction = useSessionStore.getState().timerAction;
+    const currentTimerAction = useTimerStore.getState().timerAction;
     const isForce = useSettingsStore.getState().isForceActionEnabled;
     logger.info(`Executing action: ${currentTimerAction}, forcing: ${isForce}`);
 

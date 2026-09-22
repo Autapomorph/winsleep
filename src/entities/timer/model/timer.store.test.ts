@@ -1,4 +1,4 @@
-import { DEFAULT_TIMER_SECONDS } from '@/shared/config';
+import { DEFAULT_TIMER_ACTION, DEFAULT_TIMER_SECONDS } from '@/shared/config';
 import { initTimerListeners } from './initTimerListeners';
 import { useTimerStore } from './timer.store';
 
@@ -31,6 +31,7 @@ describe('timerStore', () => {
       plannedSeconds: DEFAULT_TIMER_SECONDS,
       remainingSeconds: DEFAULT_TIMER_SECONDS,
       targetDateTime: null,
+      timerAction: DEFAULT_TIMER_ACTION,
       timerMode: 'duration',
       timerState: 'idle',
     });
@@ -350,5 +351,48 @@ describe('timerStore', () => {
     useTimerStore.getState().setTimerMode('duration');
     expect(useTimerStore.getState().timerState).toBe('running');
     expect(useTimerStore.getState().timerMode).toBe('duration');
+  });
+
+  describe('setTimerAction', () => {
+    test('should change timerAction from sleep to hibernate', () => {
+      useTimerStore.getState().setTimerAction('hibernate');
+      expect(useTimerStore.getState().timerAction).toBe('hibernate');
+    });
+
+    test('should do nothing if action is identical', () => {
+      useTimerStore.getState().setTimerAction('sleep');
+      expect(useTimerStore.getState().timerAction).toBe('sleep');
+    });
+
+    test('should reset indefinite keep-awake to duration with default time when changing action', () => {
+      useTimerStore.setState({
+        plannedSeconds: 0,
+        remainingSeconds: 0,
+        timerAction: 'keep-awake',
+        timerMode: 'indefinite',
+        timerState: 'idle',
+      });
+
+      useTimerStore.getState().setTimerAction('sleep', 1800);
+
+      expect(useTimerStore.getState().timerAction).toBe('sleep');
+      expect(useTimerStore.getState().timerMode).toBe('duration');
+      expect(useTimerStore.getState().plannedSeconds).toBe(1800);
+      expect(useTimerStore.getState().remainingSeconds).toBe(1800);
+    });
+
+    test('should switch to indefinite mode when changing to keep-awake if idle and remaining seconds is 0', () => {
+      useTimerStore.setState({
+        remainingSeconds: 0,
+        timerAction: 'sleep',
+        timerMode: 'duration',
+        timerState: 'idle',
+      });
+
+      useTimerStore.getState().setTimerAction('keep-awake');
+
+      expect(useTimerStore.getState().timerAction).toBe('keep-awake');
+      expect(useTimerStore.getState().timerMode).toBe('indefinite');
+    });
   });
 });

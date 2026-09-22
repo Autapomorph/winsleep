@@ -12,13 +12,20 @@ interface Props {
 }
 
 export const useTimerDefaults = ({ setExactTime }: Props) => {
-  const { action, isInitialized, setAction, setIsInitialized, setIsLocked } = useSessionStore(
+  const { isInitialized, setIsInitialized, setIsLocked } = useSessionStore(
     useShallow(state => ({
-      action: state.timerAction,
       isInitialized: state.isInitialized,
-      setAction: state.setTimerAction,
       setIsInitialized: state.setIsInitialized,
       setIsLocked: state.setIsLocked,
+    })),
+  );
+
+  const { action, setAction, timerMode, plannedSeconds } = useTimerStore(
+    useShallow(state => ({
+      action: state.timerAction,
+      setAction: state.setTimerAction,
+      timerMode: state.timerMode,
+      plannedSeconds: state.plannedSeconds,
     })),
   );
 
@@ -39,13 +46,6 @@ export const useTimerDefaults = ({ setExactTime }: Props) => {
       isLockedByDefault: state.isLockedByDefault,
       setDefaultTimerAction: state.setDefaultTimerAction,
       setDefaultTimerSeconds: state.setDefaultTimerSeconds,
-    })),
-  );
-
-  const { timerMode, plannedSeconds } = useTimerStore(
-    useShallow(state => ({
-      timerMode: state.timerMode,
-      plannedSeconds: state.plannedSeconds,
     })),
   );
 

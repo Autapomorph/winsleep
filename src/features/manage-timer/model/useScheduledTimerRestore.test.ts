@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react';
 
 import { useAppStateStore } from '@/entities/app-state';
-import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import { useTimerStore } from '@/entities/timer';
 import * as sharedLib from '@/shared/lib';
@@ -25,8 +24,8 @@ describe('useScheduledTimerRestore', () => {
   beforeEach(() => {
     useSettingsStore.setState({ isRestoreScheduledTimerOnStartupEnabled: true });
     useAppStateStore.setState({ scheduledTimer: null });
-    useSessionStore.setState({ timerAction: 'sleep' });
     useTimerStore.setState({
+      timerAction: 'sleep',
       timerState: 'idle',
       timerMode: 'duration',
       targetDateTime: null,
@@ -45,7 +44,7 @@ describe('useScheduledTimerRestore', () => {
 
     renderHook(() => useScheduledTimerRestore());
 
-    expect(useSessionStore.getState().timerAction).toBe('shutdown');
+    expect(useTimerStore.getState().timerAction).toBe('shutdown');
     expect(useTimerStore.getState().timerState).toBe('running');
     expect(useTimerStore.getState().timerMode).toBe('timestamp');
     expect(useTimerStore.getState().targetDateTime).toBe(futureTime);
@@ -80,7 +79,7 @@ describe('useScheduledTimerRestore', () => {
 
     renderHook(() => useScheduledTimerRestore());
 
-    expect(useSessionStore.getState().timerAction).toBe('keep-awake');
+    expect(useTimerStore.getState().timerAction).toBe('keep-awake');
     expect(useTimerStore.getState().timerMode).toBe('indefinite');
     expect(useTimerStore.getState().timerState).toBe('running');
     expect(useTimerStore.getState().plannedSeconds).toBe(0);
@@ -119,7 +118,7 @@ describe('useScheduledTimerRestore', () => {
 
     renderHook(() => useScheduledTimerRestore());
 
-    expect(useSessionStore.getState().timerAction).toBe('sleep');
+    expect(useTimerStore.getState().timerAction).toBe('sleep');
     expect(useTimerStore.getState().timerState).toBe('running');
     expect(useTimerStore.getState().targetDateTime).toBe(-10000);
     expect(sharedLib.showInfoToast).toHaveBeenCalled();
@@ -180,7 +179,7 @@ describe('useScheduledTimerRestore', () => {
     expect(scheduled?.targetDateTime).toBe(futureTime);
     expect(scheduled?.timerAction).toBe('shutdown');
     expect(scheduled?.armedAt).toBe(originalArmedAt);
-    expect(useSessionStore.getState().timerAction).toBe('shutdown');
+    expect(useTimerStore.getState().timerAction).toBe('shutdown');
     expect(useTimerStore.getState().timerState).toBe('running');
   });
 
@@ -204,7 +203,7 @@ describe('useScheduledTimerRestore', () => {
     expect(scheduled?.targetDateTime).toBeNull();
     expect(scheduled?.timerAction).toBe('keep-awake');
     expect(scheduled?.armedAt).toBe(originalArmedAt);
-    expect(useSessionStore.getState().timerAction).toBe('keep-awake');
+    expect(useTimerStore.getState().timerAction).toBe('keep-awake');
     expect(useTimerStore.getState().timerMode).toBe('indefinite');
     expect(useTimerStore.getState().timerState).toBe('running');
   });

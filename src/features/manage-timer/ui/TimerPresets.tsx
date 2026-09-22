@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Button, Toolbar } from '@heroui/react';
 
-import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import { useTimerStore } from '@/entities/timer';
 import { type TimerAction, DEFAULT_TIMER_PRESETS } from '@/shared/config';
@@ -16,10 +15,10 @@ interface Props {
 
 export const TimerPresets = ({ action, isLocked = false, setExactTime, setIndefinite }: Props) => {
   const { t } = useTranslation();
-  const sessionAction = useSessionStore(state => state.timerAction);
+  const timerAction = useTimerStore(state => state.timerAction);
   const customTimerPresets = useSettingsStore(state => state.customTimerPresets);
 
-  const currentAction = action ?? sessionAction;
+  const currentAction = action ?? timerAction;
   const isKeepAwake = currentAction === 'keep-awake';
 
   const getPresetLabel = (time: number) => {

@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useSessionStore } from '@/entities/session';
 import { useSettingsStore } from '@/entities/setting';
 import { useTimerStore } from '@/entities/timer';
 import type { TimerAction } from '@/shared/config';
@@ -21,7 +20,7 @@ export const useTimerNotification = () => {
   const notifiedTimesRef = useRef<Set<number>>(new Set());
   const prevEndTimeRef = useRef<number | null>(null);
 
-  const action = useSessionStore(state => state.timerAction);
+  const action = useTimerStore(state => state.timerAction);
 
   const timerState = useTimerStore(state => state.timerState);
   const remainingSeconds = useTimerStore(state => state.remainingSeconds);

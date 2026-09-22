@@ -162,8 +162,8 @@ describe('useTrayTimerControl', () => {
 
   describe('keep-awake indefinite mode', () => {
     beforeEach(() => {
-      useSessionStore.setState({ timerAction: 'keep-awake' });
       useTimerStore.setState({
+        timerAction: 'keep-awake',
         timerState: 'idle',
         plannedSeconds: 0,
         remainingSeconds: 0,
@@ -232,8 +232,8 @@ describe('useTrayTimerControl', () => {
     });
 
     test('cancels paused countdown and sets idle when preset 0 is selected in keep-awake', () => {
-      useSessionStore.setState({ timerAction: 'keep-awake' });
       useTimerStore.setState({
+        timerAction: 'keep-awake',
         timerState: 'paused',
         timerMode: 'duration',
         plannedSeconds: 600,

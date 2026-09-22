@@ -2,13 +2,19 @@ import { type StateCreator, create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
 import { typedInvoke } from '@/shared/api';
-import { DEFAULT_TIMER_SECONDS, DEFAULT_TIMER_STEP_SECONDS } from '@/shared/config';
+import {
+  type TimerAction,
+  DEFAULT_TIMER_ACTION,
+  DEFAULT_TIMER_SECONDS,
+  DEFAULT_TIMER_STEP_SECONDS,
+} from '@/shared/config';
 import { getDateNow, logger } from '@/shared/lib';
 import { type TimerMode, type TimerState, MAX_SECONDS, MIN_SECONDS } from './timer';
 
 export type TimerStore = TimerStoreState & TimerActions;
 
 export interface TimerStoreState {
+  timerAction: TimerAction;
   timerState: TimerState;
   timerMode: TimerMode;
   targetDateTime: number | null;
@@ -29,12 +35,14 @@ export interface TimerActions {
   setExactTime: (seconds: number) => void;
   setTargetDateTime: (timestamp: number | null) => void;
   setIndefinite: () => void;
+  setTimerAction: (action: TimerAction, defaultDuration?: number) => void;
   resetToDefaultDuration: (defaultSeconds?: number) => void;
   restoreScheduledTimer: (targetDateTime: number) => void;
   restoreIndefiniteTimer: () => void;
 }
 
 const initialState: TimerStoreState = {
+  timerAction: DEFAULT_TIMER_ACTION,
   timerState: 'idle',
   timerMode: 'duration',
   targetDateTime: null,
@@ -596,6 +604,34 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
 
   setIndefinite: () => {
     get().setTimerMode('indefinite');
+  },
+
+  setTimerAction: (action, defaultDuration = DEFAULT_TIMER_SECONDS) => {
+    const { timerAction: currentAction, timerMode, remainingSeconds, timerState } = get();
+
+    if (action === currentAction) {
+      return;
+    }
+
+    logger.info(`Timer action changed from ${currentAction} to ${action}`);
+
+    // Rule 1: Currently keep-awake and indefinite
+    if (currentAction === 'keep-awake' && timerMode === 'indefinite') {
+      get().resetToDefaultDuration(defaultDuration);
+      set({ timerAction: action }, false, 'timer/setTimerAction');
+      return;
+    }
+
+    // Rule 2: Currently other action, set to now (0) and idle
+    if (currentAction !== 'keep-awake' && remainingSeconds === 0 && timerState === 'idle') {
+      if (action === 'keep-awake') {
+        get().setIndefinite();
+        set({ timerAction: action }, false, 'timer/setTimerAction');
+        return;
+      }
+    }
+
+    set({ timerAction: action }, false, 'timer/setTimerAction');
   },
 
   resetToDefaultDuration: defaultSeconds => {

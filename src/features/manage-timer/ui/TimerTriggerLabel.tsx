@@ -1,7 +1,6 @@
 import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
 
-import { useSessionStore } from '@/entities/session';
 import { useTimerStore } from '@/entities/timer';
 import { type TimerAction } from '@/shared/config';
 import { useNow } from '@/shared/lib';
@@ -13,23 +12,30 @@ interface Props {
 
 export const TimerTriggerLabel = ({ currentSeconds, action }: Props) => {
   const { t, i18n } = useTranslation();
-  const sessionAction = useSessionStore(state => state.timerAction);
-
-  const currentAction = action ?? sessionAction;
-  const isKeepAwake = currentAction === 'keep-awake';
 
   const nowMs = useNow();
-  const { timerState, timerMode, targetDateTime, endTime, remainingSeconds, plannedSeconds } =
-    useTimerStore(
-      useShallow(state => ({
-        timerState: state.timerState,
-        timerMode: state.timerMode,
-        targetDateTime: state.targetDateTime,
-        endTime: state.endTime,
-        remainingSeconds: state.remainingSeconds,
-        plannedSeconds: state.plannedSeconds,
-      })),
-    );
+  const {
+    timerAction,
+    timerState,
+    timerMode,
+    targetDateTime,
+    endTime,
+    remainingSeconds,
+    plannedSeconds,
+  } = useTimerStore(
+    useShallow(state => ({
+      timerAction: state.timerAction,
+      timerState: state.timerState,
+      timerMode: state.timerMode,
+      targetDateTime: state.targetDateTime,
+      endTime: state.endTime,
+      remainingSeconds: state.remainingSeconds,
+      plannedSeconds: state.plannedSeconds,
+    })),
+  );
+
+  const currentAction = action ?? timerAction;
+  const isKeepAwake = currentAction === 'keep-awake';
 
   const isIndefiniteMode = timerMode === 'indefinite';
 
