@@ -12,7 +12,7 @@ export const DEFAULT_IS_NOTIFICATION_SOUND_ENABLED = true;
 
 export const DEFAULT_NOTIFICATION_SOUND_TYPE: NotificationSound = 'system';
 
-export const DEFAULT_CUSTOM_NOTIFICATION_SOUND: Tone[] = [
+export const DEFAULT_NOTIFICATION_SOUND: Tone[] = [
   // E5
   {
     freq: 659.25,

@@ -22,7 +22,7 @@ export { useAppHotkey } from './user-interactions/shortcuts/useAppHotkey';
 export { useHotkeysScope } from './user-interactions/shortcuts/useHotkeysScope';
 export type { HotkeyConfig } from '../config';
 
-export { type Tone, playCustomNotificationSound } from './audio/playCustomNotificationSound';
+export { type Tone, playNotificationSound } from './audio/playNotificationSound';
 export { playSystemNotificationSound } from './audio/playSystemNotificationSound';
 
 export { type LogEntry, type LogLevel } from './logger/types';
