@@ -60,7 +60,6 @@ pub fn run() {
             pc_management::commands::pc_lock,
             pc_management::commands::pc_signout,
             pc_management::commands::set_keep_awake,
-            pc_management::commands::get_keep_awake_status,
             notifications::commands::play_notification_sound,
             app::commands::quit_app,
             app::commands::set_is_critical_operation_in_progress,

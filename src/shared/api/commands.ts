@@ -30,7 +30,6 @@ export type Commands = CommandsShape<{
   pc_lock: CommandDef<void>;
   pc_signout: CommandDef<void, SignoutCommandArgs | undefined>;
   set_keep_awake: CommandDef<void, SetKeepAwakeCommandArgs>;
-  get_keep_awake_status: CommandDef<boolean>;
   play_notification_sound: CommandDef<void>;
   quit_app: CommandDef<void>;
   set_is_critical_operation_in_progress: CommandDef<
