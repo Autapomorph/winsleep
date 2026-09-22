@@ -7,7 +7,7 @@ import { useTimerStore } from '@/entities/timer';
 import type { TimerAction } from '@/shared/config';
 import {
   logger,
-  playCustomNotificationSound,
+  playNotificationSound,
   playSystemNotificationSound,
   sendSystemNotification,
   showErrorToast,
@@ -106,7 +106,7 @@ export const useTimerNotification = () => {
 
           if (isSent && isNotificationSoundEnabled) {
             if (notificationSoundType === 'app') {
-              playCustomNotificationSound();
+              playNotificationSound();
             } else {
               playSystemNotificationSound();
             }

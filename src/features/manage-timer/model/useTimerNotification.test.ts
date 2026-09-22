@@ -12,7 +12,7 @@ vi.mock('@/shared/lib', async importOriginal => {
     ...actual,
     sendSystemNotification: vi.fn().mockResolvedValue(true),
     showWarningToast: vi.fn(),
-    playCustomNotificationSound: vi.fn(),
+    playNotificationSound: vi.fn(),
     playSystemNotificationSound: vi.fn(),
   };
 });

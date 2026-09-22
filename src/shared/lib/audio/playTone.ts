@@ -3,7 +3,7 @@ export const playTone = (
   freq: number,
   startTime: number,
   duration: number,
-) => {
+): OscillatorNode => {
   const osc = audioContext.createOscillator();
   const gainNode = audioContext.createGain();
 
@@ -19,4 +19,6 @@ export const playTone = (
 
   osc.start(startTime);
   osc.stop(startTime + duration);
+
+  return osc;
 };

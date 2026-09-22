@@ -1,30 +1,42 @@
+import { DEFAULT_NOTIFICATION_SOUND } from '@/shared/config';
+import { playTone } from './playTone';
 import { logger } from '../logger/logger';
 
-export const playNotificationSound = () => {
+export interface Tone {
+  freq: number;
+  startTime: number;
+  duration: number;
+}
+
+export const playNotificationSound = (tones: Tone[] = DEFAULT_NOTIFICATION_SOUND) => {
   try {
     const audioContext = new AudioContext();
-
-    const playTone = (freq: number, startTime: number, duration: number) => {
-      const osc = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-
-      gainNode.gain.setValueAtTime(0, startTime);
-      gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-
-      osc.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
-      osc.start(startTime);
-      osc.stop(startTime + duration);
-    };
-
     const now = audioContext.currentTime;
-    playTone(659.25, now, 0.3); // E5
-    playTone(880.0, now + 0.15, 0.5); // A5
+
+    let latestStopTime = -1;
+    let lastOscillator: OscillatorNode | null = null;
+
+    for (const { freq, startTime, duration } of tones) {
+      const stopTime = now + startTime + duration;
+      const osc = playTone(audioContext, freq, now + startTime, duration);
+
+      if (stopTime > latestStopTime) {
+        latestStopTime = stopTime;
+        lastOscillator = osc;
+      }
+    }
+
+    if (lastOscillator) {
+      lastOscillator.onended = () => {
+        audioContext.close?.().catch(error => {
+          logger.error(`Failed to close AudioContext: ${error}`);
+        });
+      };
+    } else {
+      audioContext.close?.().catch(error => {
+        logger.error(`Failed to close AudioContext: ${error}`);
+      });
+    }
   } catch (error) {
     logger.error(`Failed to play notification sound: ${error}`);
   }

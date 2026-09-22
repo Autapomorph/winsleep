@@ -25,8 +25,9 @@ describe('playTone', () => {
       destination: {},
     } as unknown as AudioContext;
 
-    playTone(mockAudioContext, 440, 10, 0.5);
+    const result = playTone(mockAudioContext, 440, 10, 0.5);
 
+    expect(result).toBe(mockOscillator);
     expect(mockOscillator.type).toBe('sine');
     expect(mockOscillator.frequency.value).toBe(440);
     expect(mockOscillator.connect).toHaveBeenCalledWith(mockGain);
