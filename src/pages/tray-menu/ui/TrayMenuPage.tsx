@@ -129,10 +129,11 @@ export const TrayMenuPage = () => {
       if (closeTimeoutRef.current) {
         clearTimeout(closeTimeoutRef.current);
       }
-      unlistenTrayMenuStateUpdated.then(unlisten => unlisten());
-      unlistenWindowFocusChanged.then(unlisten => unlisten());
-      unlistenTrayMenuShow.then(unlisten => unlisten());
-      unlistenTrayMenuRequestClose.then(unlisten => unlisten());
+
+      unlistenTrayMenuStateUpdated.then(unlisten => unlisten()).catch(() => {});
+      unlistenWindowFocusChanged.then(unlisten => unlisten()).catch(() => {});
+      unlistenTrayMenuShow.then(unlisten => unlisten()).catch(() => {});
+      unlistenTrayMenuRequestClose.then(unlisten => unlisten()).catch(() => {});
     };
   }, [closeWithAnimation, openWithAnimation]);
 
