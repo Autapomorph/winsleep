@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   frontend:
-    name: Frontend (Lint, Types, Tests)
+    name: Frontend
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -31,20 +31,20 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit --progress=false
 
-      - name: TypeScript Typecheck
+      - name: TypeScript typecheck
         run: npm run typecheck
 
       - name: ESLint check
         run: npm run lint:js
 
-      - name: FSD Architecture Check (Steiger)
+      - name: FSD architecture check (Steiger)
         run: npx steiger ./src
 
-      - name: Vitest Tests
+      - name: Tests
         run: npm test
 
   backend:
-    name: Backend (Cargo Check & Tests)
+    name: Backend
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
@@ -59,8 +59,8 @@ jobs:
         with:
           workspaces: "./src-tauri -> target"
 
-      - name: Cargo Check
+      - name: Cargo check
         run: cargo check --manifest-path src-tauri/Cargo.toml
 
-      - name: Cargo Test
+      - name: Tests
         run: cargo test --manifest-path src-tauri/Cargo.toml

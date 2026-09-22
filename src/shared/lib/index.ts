@@ -20,7 +20,6 @@ export { useLongPress } from './user-interactions/useLongPress';
 export { useScrollSpy } from './user-interactions/useScrollSpy';
 export { useAppHotkey } from './user-interactions/shortcuts/useAppHotkey';
 export { useHotkeysScope } from './user-interactions/shortcuts/useHotkeysScope';
-export type { HotkeyConfig } from '../config';
 
 export { type Tone, playNotificationSound } from './audio/playNotificationSound';
 export { playSystemNotificationSound } from './audio/playSystemNotificationSound';

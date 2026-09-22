@@ -19,7 +19,7 @@ interface Props {
   onValidityChange: (isValid: boolean) => void;
 }
 
-export const DEFAULT_TIME_OFFSET_MINUTES = 30;
+const DEFAULT_TIME_OFFSET_MINUTES = 30;
 
 export const TimestampPickerPanel = ({
   initialTargetDateTime,

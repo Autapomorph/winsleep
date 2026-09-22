@@ -25,11 +25,6 @@ pub fn set_keep_awake(
 }
 
 #[tauri::command]
-pub fn get_keep_awake_status(state: State<'_, KeepAwakeManager>) -> Result<bool, String> {
-    Ok(state.is_active())
-}
-
-#[tauri::command]
 pub fn pc_sleep(keep_awake: State<'_, KeepAwakeManager>) -> Result<(), String> {
     let _ = keep_awake.release();
 
