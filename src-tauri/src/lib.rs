@@ -8,6 +8,7 @@ mod settings;
 mod system;
 mod timer;
 mod tray;
+mod updater;
 
 use settings::AppSettings;
 use tauri::Manager;
@@ -38,7 +39,11 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_os::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(
+            tauri_plugin_updater::Builder::new()
+                .default_version_comparator(updater::version_comparator)
+                .build(),
+        )
         .plugin(
             tauri_plugin_autostart::Builder::new()
                 .args(["--autostart"])
