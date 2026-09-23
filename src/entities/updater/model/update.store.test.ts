@@ -1,3 +1,4 @@
+import { getVersion } from '@tauri-apps/api/app';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { type Update, check } from '@tauri-apps/plugin-updater';
 
@@ -5,6 +6,10 @@ import { MOCK_CHANGELOG, MOCK_VERSION } from './mockUpdate';
 import { useUpdateStore } from './update.store';
 
 let mockIsDev = false;
+
+vi.mock(import('@tauri-apps/api/app'), () => ({
+  getVersion: vi.fn(() => Promise.resolve('1.3.1')),
+}));
 
 vi.mock(import('@tauri-apps/plugin-process'), () => ({
   relaunch: vi.fn(() => Promise.resolve()),
@@ -89,6 +94,37 @@ describe('updateStore', () => {
 
     expect(state.status).toBe('upToDate');
     expect(state.updateInfo).toBeNull();
+    expect(check).toHaveBeenCalledWith({
+      headers: {
+        'x-update-channel': 'stable',
+      },
+    });
+  });
+
+  test('should pass prerelease channel headers when version is prerelease', async () => {
+    vi.mocked(getVersion).mockResolvedValueOnce('1.3.2-beta.1');
+    vi.mocked(check).mockResolvedValueOnce(null);
+
+    await useUpdateStore.getState().checkUpdates();
+
+    expect(check).toHaveBeenCalledWith({
+      headers: {
+        'x-update-channel': 'prerelease',
+      },
+    });
+  });
+
+  test('should respect explicit channel override in checkUpdates options', async () => {
+    vi.mocked(getVersion).mockResolvedValueOnce('1.3.1');
+    vi.mocked(check).mockResolvedValueOnce(null);
+
+    await useUpdateStore.getState().checkUpdates({ channel: 'prerelease' });
+
+    expect(check).toHaveBeenCalledWith({
+      headers: {
+        'x-update-channel': 'prerelease',
+      },
+    });
   });
 
   test('should handle checkUpdates error', async () => {

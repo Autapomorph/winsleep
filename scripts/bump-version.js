@@ -9,8 +9,6 @@ if (!newVersion) {
   process.exit(1);
 }
 
-const repo = process.env.GITHUB_REPOSITORY || 'Autapomorph/winsleep';
-
 console.log(`Bumping version from ${prevVersion || 'unknown'} to ${newVersion}`);
 
 // 1. package.json & package-lock.json via npm
@@ -55,41 +53,6 @@ if (fs.existsSync(cargoLockPath)) {
   );
   fs.writeFileSync(cargoLockPath, cargoLock, 'utf8');
   console.log('✓ Updated Cargo.lock');
-}
-
-// 5. latest.json
-const latestJsonPath = 'latest.json';
-if (fs.existsSync(latestJsonPath)) {
-  const latestJson = JSON.parse(fs.readFileSync(latestJsonPath, 'utf8'));
-  latestJson.version = newVersion;
-
-  const defaultX64Url = `https://github.com/${repo}/releases/download/${newVersion}/WinSleep_${newVersion}_x64-setup.exe`;
-  const defaultArm64Url = `https://github.com/${repo}/releases/download/${newVersion}/WinSleep_${newVersion}_arm64-setup.exe`;
-
-  if (latestJson.platforms && latestJson.platforms['windows-x86_64']) {
-    if (prevVersion && prevVersion !== 'null') {
-      latestJson.platforms['windows-x86_64'].url = latestJson.platforms['windows-x86_64'].url
-        .split(prevVersion)
-        .join(newVersion)
-        .replace(/ /g, '.');
-    } else {
-      latestJson.platforms['windows-x86_64'].url = defaultX64Url;
-    }
-  }
-
-  if (latestJson.platforms && latestJson.platforms['windows-aarch64']) {
-    if (prevVersion && prevVersion !== 'null') {
-      latestJson.platforms['windows-aarch64'].url = latestJson.platforms['windows-aarch64'].url
-        .split(prevVersion)
-        .join(newVersion)
-        .replace(/ /g, '.');
-    } else {
-      latestJson.platforms['windows-aarch64'].url = defaultArm64Url;
-    }
-  }
-
-  fs.writeFileSync(latestJsonPath, `${JSON.stringify(latestJson, null, 2)}\n`, 'utf8');
-  console.log('✓ Updated latest.json');
 }
 
 console.log(`Version bump to ${newVersion} completed successfully.`);

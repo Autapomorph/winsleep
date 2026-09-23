@@ -1,9 +1,11 @@
+import { getVersion } from '@tauri-apps/api/app';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { type Update, check } from '@tauri-apps/plugin-updater';
 import { type StateCreator } from 'zustand';
+import semver from 'semver';
 
 import { typedInvoke } from '@/shared/api';
-import { config } from '@/shared/config';
+import { type UpdateChannel, config, UPDATE_CHANNELS } from '@/shared/config';
 import { delay, logger, showErrorToast } from '@/shared/lib';
 import { initialChangelogState } from './changelog.slice';
 import { MOCK_VERSION } from '../mockUpdate';
@@ -22,10 +24,19 @@ export interface UpdateState {
 export type UpdateStatus =
   'idle' | 'checking' | 'upToDate' | 'available' | 'downloading' | 'readyToInstall' | 'error';
 
+export interface CheckUpdatesOptions {
+  isManual?: boolean;
+  channel?: UpdateChannel;
+}
+
+export interface InstallUpdateOptions {
+  restartAfterInstall?: boolean;
+}
+
 export interface UpdateActions {
-  checkUpdates: (options?: { isManual?: boolean }) => Promise<void>;
+  checkUpdates: (options?: CheckUpdatesOptions) => Promise<void>;
   downloadUpdate: () => Promise<void>;
-  installUpdate: (options?: { restartAfterInstall?: boolean }) => Promise<void>;
+  installUpdate: (options?: InstallUpdateOptions) => Promise<void>;
   relaunchApp: () => Promise<void>;
   resetStore: () => void;
   triggerMockUpdate: () => Promise<void>;
@@ -68,7 +79,20 @@ export const createUpdateSlice: StateCreator<
       logger.info('Checking for updates...');
 
       try {
-        const update = await check();
+        let { channel } = options;
+
+        if (!channel) {
+          const currentVersion = await getVersion().catch(() => '');
+          channel = semver.prerelease(currentVersion)
+            ? UPDATE_CHANNELS.PRERELEASE
+            : UPDATE_CHANNELS.STABLE;
+        }
+
+        const update = await check({
+          headers: {
+            'x-update-channel': channel,
+          },
+        });
 
         if (update) {
           logger.info(`Update available: v${update.version}`);

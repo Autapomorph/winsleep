@@ -43,16 +43,18 @@ jobs:
     outputs:
       new_version: ${{ steps.normalize_new_version.outputs.new_version }}
       previous_version: ${{ steps.get_previous_version.outputs.previous_version }}
+      is_prerelease: ${{ steps.validate_increment.outputs.is_prerelease }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Get latest release version
-        id: get_previous_version
-        run: |
-          PREVIOUS_VERSION=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r .tag_name)
-          echo "Found previous version: $PREVIOUS_VERSION"
-          echo "previous_version=$PREVIOUS_VERSION" >> $GITHUB_OUTPUT
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Install semver dependency
+        run: npm install --no-save semver
 
       - name: Normalize new version
         id: normalize_new_version
@@ -61,6 +63,14 @@ jobs:
           NORMALIZED_VERSION="${RAW_VERSION#v}"
           echo "new_version=$NORMALIZED_VERSION" >> $GITHUB_OUTPUT
 
+      - name: Resolve previous release version
+        id: get_previous_version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          NEW_VERSION: ${{ steps.normalize_new_version.outputs.new_version }}
+        run: node ./scripts/resolve-previous-version.js
+
       - name: Validate semantic version format
         id: validate_format
         uses: matt-usurp/validate-semver@v3
@@ -68,7 +78,8 @@ jobs:
           version: ${{ steps.normalize_new_version.outputs.new_version }}
 
       - name: Validate version increment
-        run: node scripts/validate-version-increment.js
+        id: validate_increment
+        run: node ./scripts/validate-version-increment.js
         env:
           PREVIOUS_VERSION: ${{ steps.get_previous_version.outputs.previous_version }}
           NEW_VERSION: ${{ steps.normalize_new_version.outputs.new_version }}
@@ -208,10 +219,11 @@ jobs:
           node ./scripts/bump-version.js "${{ needs.validate_version.outputs.previous_version }}" "${{ needs.validate_version.outputs.new_version }}"
 
       - name: Update latest.json with signatures
-        run: node scripts/update-latest-json.js
+        run: node ./scripts/update-latest-json.js
         env:
           NEW_VERSION: ${{ needs.validate_version.outputs.new_version }}
           IS_MAJOR: ${{ github.event.inputs.is_major }}
+          IS_PRERELEASE: ${{ needs.validate_version.outputs.is_prerelease }}
           GITHUB_REPOSITORY: ${{ github.repository }}
 
       - uses: actions/create-github-app-token@v3
@@ -242,11 +254,13 @@ jobs:
             src-tauri/Cargo.toml
             src-tauri/Cargo.lock
             latest.json
+            latest.stable.json
+            latest.prerelease.json
           sign-commits: true
 
       - name: Generate release notes
         id: generate_notes
-        run: node scripts/generate-release-notes.js
+        run: node ./scripts/generate-release-notes.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -262,6 +276,7 @@ jobs:
           name: v${{ needs.validate_version.outputs.new_version }}
           body_path: ./release_notes.md
           draft: ${{ github.event.inputs.is_draft == 'true' }}
+          prerelease: ${{ needs.validate_version.outputs.is_prerelease == 'true' }}
           files: |
             ./release-bundles/WinSleep_${{ needs.validate_version.outputs.new_version }}_x64-setup.exe
             ./release-bundles/WinSleep_${{ needs.validate_version.outputs.new_version }}_x64-setup.exe.sig
