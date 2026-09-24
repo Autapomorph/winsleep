@@ -18,8 +18,6 @@ vi.mock('@/shared/lib', async importOriginal => {
 
 describe('useTimerNotification', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-
     useSettingsStore.setState({
       isNotificationsEnabled: true,
       notificationTimes: [

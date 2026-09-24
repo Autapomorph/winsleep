@@ -8,8 +8,13 @@ import { FaGithub, FaTriangleExclamation } from 'react-icons/fa6';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-import { MOCK_VERSION, STORAGE_LAST_SEEN_VERSION_KEY, useUpdateStore } from '@/entities/updater';
-import { config, DEFAULT_LOCALE, GITHUB_REPO_URL, RELEASE_NOTES_TAGS } from '@/shared/config';
+import {
+  MOCK_VERSION,
+  STORAGE_LAST_SEEN_VERSION_KEY,
+  updateService,
+  useUpdateStore,
+} from '@/entities/updater';
+import { config, DEFAULT_LOCALE, RELEASE_NOTES_TAGS } from '@/shared/config';
 import {
   compareSemver,
   formatReleaseDate,
@@ -113,7 +118,6 @@ export const ReleaseNotesModal = () => {
   );
 
   const version = releaseNotesVersion ?? '';
-  const releaseUrl = `${GITHUB_REPO_URL}/releases/tag`;
 
   const versionsToDisplay = Array.from(
     new Set(
@@ -299,8 +303,8 @@ export const ReleaseNotesModal = () => {
               onPress={() => {
                 const targetUrl =
                   version === MOCK_VERSION
-                    ? `${GITHUB_REPO_URL}/releases`
-                    : `${releaseUrl}/${version}`;
+                    ? updateService.getReleasesUrl()
+                    : updateService.getReleaseUrl(version);
                 openExternalLink(targetUrl).catch(() => {});
               }}
             >

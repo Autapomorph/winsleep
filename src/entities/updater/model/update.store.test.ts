@@ -406,7 +406,7 @@ describe('updateStore', () => {
       new Response(
         JSON.stringify({
           notes: 'Proxy release notes',
-          released_at: '2026-09-03',
+          releasedAt: '2026-09-03',
           tags: ['New'],
         }),
         { status: 200 },
@@ -433,7 +433,7 @@ describe('updateStore', () => {
 
     const state = useUpdateStore.getState();
     expect(state.isReleaseNotesLoading).toBe(false);
-    expect(state.releaseNotesError).toContain('404');
+    expect(state.releaseNotesError).toContain('Release notes not found');
 
     fetchSpy.mockRestore();
   });
