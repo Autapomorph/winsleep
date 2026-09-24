@@ -202,6 +202,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Install semver dependency
+        run: npm install --no-save semver
+
       - name: Download all bundles
         uses: actions/download-artifact@v7
         with:
