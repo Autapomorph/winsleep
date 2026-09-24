@@ -44,7 +44,7 @@ Direct native Windows integration for all critical power actions:
 ### 🎨 Modern UI & Experience
 - **Theme Support**: Seamless Light, Dark, and System theme switching.
 - **Multilingual Support**: Built-in English and Russian translations.
-- **Automatic & Manual Updates**: Built-in updater with GitHub release changelog preview.
+- **Automatic & Manual Updates**: Built-in updater.
 
 ---
 
