@@ -46,7 +46,7 @@ try {
 
   // Remove lines for version bumps, docs, ci, and chore(ci)
   const excludedKeywords = [
-    '* chore: update changelog',
+    '* chore: update release notes',
     '* chore(version): bump to',
     '* chore: push notification',
     '* chore(i18n): pull translations from crowdin',

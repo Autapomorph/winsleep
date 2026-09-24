@@ -83,7 +83,7 @@ export const createChangelogSlice: StateCreator<
   fetchAvailableVersions: async () => {
     set({ isVersionsLoading: true }, false, 'updater/fetchAvailableVersionsStart');
     try {
-      const response = await fetch(`${PROXY_UPDATER_URL}/changelogs`, {
+      const response = await fetch(`${PROXY_UPDATER_URL}/release-notes`, {
         cache: 'no-cache',
       });
 
@@ -136,7 +136,7 @@ export const createChangelogSlice: StateCreator<
     }
 
     try {
-      const proxyResponse = await fetch(`${PROXY_UPDATER_URL}/changelogs/${targetVersion}`, {
+      const proxyResponse = await fetch(`${PROXY_UPDATER_URL}/release-notes/${targetVersion}`, {
         cache: 'no-cache',
       });
 

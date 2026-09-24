@@ -22,7 +22,8 @@ versioning:
 - all:
   - changed-files:
     - any-glob-to-any-file:
-      - "CHANGELOG.md"
+      - "changelogs/**/*"
+      - "release-notes/**/*"
       - "latest.json"
 
 notifications:
