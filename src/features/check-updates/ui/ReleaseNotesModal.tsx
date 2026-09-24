@@ -9,11 +9,11 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { MOCK_VERSION, STORAGE_LAST_SEEN_VERSION_KEY, useUpdateStore } from '@/entities/updater';
-import { CHANGELOG_TAGS, config, DEFAULT_LOCALE, GITHUB_REPO_URL } from '@/shared/config';
+import { config, DEFAULT_LOCALE, GITHUB_REPO_URL, RELEASE_NOTES_TAGS } from '@/shared/config';
 import {
   compareSemver,
   formatReleaseDate,
-  isChangelogTag,
+  isReleaseNotesTag,
   logger,
   openExternalLink,
 } from '@/shared/lib';
@@ -61,19 +61,19 @@ const markdownComponents = {
   ),
 };
 
-const getChangelogTagClassName = (tag: string) => {
+const getReleaseNotesTagClassName = (tag: string) => {
   const normalizedTag = tag.toLowerCase();
 
   switch (normalizedTag) {
-    case CHANGELOG_TAGS.NEW:
+    case RELEASE_NOTES_TAGS.NEW:
       return cn(
         'border-green-400/15 bg-green-200 text-green-800 dark:border-green-300/15 dark:bg-green-500/15 dark:text-green-400',
       );
-    case CHANGELOG_TAGS.IMPROVED:
+    case RELEASE_NOTES_TAGS.IMPROVED:
       return cn(
         'border-purple-400/15 bg-purple-200 text-purple-800 dark:border-purple-300/15 dark:bg-purple-500/15 dark:text-purple-400',
       );
-    case CHANGELOG_TAGS.FIXED:
+    case RELEASE_NOTES_TAGS.FIXED:
       return cn(
         'border-cyan-400/15 bg-cyan-200 text-cyan-800 dark:border-cyan-300/15 dark:bg-cyan-500/15 dark:text-cyan-400',
       );
@@ -84,35 +84,35 @@ const getChangelogTagClassName = (tag: string) => {
   }
 };
 
-export const ChangelogModal = () => {
+export const ReleaseNotesModal = () => {
   const { t, i18n } = useTranslation();
   const {
-    isChangelogOpen,
-    changelogVersion,
-    changelog,
-    changelogMeta,
+    isReleaseNotesOpen,
+    releaseNotesVersion,
+    releaseNotes,
+    releaseNotesMeta,
     availableVersions,
-    isChangelogLoading,
-    changelogError,
-    closeChangelog,
-    openChangelog,
-    fetchChangelog,
+    isReleaseNotesLoading,
+    releaseNotesError,
+    closeReleaseNotes,
+    openReleaseNotes,
+    fetchReleaseNotes,
   } = useUpdateStore(
     useShallow(state => ({
-      isChangelogOpen: state.isChangelogOpen,
-      changelogVersion: state.changelogVersion,
-      changelog: state.changelog,
-      changelogMeta: state.changelogMeta,
+      isReleaseNotesOpen: state.isReleaseNotesOpen,
+      releaseNotesVersion: state.releaseNotesVersion,
+      releaseNotes: state.releaseNotes,
+      releaseNotesMeta: state.releaseNotesMeta,
       availableVersions: state.availableVersions,
-      isChangelogLoading: state.isChangelogLoading,
-      changelogError: state.changelogError,
-      closeChangelog: state.closeChangelog,
-      openChangelog: state.openChangelog,
-      fetchChangelog: state.fetchChangelog,
+      isReleaseNotesLoading: state.isReleaseNotesLoading,
+      releaseNotesError: state.releaseNotesError,
+      closeReleaseNotes: state.closeReleaseNotes,
+      openReleaseNotes: state.openReleaseNotes,
+      fetchReleaseNotes: state.fetchReleaseNotes,
     })),
   );
 
-  const version = changelogVersion ?? '';
+  const version = releaseNotesVersion ?? '';
   const releaseUrl = `${GITHUB_REPO_URL}/releases/tag`;
 
   const versionsToDisplay = Array.from(
@@ -133,7 +133,7 @@ export const ChangelogModal = () => {
         const normalizedLastSeen = lastSeenVersion ? lastSeenVersion.replace(/^v/, '') : null;
 
         if (normalizedLastSeen && compareSemver(normalizedCurrent, normalizedLastSeen, 'asc') > 0) {
-          openChangelog(normalizedCurrent);
+          openReleaseNotes(normalizedCurrent);
         } else if (!lastSeenVersion) {
           localStorage.setItem(STORAGE_LAST_SEEN_VERSION_KEY, normalizedCurrent);
         }
@@ -143,24 +143,24 @@ export const ChangelogModal = () => {
     };
 
     init().catch(() => {});
-  }, [openChangelog]);
+  }, [openReleaseNotes]);
 
   const handleVersionChange = (val: Key | null) => {
     if (val !== null && val !== version) {
-      fetchChangelog(String(val)).catch(() => {});
+      fetchReleaseNotes(String(val)).catch(() => {});
     }
   };
 
-  if (isChangelogLoading) {
+  if (isReleaseNotesLoading) {
     modalContent = (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 py-6">
         <Spinner size="lg" />
-        <p className="text-muted-foreground text-sm">{t($ => $.changelogModal.loading)}</p>
+        <p className="text-muted-foreground text-sm">{t($ => $.releaseNotesModal.loading)}</p>
       </div>
     );
   }
 
-  if (changelogError) {
+  if (releaseNotesError) {
     modalContent = (
       <div className="flex flex-1 flex-col items-center justify-center py-6">
         <div className="my-2 flex flex-col items-center gap-3 rounded-2xl border border-danger/20 bg-danger/5 p-6 text-center">
@@ -169,31 +169,31 @@ export const ChangelogModal = () => {
           </div>
 
           <h3 className="text-base font-bold text-foreground">
-            {t($ => $.changelogModal.error.title)}
+            {t($ => $.releaseNotesModal.error.title)}
           </h3>
 
           <p className="max-w-xs text-xs leading-relaxed text-muted">
-            {t($ => $.changelogModal.error.description)}
+            {t($ => $.releaseNotesModal.error.description)}
           </p>
 
           <Button
             variant="secondary"
             onPress={() => {
-              fetchChangelog(version).catch(() => {});
+              fetchReleaseNotes(version).catch(() => {});
             }}
           >
-            {t($ => $.changelogModal.error.retryBtn.text)}
+            {t($ => $.releaseNotesModal.error.retryBtn.text)}
           </Button>
         </div>
       </div>
     );
   }
 
-  if (!isChangelogLoading && !changelogError) {
+  if (!isReleaseNotesLoading && !releaseNotesError) {
     modalContent = (
       <div>
         <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-          {changelog}
+          {releaseNotes}
         </ReactMarkdown>
       </div>
     );
@@ -201,7 +201,7 @@ export const ChangelogModal = () => {
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      closeChangelog();
+      closeReleaseNotes();
 
       getVersion()
         .then(currentVersion => {
@@ -218,9 +218,9 @@ export const ChangelogModal = () => {
       <Select
         variant="secondary"
         value={version}
-        placeholder={t($ => $.changelogModal.selectVersion)}
+        placeholder={t($ => $.releaseNotesModal.selectVersion)}
         onChange={handleVersionChange}
-        aria-label={t($ => $.changelogModal.selectVersion)}
+        aria-label={t($ => $.releaseNotesModal.selectVersion)}
       >
         <Select.Trigger className="font-mono text-xs font-semibold">
           <Select.Value />
@@ -242,41 +242,41 @@ export const ChangelogModal = () => {
   } else if (version) {
     versionSelector = (
       <span className="font-mono text-xs font-semibold">
-        {t($ => $.changelogModal.version, { version })}
+        {t($ => $.releaseNotesModal.version, { version })}
       </span>
     );
   }
 
-  const formattedReleaseDate = changelogMeta?.releasedAt
-    ? formatReleaseDate(changelogMeta.releasedAt, i18n.language)
+  const formattedReleaseDate = releaseNotesMeta?.releasedAt
+    ? formatReleaseDate(releaseNotesMeta.releasedAt, i18n.language)
     : null;
-  const hasMeta = Boolean(formattedReleaseDate) || (changelogMeta?.tags?.length ?? 0) > 0;
+  const hasMeta = Boolean(formattedReleaseDate) || (releaseNotesMeta?.tags?.length ?? 0) > 0;
 
-  const renderChangelogTagChip = (tag: string) => {
+  const renderReleaseNotesTagChip = (tag: string) => {
     const normalizedTag = tag.toLowerCase();
-    const label = isChangelogTag(normalizedTag)
-      ? t($ => $.changelogModal.tags[normalizedTag], {
+    const label = isReleaseNotesTag(normalizedTag)
+      ? t($ => $.releaseNotesModal.tags[normalizedTag], {
           lng: DEFAULT_LOCALE,
           defaultValue: tag,
         })
       : tag;
 
     return (
-      <Chip key={tag} className={cn('border', getChangelogTagClassName(tag))} size="sm">
+      <Chip key={tag} className={cn('border', getReleaseNotesTagClassName(tag))} size="sm">
         {label}
       </Chip>
     );
   };
 
   return (
-    <Modal.Backdrop isOpen={isChangelogOpen} onOpenChange={handleOpenChange}>
+    <Modal.Backdrop isOpen={isReleaseNotesOpen} onOpenChange={handleOpenChange}>
       <Modal.Container placement="center" size="cover">
         <Modal.Dialog>
           <Modal.CloseTrigger />
 
           <Modal.Header className="flex flex-col gap-1.5">
             <Modal.Heading className="flex items-center gap-4 text-xl font-bold">
-              {t($ => $.changelogModal.title)}
+              {t($ => $.releaseNotesModal.title)}
               {versionSelector}
             </Modal.Heading>
 
@@ -286,7 +286,7 @@ export const ChangelogModal = () => {
                   <span className="text-xs text-muted">{formattedReleaseDate}</span>
                 )}
 
-                {changelogMeta?.tags?.map(renderChangelogTagChip)}
+                {releaseNotesMeta?.tags?.map(renderReleaseNotesTagChip)}
               </div>
             )}
           </Modal.Header>
@@ -308,7 +308,7 @@ export const ChangelogModal = () => {
                 <FaGithub />
               </Link.Icon>
 
-              <span>{t($ => $.changelogModal.viewOnGithub)}</span>
+              <span>{t($ => $.releaseNotesModal.viewOnGithub)}</span>
 
               <Link.Icon className="ml-1.5 size-3">
                 <FaExternalLinkAlt />
@@ -316,7 +316,7 @@ export const ChangelogModal = () => {
             </Link>
 
             <Button variant="primary" slot="close">
-              {t($ => $.changelogModal.closeBtn.text)}
+              {t($ => $.releaseNotesModal.closeBtn.text)}
             </Button>
           </Modal.Footer>
         </Modal.Dialog>

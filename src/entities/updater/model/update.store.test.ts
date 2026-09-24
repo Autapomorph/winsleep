@@ -2,7 +2,7 @@ import { getVersion } from '@tauri-apps/api/app';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { type Update, check } from '@tauri-apps/plugin-updater';
 
-import { MOCK_CHANGELOG, MOCK_VERSION } from './mockUpdate';
+import { MOCK_RELEASE_NOTES, MOCK_VERSION } from './mockUpdate';
 import { useUpdateStore } from './update.store';
 
 let mockIsDev = false;
@@ -82,7 +82,7 @@ describe('updateStore', () => {
     expect(state.updateInfo).toBeNull();
     expect(state.downloadProgress).toBe(0);
     expect(state.errorMessage).toBeNull();
-    expect(state.isChangelogOpen).toBe(false);
+    expect(state.isReleaseNotesOpen).toBe(false);
   });
 
   test('should handle checkUpdates when no update is available', async () => {
@@ -263,14 +263,14 @@ describe('updateStore', () => {
     expect(mockInstall).toHaveBeenCalledWith({ restartAfterInstall: false });
   });
 
-  test('should open and close changelog', () => {
-    useUpdateStore.getState().openChangelog('2.0.0');
-    expect(useUpdateStore.getState().isChangelogOpen).toBe(true);
-    expect(useUpdateStore.getState().changelogVersion).toBe('2.0.0');
+  test('should open and close release notes', () => {
+    useUpdateStore.getState().openReleaseNotes('2.0.0');
+    expect(useUpdateStore.getState().isReleaseNotesOpen).toBe(true);
+    expect(useUpdateStore.getState().releaseNotesVersion).toBe('2.0.0');
 
-    useUpdateStore.getState().closeChangelog();
-    expect(useUpdateStore.getState().isChangelogOpen).toBe(false);
-    expect(useUpdateStore.getState().changelogVersion).toBeNull();
+    useUpdateStore.getState().closeReleaseNotes();
+    expect(useUpdateStore.getState().isReleaseNotesOpen).toBe(false);
+    expect(useUpdateStore.getState().releaseNotesVersion).toBeNull();
   });
 
   test('should trigger relaunch in production mode', async () => {
@@ -338,28 +338,28 @@ describe('updateStore', () => {
     expect(useUpdateStore.getState().status).toBe('idle');
   });
 
-  test('should initialize with default changelog state', () => {
+  test('should initialize with default release notes state', () => {
     const state = useUpdateStore.getState();
-    expect(state.changelog).toBe('');
-    expect(state.isChangelogLoading).toBe(false);
-    expect(state.changelogError).toBeNull();
+    expect(state.releaseNotes).toBe('');
+    expect(state.isReleaseNotesLoading).toBe(false);
+    expect(state.releaseNotesError).toBeNull();
     expect(state.availableVersions).toEqual([]);
     expect(state.isVersionsLoading).toBe(false);
-    expect(state.changelogMeta).toBeNull();
+    expect(state.releaseNotesMeta).toBeNull();
   });
 
-  test('should open changelog and trigger fetchChangelog and fetchAvailableVersions', async () => {
+  test('should open release notes and trigger fetchReleaseNotes and fetchAvailableVersions', async () => {
     const fetchSpy = vi
-      .spyOn(useUpdateStore.getState(), 'fetchChangelog')
+      .spyOn(useUpdateStore.getState(), 'fetchReleaseNotes')
       .mockImplementation(async () => {});
     const fetchVersionsSpy = vi
       .spyOn(useUpdateStore.getState(), 'fetchAvailableVersions')
       .mockImplementation(async () => {});
 
-    useUpdateStore.getState().openChangelog('1.0.0');
+    useUpdateStore.getState().openReleaseNotes('1.0.0');
 
-    expect(useUpdateStore.getState().isChangelogOpen).toBe(true);
-    expect(useUpdateStore.getState().changelogVersion).toBe('1.0.0');
+    expect(useUpdateStore.getState().isReleaseNotesOpen).toBe(true);
+    expect(useUpdateStore.getState().releaseNotesVersion).toBe('1.0.0');
     expect(fetchSpy).toHaveBeenCalledWith('1.0.0');
     expect(fetchVersionsSpy).toHaveBeenCalled();
 
@@ -367,19 +367,19 @@ describe('updateStore', () => {
     fetchVersionsSpy.mockRestore();
   });
 
-  test('should fetch mock changelog', async () => {
-    const fetchPromise = useUpdateStore.getState().fetchChangelog(MOCK_VERSION);
+  test('should fetch mock release notes', async () => {
+    const fetchPromise = useUpdateStore.getState().fetchReleaseNotes(MOCK_VERSION);
 
-    expect(useUpdateStore.getState().isChangelogLoading).toBe(true);
-    expect(useUpdateStore.getState().changelogError).toBeNull();
+    expect(useUpdateStore.getState().isReleaseNotesLoading).toBe(true);
+    expect(useUpdateStore.getState().releaseNotesError).toBeNull();
 
     await vi.advanceTimersByTimeAsync(3000);
     await fetchPromise;
 
     const state = useUpdateStore.getState();
-    expect(state.isChangelogLoading).toBe(false);
-    expect(state.changelog).toBe(MOCK_CHANGELOG);
-    expect(state.changelogMeta).toEqual({
+    expect(state.isReleaseNotesLoading).toBe(false);
+    expect(state.releaseNotes).toBe(MOCK_RELEASE_NOTES);
+    expect(state.releaseNotesMeta).toEqual({
       releasedAt: '2026-09-03',
       tags: ['New', 'Improved', 'Fixed'],
     });
@@ -413,13 +413,13 @@ describe('updateStore', () => {
       ),
     );
 
-    await useUpdateStore.getState().fetchChangelog('v1.2.3');
+    await useUpdateStore.getState().fetchReleaseNotes('v1.2.3');
 
     const state = useUpdateStore.getState();
-    expect(state.isChangelogLoading).toBe(false);
-    expect(state.changelog).toBe('Proxy release notes');
-    expect(state.changelogMeta).toEqual({ releasedAt: '2026-09-03', tags: ['New'] });
-    expect(state.changelogError).toBeNull();
+    expect(state.isReleaseNotesLoading).toBe(false);
+    expect(state.releaseNotes).toBe('Proxy release notes');
+    expect(state.releaseNotesMeta).toEqual({ releasedAt: '2026-09-03', tags: ['New'] });
+    expect(state.releaseNotesError).toBeNull();
 
     fetchSpy.mockRestore();
   });
@@ -429,11 +429,11 @@ describe('updateStore', () => {
       .spyOn(globalThis, 'fetch')
       .mockResolvedValue(new Response(null, { status: 404 }));
 
-    await useUpdateStore.getState().fetchChangelog('v1.2.3');
+    await useUpdateStore.getState().fetchReleaseNotes('v1.2.3');
 
     const state = useUpdateStore.getState();
-    expect(state.isChangelogLoading).toBe(false);
-    expect(state.changelogError).toContain('404');
+    expect(state.isReleaseNotesLoading).toBe(false);
+    expect(state.releaseNotesError).toContain('404');
 
     fetchSpy.mockRestore();
   });
@@ -450,13 +450,13 @@ describe('updateStore', () => {
       );
     });
 
-    await useUpdateStore.getState().fetchChangelog('v1.2.3');
+    await useUpdateStore.getState().fetchReleaseNotes('v1.2.3');
 
     const state = useUpdateStore.getState();
-    expect(state.isChangelogLoading).toBe(false);
-    expect(state.changelog).toBe('GitHub release body');
-    expect(state.changelogMeta).toEqual({ releasedAt: '2026-09-03T12:00:00Z', tags: [] });
-    expect(state.changelogError).toBeNull();
+    expect(state.isReleaseNotesLoading).toBe(false);
+    expect(state.releaseNotes).toBe('GitHub release body');
+    expect(state.releaseNotesMeta).toEqual({ releasedAt: '2026-09-03T12:00:00Z', tags: [] });
+    expect(state.releaseNotesError).toBeNull();
 
     fetchSpy.mockRestore();
   });

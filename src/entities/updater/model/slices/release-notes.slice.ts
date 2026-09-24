@@ -2,81 +2,85 @@ import { type StateCreator } from 'zustand';
 
 import {
   type GitHubReleaseResponse,
-  type ProxyChangelogResponse,
-  type ProxyChangelogVersionsResponse,
+  type ProxyReleaseNotesResponse,
+  type ProxyReleaseNotesVersionsResponse,
   GITHUB_API_REPO_URL,
   PROXY_UPDATER_URL,
 } from '@/shared/config';
 import { delay, logger } from '@/shared/lib';
-import { MOCK_CHANGELOG, MOCK_VERSION } from '../mockUpdate';
+import { MOCK_RELEASE_NOTES, MOCK_VERSION } from '../mockUpdate';
 import { type UpdateStore } from '../update.store';
 
-export type ChangelogSlice = ChangelogState & ChangelogActions;
+export type ReleaseNotesSlice = ReleaseNotesState & ReleaseNotesActions;
 
-export interface ChangelogState {
+export interface ReleaseNotesState {
   availableVersions: string[];
   isVersionsLoading: boolean;
-  isChangelogOpen: boolean;
-  isChangelogLoading: boolean;
-  changelogError: string | null;
-  changelog: string;
-  changelogVersion: string | null;
-  changelogMeta: ChangelogMeta | null;
+  isReleaseNotesOpen: boolean;
+  isReleaseNotesLoading: boolean;
+  releaseNotesError: string | null;
+  releaseNotes: string;
+  releaseNotesVersion: string | null;
+  releaseNotesMeta: ReleaseNotesMeta | null;
 }
 
-export interface ChangelogMeta {
+export interface ReleaseNotesMeta {
   releasedAt?: string;
   tags?: string[];
 }
 
-export interface ChangelogActions {
-  openChangelog: (version: string) => void;
-  closeChangelog: () => void;
-  fetchChangelog: (version: string) => Promise<void>;
+export interface ReleaseNotesActions {
+  openReleaseNotes: (version: string) => void;
+  closeReleaseNotes: () => void;
+  fetchReleaseNotes: (version: string) => Promise<void>;
   fetchAvailableVersions: () => Promise<void>;
 }
 
-export const initialChangelogState: ChangelogState = {
+export const initialReleaseNotesState: ReleaseNotesState = {
   availableVersions: [],
-  changelog: '',
-  changelogError: null,
-  changelogMeta: null,
-  changelogVersion: null,
-  isChangelogLoading: false,
-  isChangelogOpen: false,
+  releaseNotes: '',
+  releaseNotesError: null,
+  releaseNotesMeta: null,
+  releaseNotesVersion: null,
+  isReleaseNotesLoading: false,
+  isReleaseNotesOpen: false,
   isVersionsLoading: false,
 };
 
-export const createChangelogSlice: StateCreator<
+export const createReleaseNotesSlice: StateCreator<
   UpdateStore,
   [['zustand/devtools', never]],
   [],
-  ChangelogSlice
+  ReleaseNotesSlice
 > = (set, get) => ({
-  ...initialChangelogState,
+  ...initialReleaseNotesState,
 
-  openChangelog: (version: string) => {
-    set({ changelogVersion: version, isChangelogOpen: true }, false, 'updater/openChangelog');
+  openReleaseNotes: (version: string) => {
+    set(
+      { releaseNotesVersion: version, isReleaseNotesOpen: true },
+      false,
+      'updater/openReleaseNotes',
+    );
     get()
-      .fetchChangelog(version)
+      .fetchReleaseNotes(version)
       .catch(() => {});
     get()
       .fetchAvailableVersions()
       .catch(() => {});
   },
 
-  closeChangelog: () => {
+  closeReleaseNotes: () => {
     set(
       {
-        changelog: '',
-        changelogError: null,
-        changelogMeta: null,
-        changelogVersion: null,
-        isChangelogLoading: false,
-        isChangelogOpen: false,
+        releaseNotes: '',
+        releaseNotesError: null,
+        releaseNotesMeta: null,
+        releaseNotesVersion: null,
+        isReleaseNotesLoading: false,
+        isReleaseNotesOpen: false,
       },
       false,
-      'updater/closeChangelog',
+      'updater/closeReleaseNotes',
     );
   },
 
@@ -88,7 +92,7 @@ export const createChangelogSlice: StateCreator<
       });
 
       if (response.ok) {
-        const data: ProxyChangelogVersionsResponse = await response.json();
+        const data: ProxyReleaseNotesVersionsResponse = await response.json();
         if (Array.isArray(data.versions) && data.versions.length > 0) {
           set(
             { availableVersions: data.versions, isVersionsLoading: false },
@@ -105,15 +109,15 @@ export const createChangelogSlice: StateCreator<
     set({ isVersionsLoading: false }, false, 'updater/fetchAvailableVersionsEnd');
   },
 
-  fetchChangelog: async (targetVersion: string) => {
+  fetchReleaseNotes: async (targetVersion: string) => {
     set(
       {
-        changelogError: null,
-        changelogVersion: targetVersion,
-        isChangelogLoading: true,
+        releaseNotesError: null,
+        releaseNotesVersion: targetVersion,
+        isReleaseNotesLoading: true,
       },
       false,
-      'updater/fetchChangelogStart',
+      'updater/fetchReleaseNotesStart',
     );
 
     if (targetVersion === MOCK_VERSION) {
@@ -121,15 +125,15 @@ export const createChangelogSlice: StateCreator<
 
       set(
         {
-          changelog: MOCK_CHANGELOG,
-          changelogMeta: {
+          releaseNotes: MOCK_RELEASE_NOTES,
+          releaseNotesMeta: {
             releasedAt: '2026-09-03',
             tags: ['New', 'Improved', 'Fixed'],
           },
-          isChangelogLoading: false,
+          isReleaseNotesLoading: false,
         },
         false,
-        'updater/fetchMockChangelogSuccess',
+        'updater/fetchMockReleaseNotesSuccess',
       );
 
       return;
@@ -141,18 +145,18 @@ export const createChangelogSlice: StateCreator<
       });
 
       if (proxyResponse.ok) {
-        const proxyData: ProxyChangelogResponse = await proxyResponse.json();
+        const proxyData: ProxyReleaseNotesResponse = await proxyResponse.json();
         set(
           {
-            changelog: proxyData.notes ?? '',
-            changelogMeta: {
+            releaseNotes: proxyData.notes ?? '',
+            releaseNotesMeta: {
               releasedAt: proxyData.released_at,
               tags: proxyData.tags ?? [],
             },
-            isChangelogLoading: false,
+            isReleaseNotesLoading: false,
           },
           false,
-          'updater/fetchChangelogProxySuccess',
+          'updater/fetchReleaseNotesProxySuccess',
         );
 
         return;
@@ -173,21 +177,21 @@ export const createChangelogSlice: StateCreator<
       const data: GitHubReleaseResponse = await response.json();
       set(
         {
-          changelog: data.body ?? '',
-          changelogMeta: data.published_at ? { releasedAt: data.published_at, tags: [] } : null,
-          isChangelogLoading: false,
+          releaseNotes: data.body ?? '',
+          releaseNotesMeta: data.published_at ? { releasedAt: data.published_at, tags: [] } : null,
+          isReleaseNotesLoading: false,
         },
         false,
-        'updater/fetchChangelogGithubSuccess',
+        'updater/fetchReleaseNotesGithubSuccess',
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       logger.error(`Failed to fetch release notes: ${message}`);
 
       set(
-        { changelogError: message, isChangelogLoading: false },
+        { releaseNotesError: message, isReleaseNotesLoading: false },
         false,
-        'updater/fetchChangelogError',
+        'updater/fetchReleaseNotesError',
       );
     }
   },

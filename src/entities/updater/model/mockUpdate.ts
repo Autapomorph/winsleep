@@ -1,8 +1,8 @@
 export const MOCK_VERSION = 'X.Y.Z';
 
-export const MOCK_CHANGELOG = `### New 🎉
+export const MOCK_RELEASE_NOTES = `### New 🎉
 - Added support for scheduled timer restoration after app exit
-- Added version selector to the changelog modal
+- Added version selector to the release notes modal
 - Added quick presets customization in tray context menu
 - Added keyboard shortcuts for rapid action switching
 
@@ -14,6 +14,6 @@ export const MOCK_CHANGELOG = `### New 🎉
 
 ### Fixed 🐛
 - Fixed incorrect timer state on system sleep mode activation
-- Resolved edge case in changelog version ordering
+- Resolved edge case in release notes version ordering
 - Fixed tooltip flicker when hovering over titlebar controls
 - Corrected window position restore logic on multi-monitor setups`;

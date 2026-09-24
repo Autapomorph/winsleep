@@ -2,13 +2,13 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
 import {
-  type ChangelogActions,
-  type ChangelogMeta,
-  type ChangelogSlice,
-  type ChangelogState,
-  createChangelogSlice,
-  initialChangelogState,
-} from './slices/changelog.slice';
+  type ReleaseNotesActions,
+  type ReleaseNotesMeta,
+  type ReleaseNotesSlice,
+  type ReleaseNotesState,
+  createReleaseNotesSlice,
+  initialReleaseNotesState,
+} from './slices/release-notes.slice';
 import {
   type UpdateActions,
   type UpdateSlice,
@@ -20,32 +20,32 @@ import {
 } from './slices/update.slice';
 
 export type {
-  ChangelogActions,
-  ChangelogMeta,
-  ChangelogSlice,
-  ChangelogState,
+  ReleaseNotesActions,
+  ReleaseNotesMeta,
+  ReleaseNotesSlice,
+  ReleaseNotesState,
   UpdateActions,
   UpdateSlice,
   UpdateState,
   UpdateStatus,
 };
 
-export type UpdateStore = UpdateSlice & ChangelogSlice;
+export type UpdateStore = UpdateSlice & ReleaseNotesSlice;
 
-export type UpdateStoreState = UpdateState & ChangelogState;
+export type UpdateStoreState = UpdateState & ReleaseNotesState;
 
 export { STORAGE_LAST_SEEN_VERSION_KEY };
 
 export const initialUpdateStoreState: UpdateStoreState = {
   ...initialUpdateState,
-  ...initialChangelogState,
+  ...initialReleaseNotesState,
 };
 
 export const useUpdateStore = create<UpdateStore>()(
   devtools(
     (...a) => ({
       ...createUpdateSlice(...a),
-      ...createChangelogSlice(...a),
+      ...createReleaseNotesSlice(...a),
     }),
     {
       name: 'updater',

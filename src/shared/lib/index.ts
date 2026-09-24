@@ -45,7 +45,7 @@ export {
   compareSemver,
   compareSemverDesc,
 } from './updates/compareSemver';
-export { isChangelogTag } from './updates/isChangelogTag';
+export { isReleaseNotesTag } from './updates/isReleaseNotesTag';
 export { isValidUpdateInterval } from './updates/isValidUpdateInterval';
 
 export { isMainWindow } from './window/isMainWindow';

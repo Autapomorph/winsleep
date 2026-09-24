@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { cn, Dropdown, Separator } from '@heroui/react';
 import { TbSquareRoundedChevronDown } from 'react-icons/tb';
 
-import { ViewChangelog } from './items/ChangelogMenuItem';
 import { FeatureRequest } from './items/FeatureRequest';
+import { ViewReleaseNotes } from './items/ReleaseNotesMenuItem';
 import { ReportIssue } from './items/ReportIssue';
 import { CheckUpdates } from './items/UpdateMenuItem';
 import { TitlebarButton } from '../TitlebarButton';
@@ -87,7 +87,7 @@ export const Menu = () => {
 
           <Separator />
 
-          <ViewChangelog />
+          <ViewReleaseNotes />
           <CheckUpdates />
         </Dropdown.Menu>
       </Dropdown.Popover>

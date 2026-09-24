@@ -7,7 +7,7 @@ import semver from 'semver';
 import { typedInvoke } from '@/shared/api';
 import { type UpdateChannel, config, UPDATE_CHANNELS } from '@/shared/config';
 import { delay, logger, showErrorToast } from '@/shared/lib';
-import { initialChangelogState } from './changelog.slice';
+import { initialReleaseNotesState } from './release-notes.slice';
 import { MOCK_VERSION } from '../mockUpdate';
 import { type UpdateStore } from '../update.store';
 
@@ -42,7 +42,7 @@ export interface UpdateActions {
   triggerMockUpdate: () => Promise<void>;
 }
 
-export const STORAGE_LAST_SEEN_VERSION_KEY = 'lastSeenChangelogVersion';
+export const STORAGE_LAST_SEEN_VERSION_KEY = 'lastSeenReleaseNotesVersion';
 
 export const initialUpdateState: UpdateState = {
   downloadProgress: 0,
@@ -245,7 +245,7 @@ export const createUpdateSlice: StateCreator<
         mockUpdateController = null;
       }
 
-      set({ ...initialUpdateState, ...initialChangelogState }, false, 'updater/resetStore');
+      set({ ...initialUpdateState, ...initialReleaseNotesState }, false, 'updater/resetStore');
     },
 
     triggerMockUpdate: async () => {
