@@ -22,7 +22,6 @@ versioning:
 - all:
   - changed-files:
     - any-glob-to-any-file:
-      - "changelogs/**/*"
       - "release-notes/**/*"
       - "latest.json"
 

@@ -38,15 +38,15 @@ vi.mock(import('@/entities/updater'), async importOriginal => {
     isManualCheck: false,
     updateInfo: null,
     errorMessage: null as string | null,
-    changelogVersion: null as string | null,
-    isChangelogOpen: false,
+    releaseNotesVersion: null as string | null,
+    isReleaseNotesOpen: false,
     checkUpdates: vi.fn(),
     installUpdate: vi.fn(),
     relaunchApp: vi.fn(),
     resetStore: vi.fn(),
     triggerMockUpdate: vi.fn(),
-    openChangelog: vi.fn(),
-    closeChangelog: vi.fn(),
+    openReleaseNotes: vi.fn(),
+    closeReleaseNotes: vi.fn(),
   };
 
   return {

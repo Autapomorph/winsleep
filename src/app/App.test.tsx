@@ -10,7 +10,7 @@ vi.mock(import('react-router'), async importOriginal => ({
 
 vi.mock(import('@/features/check-updates'), async importOriginal => ({
   ...(await importOriginal()),
-  ChangelogModal: () => <div data-testid="changelog-modal" />,
+  ReleaseNotesModal: () => <div data-testid="release-notes-modal" />,
 }));
 
 vi.mock(import('@/features/global-context-menu'), async importOriginal => ({
@@ -52,7 +52,7 @@ describe('App', () => {
 
     const { getByTestId } = render(<App />);
 
-    expect(getByTestId('changelog-modal')).toBeInTheDocument();
+    expect(getByTestId('release-notes-modal')).toBeInTheDocument();
     expect(getByTestId('main-window-initializer')).toBeInTheDocument();
   });
 
@@ -61,7 +61,7 @@ describe('App', () => {
 
     const { queryByTestId } = render(<App />);
 
-    expect(queryByTestId('changelog-modal')).not.toBeInTheDocument();
+    expect(queryByTestId('release-notes-modal')).not.toBeInTheDocument();
     expect(queryByTestId('main-window-initializer')).not.toBeInTheDocument();
   });
 });

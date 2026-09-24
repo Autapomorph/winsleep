@@ -375,7 +375,7 @@
       "items": {
         "reportIssue": "Report an Issue",
         "featureRequest": "Request a Feature",
-        "viewChangelog": "View Changelog",
+        "viewReleaseNotes": "View Release Notes",
         "checkUpdates": {
           "default": "Check for Updates",
           "checking": "Checking for updates...",
@@ -824,7 +824,7 @@
       }
     }
   },
-  "changelogModal": {
+  "releaseNotesModal": {
     "title": "WinSleep Update",
     "version": "Version {{version}}",
     "selectVersion": "Select version",

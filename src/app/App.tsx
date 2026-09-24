@@ -1,6 +1,6 @@
 import { RouterProvider } from 'react-router';
 
-import { ChangelogModal } from '@/features/check-updates';
+import { ReleaseNotesModal } from '@/features/check-updates';
 import { GlobalContextMenu } from '@/features/global-context-menu';
 import { isMainWindow, useGlobalErrorTracking } from '@/shared/lib';
 import { MainWindowInitializer } from './init';
@@ -19,7 +19,7 @@ export const App = () => {
     <Providers>
       <HeadData />
       <GlobalContextMenu />
-      {isMain && <ChangelogModal />}
+      {isMain && <ReleaseNotesModal />}
       {isMain && <MainWindowInitializer />}
       <RouterProvider router={router} />
     </Providers>

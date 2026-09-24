@@ -4,19 +4,19 @@ import { useTranslation } from 'react-i18next';
 import { useUpdateStore } from '@/entities/updater';
 import { logger, showErrorToast } from '@/shared/lib';
 
-export const useViewChangelog = () => {
+export const useViewReleaseNotes = () => {
   const { t } = useTranslation();
-  const openChangelog = useUpdateStore(state => state.openChangelog);
+  const openReleaseNotes = useUpdateStore(state => state.openReleaseNotes);
 
-  const viewChangelog = async () => {
+  const viewReleaseNotes = async () => {
     try {
       const currentVersion = await getVersion();
-      openChangelog(currentVersion);
+      openReleaseNotes(currentVersion);
     } catch (err) {
-      logger.error(`Failed to view changelog: ${err}`);
+      logger.error(`Failed to view release notes: ${err}`);
       showErrorToast(t($ => $.titlebar.updateBtn.notifications.checkFailed));
     }
   };
 
-  return viewChangelog;
+  return viewReleaseNotes;
 };

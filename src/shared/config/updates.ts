@@ -8,11 +8,11 @@ export interface ProxyUpdateResponse {
   notes?: string;
 }
 
-export interface ProxyChangelogVersionsResponse {
+export interface ProxyReleaseNotesVersionsResponse {
   versions: string[];
 }
 
-export interface ProxyChangelogResponse {
+export interface ProxyReleaseNotesResponse {
   tag_name?: string;
   version?: string;
   notes?: string;
@@ -20,13 +20,13 @@ export interface ProxyChangelogResponse {
   tags?: string[];
 }
 
-export const CHANGELOG_TAGS = {
+export const RELEASE_NOTES_TAGS = {
   NEW: 'new',
   IMPROVED: 'improved',
   FIXED: 'fixed',
 } as const;
 
-export type ChangelogTag = (typeof CHANGELOG_TAGS)[keyof typeof CHANGELOG_TAGS];
+export type ReleaseNotesTag = (typeof RELEASE_NOTES_TAGS)[keyof typeof RELEASE_NOTES_TAGS];
 
 export const UPDATE_CHANNELS = {
   PRERELEASE: 'prerelease',

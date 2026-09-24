@@ -2,7 +2,7 @@ import { getVersion } from '@tauri-apps/api/app';
 import { render, waitFor } from '@testing-library/react';
 
 import { STORAGE_LAST_SEEN_VERSION_KEY, useUpdateStore } from '@/entities/updater';
-import { ChangelogModal } from './ChangelogModal';
+import { ReleaseNotesModal } from './ReleaseNotesModal';
 
 vi.mock(import('@tauri-apps/api/app'), () => ({
   getVersion: vi.fn(() => Promise.resolve('1.2.0')),
@@ -16,41 +16,41 @@ vi.mock(import('react-i18next'), async importOriginal => {
   };
 });
 
-describe('ChangelogModal', () => {
+describe('ReleaseNotesModal', () => {
   beforeEach(() => {
     localStorage.clear();
-    useUpdateStore.getState().closeChangelog();
+    useUpdateStore.getState().closeReleaseNotes();
     vi.mocked(getVersion).mockResolvedValue('1.2.0');
   });
 
-  test('does not open changelog on clean first install and records lastSeenChangelogVersion', async () => {
-    render(<ChangelogModal />);
+  test('does not open release notes on clean first install and records lastSeenReleaseNotesVersion', async () => {
+    render(<ReleaseNotesModal />);
 
     await waitFor(() => {
       expect(localStorage.getItem(STORAGE_LAST_SEEN_VERSION_KEY)).toBe('1.2.0');
     });
 
-    expect(useUpdateStore.getState().isChangelogOpen).toBe(false);
+    expect(useUpdateStore.getState().isReleaseNotesOpen).toBe(false);
   });
 
-  test('opens changelog when lastSeenChangelogVersion is older than currentVersion even without pendingVersion', async () => {
+  test('opens release notes when lastSeenReleaseNotesVersion is older than currentVersion even without pendingVersion', async () => {
     localStorage.setItem(STORAGE_LAST_SEEN_VERSION_KEY, '1.1.5');
 
-    render(<ChangelogModal />);
+    render(<ReleaseNotesModal />);
 
     await waitFor(() => {
-      expect(useUpdateStore.getState().isChangelogOpen).toBe(true);
-      expect(useUpdateStore.getState().changelogVersion).toBe('1.2.0');
+      expect(useUpdateStore.getState().isReleaseNotesOpen).toBe(true);
+      expect(useUpdateStore.getState().releaseNotesVersion).toBe('1.2.0');
     });
   });
 
-  test('does not open changelog when lastSeenChangelogVersion is already up to date', async () => {
+  test('does not open release notes when lastSeenReleaseNotesVersion is already up to date', async () => {
     localStorage.setItem(STORAGE_LAST_SEEN_VERSION_KEY, '1.2.0');
 
-    render(<ChangelogModal />);
+    render(<ReleaseNotesModal />);
 
     await waitFor(() => {
-      expect(useUpdateStore.getState().isChangelogOpen).toBe(false);
+      expect(useUpdateStore.getState().isReleaseNotesOpen).toBe(false);
     });
   });
 });
