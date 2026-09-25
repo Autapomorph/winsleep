@@ -80,7 +80,6 @@ describe('TimerEditModal', () => {
   });
 
   beforeEach(() => {
-    vi.clearAllMocks();
     useTimerStore.setState({
       timerState: 'idle',
       timerMode: 'duration',

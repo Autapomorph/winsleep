@@ -6,10 +6,6 @@ vi.mock(import('./playTone'), () => ({
 }));
 
 describe('playNotificationSound', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   const customTones: Tone[] = [
     // E5
     {

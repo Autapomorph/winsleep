@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next';
 
-import { config, GITHUB_REPO_URL } from '@/shared/config';
+import { config } from '@/shared/config';
 import { logger, openExternalLink, showErrorToast, showInfoToast } from '@/shared/lib';
+import { updateService } from '../api/update.service';
 import { useUpdateStore } from '../model/update.store';
 
 export const useUpdater = () => {
@@ -11,7 +12,7 @@ export const useUpdater = () => {
     const { status, installUpdate, relaunchApp, checkUpdates } = useUpdateStore.getState();
 
     if (config.isPortable && (status === 'available' || status === 'readyToInstall')) {
-      await openExternalLink(`${GITHUB_REPO_URL}/releases`);
+      await openExternalLink(updateService.getReleasesUrl());
       showInfoToast(t($ => $.titlebar.updateBtn.notifications.portableDownload));
       return;
     }

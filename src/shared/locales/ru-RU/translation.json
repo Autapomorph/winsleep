@@ -409,7 +409,7 @@
         "checkFailed": "Не удалось проверить обновления",
         "installFailed": "Не удалось загрузить обновление",
         "relaunchFailed": "Не удалось перезапустить приложение",
-        "portableDownload": "Обновление доступно на GitHub"
+        "portableDownload": "Обновление доступно для загрузки"
       }
     },
     "minimizeBtn": {

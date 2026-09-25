@@ -47,10 +47,6 @@ describe('useDevLanguageShortcut hook', () => {
     });
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   test('cycles through mocked languages on dev hotkey trigger', () => {
     const { rerender } = renderHook(() => {
       return useDevLanguageShortcut();

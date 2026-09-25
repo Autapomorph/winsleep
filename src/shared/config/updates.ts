@@ -1,25 +1,3 @@
-export interface GitHubReleaseResponse {
-  body?: string;
-  published_at?: string;
-}
-
-export interface ProxyUpdateResponse {
-  version?: string;
-  notes?: string;
-}
-
-export interface ProxyReleaseNotesVersionsResponse {
-  versions: string[];
-}
-
-export interface ProxyReleaseNotesResponse {
-  tag_name?: string;
-  version?: string;
-  notes?: string;
-  released_at?: string;
-  tags?: string[];
-}
-
 export const RELEASE_NOTES_TAGS = {
   NEW: 'new',
   IMPROVED: 'improved',

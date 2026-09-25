@@ -409,7 +409,7 @@
         "checkFailed": "Failed to check for updates",
         "installFailed": "Failed to download update",
         "relaunchFailed": "Failed to relaunch application",
-        "portableDownload": "The update is available on GitHub"
+        "portableDownload": "The update is available for download"
       }
     },
     "minimizeBtn": {

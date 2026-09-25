@@ -30,7 +30,6 @@ describe('useTimerExecution', () => {
   beforeEach(() => {
     useTimerStore.setState({ timerAction: 'sleep' });
     useSettingsStore.setState({ isForceActionEnabled: false });
-    vi.clearAllMocks();
   });
 
   test('calls pcSleep in prod mode when action is sleep', async () => {

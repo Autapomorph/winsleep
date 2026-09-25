@@ -1,13 +1,7 @@
 import { type StateCreator } from 'zustand';
 
-import {
-  type GitHubReleaseResponse,
-  type ProxyReleaseNotesResponse,
-  type ProxyReleaseNotesVersionsResponse,
-  GITHUB_API_REPO_URL,
-  PROXY_UPDATER_URL,
-} from '@/shared/config';
 import { delay, logger } from '@/shared/lib';
+import { updateService } from '../../api/update.service';
 import { MOCK_RELEASE_NOTES, MOCK_VERSION } from '../mockUpdate';
 import { type UpdateStore } from '../update.store';
 
@@ -87,23 +81,18 @@ export const createReleaseNotesSlice: StateCreator<
   fetchAvailableVersions: async () => {
     set({ isVersionsLoading: true }, false, 'updater/fetchAvailableVersionsStart');
     try {
-      const response = await fetch(`${PROXY_UPDATER_URL}/release-notes`, {
-        cache: 'no-cache',
-      });
+      const versions = await updateService.fetchAvailableVersions();
 
-      if (response.ok) {
-        const data: ProxyReleaseNotesVersionsResponse = await response.json();
-        if (Array.isArray(data.versions) && data.versions.length > 0) {
-          set(
-            { availableVersions: data.versions, isVersionsLoading: false },
-            false,
-            'updater/fetchAvailableVersionsSuccess',
-          );
-          return;
-        }
+      if (versions.length > 0) {
+        set(
+          { availableVersions: versions, isVersionsLoading: false },
+          false,
+          'updater/fetchAvailableVersionsSuccess',
+        );
+        return;
       }
     } catch (err) {
-      logger.debug(`Failed to fetch available versions from proxy: ${err}`);
+      logger.debug(`Failed to fetch available versions: ${err}`);
     }
 
     set({ isVersionsLoading: false }, false, 'updater/fetchAvailableVersionsEnd');
@@ -140,49 +129,22 @@ export const createReleaseNotesSlice: StateCreator<
     }
 
     try {
-      const proxyResponse = await fetch(`${PROXY_UPDATER_URL}/release-notes/${targetVersion}`, {
-        cache: 'no-cache',
-      });
+      const data = await updateService.fetchReleaseNotes(targetVersion);
 
-      if (proxyResponse.ok) {
-        const proxyData: ProxyReleaseNotesResponse = await proxyResponse.json();
-        set(
-          {
-            releaseNotes: proxyData.notes ?? '',
-            releaseNotesMeta: {
-              releasedAt: proxyData.released_at,
-              tags: proxyData.tags ?? [],
-            },
-            isReleaseNotesLoading: false,
-          },
-          false,
-          'updater/fetchReleaseNotesProxySuccess',
-        );
-
-        return;
-      }
-    } catch {
-      // Fall back to direct GitHub API if proxy endpoint fails
-    }
-
-    try {
-      const response = await fetch(`${GITHUB_API_REPO_URL}/releases/tag/${targetVersion}`, {
-        cache: 'no-cache',
-      });
-
-      if (!response.ok) {
-        throw new Error(`${response.status}`);
-      }
-
-      const data: GitHubReleaseResponse = await response.json();
       set(
         {
-          releaseNotes: data.body ?? '',
-          releaseNotesMeta: data.published_at ? { releasedAt: data.published_at, tags: [] } : null,
+          releaseNotes: data.notes,
+          releaseNotesMeta:
+            data.releasedAt || (data.tags && data.tags.length > 0)
+              ? {
+                  releasedAt: data.releasedAt,
+                  tags: data.tags ?? [],
+                }
+              : null,
           isReleaseNotesLoading: false,
         },
         false,
-        'updater/fetchReleaseNotesGithubSuccess',
+        'updater/fetchReleaseNotesSuccess',
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
