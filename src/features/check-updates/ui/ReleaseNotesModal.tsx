@@ -14,7 +14,7 @@ import {
   updateService,
   useUpdateStore,
 } from '@/entities/updater';
-import { config, DEFAULT_LOCALE, RELEASE_NOTES_TAGS } from '@/shared/config';
+import { config, RELEASE_NOTES_TAGS } from '@/shared/config';
 import {
   compareSemver,
   formatReleaseDate,
@@ -260,7 +260,6 @@ export const ReleaseNotesModal = () => {
     const normalizedTag = tag.toLowerCase();
     const label = isReleaseNotesTag(normalizedTag)
       ? t($ => $.releaseNotesModal.tags[normalizedTag], {
-          lng: DEFAULT_LOCALE,
           defaultValue: tag,
         })
       : tag;

@@ -1,4 +1,6 @@
-import { config, PROXY_UPDATER_URL } from '@/shared/config';
+import i18n from 'i18next';
+
+import { config, DEFAULT_LOCALE, PROXY_UPDATER_URL } from '@/shared/config';
 import { logger } from '@/shared/lib';
 import { type UnifiedRelease, type UpdateProvider } from '../update.interface';
 
@@ -19,7 +21,9 @@ export class ProxyUpdateProvider implements UpdateProvider {
   readonly name = 'proxy';
 
   private getHeaders(): HeadersInit {
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = {
+      'X-App-Language': i18n.language || DEFAULT_LOCALE,
+    };
 
     if (config.isDev && config.VERCEL_AUTOMATION_BYPASS_SECRET) {
       headers['x-vercel-protection-bypass'] = config.VERCEL_AUTOMATION_BYPASS_SECRET;
