@@ -5,6 +5,8 @@ const validationSchema = z.object({
   DEV: z.boolean(),
   PROD: z.boolean(),
   SSR: z.boolean(),
+  VERCEL_AUTOMATION_BYPASS_SECRET: z.string().optional(),
+  VITE_PROXY_UPDATER_URL: z.string().optional(),
 });
 
 const validatedConfig = validationSchema.parse(import.meta.env);
@@ -16,6 +18,8 @@ export interface AppConfig {
   isDev: boolean;
   isTest: boolean;
   isPortable: boolean;
+  VERCEL_AUTOMATION_BYPASS_SECRET?: string;
+  PROXY_UPDATER_URL?: string;
 }
 
 const getConfig = (): AppConfig => {
@@ -26,6 +30,8 @@ const getConfig = (): AppConfig => {
     isDev: validatedConfig.DEV || validatedConfig.MODE === 'development',
     isTest: validatedConfig.MODE === 'test',
     isPortable: false,
+    VERCEL_AUTOMATION_BYPASS_SECRET: validatedConfig.VERCEL_AUTOMATION_BYPASS_SECRET,
+    PROXY_UPDATER_URL: validatedConfig.VITE_PROXY_UPDATER_URL,
   };
 };
 

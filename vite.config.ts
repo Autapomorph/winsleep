@@ -14,6 +14,7 @@ export default defineConfig(async ({ mode }) => {
   const hmrPort = Number(env.TAURI_DEV_HMR_PORT);
 
   return {
+    envPrefix: ['VITE_', 'VERCEL_'],
     clearScreen: false,
     server: {
       port: 3000,

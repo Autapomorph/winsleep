@@ -88,6 +88,14 @@ npm install
 npm run tauri dev
 ```
 
+### Environment Variables
+Copy `.env.example` to `.env` or `.env.local` to customize local configuration:
+
+| Variable | Requirement | Description |
+| :--- | :--- | :--- |
+| **`VITE_PROXY_UPDATER_URL`** | Optional | Overrides the default proxy updater URL used to query releases and release notes. |
+| **`VERCEL_AUTOMATION_BYPASS_SECRET`** | Optional | Secret token to bypass Vercel Deployment Protection on preview deployments. |
+
 ### Production Build
 To compile the native Windows installer (`.exe`):
 

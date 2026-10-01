@@ -1,4 +1,4 @@
-import { PROXY_UPDATER_URL } from '@/shared/config';
+import { config, PROXY_UPDATER_URL } from '@/shared/config';
 import { logger } from '@/shared/lib';
 import { type UnifiedRelease, type UpdateProvider } from '../update.interface';
 
@@ -18,11 +18,22 @@ interface ProxyVersionsDto {
 export class ProxyUpdateProvider implements UpdateProvider {
   readonly name = 'proxy';
 
+  private getHeaders(): HeadersInit {
+    const headers: Record<string, string> = {};
+
+    if (config.isDev && config.VERCEL_AUTOMATION_BYPASS_SECRET) {
+      headers['x-vercel-protection-bypass'] = config.VERCEL_AUTOMATION_BYPASS_SECRET;
+    }
+
+    return headers;
+  }
+
   async fetchReleaseNotes(version: string): Promise<UnifiedRelease | null> {
     try {
       const cleanVersion = version.replace(/^v/, '');
       const response = await fetch(`${PROXY_UPDATER_URL}/release-notes/${cleanVersion}`, {
         cache: 'no-cache',
+        headers: this.getHeaders(),
       });
 
       if (!response.ok) {
@@ -48,6 +59,7 @@ export class ProxyUpdateProvider implements UpdateProvider {
     try {
       const response = await fetch(`${PROXY_UPDATER_URL}/release-notes`, {
         cache: 'no-cache',
+        headers: this.getHeaders(),
       });
 
       if (!response.ok) {
