@@ -145,7 +145,7 @@ describe('UpdateService', () => {
 
 describe('ProxyUpdateProvider', () => {
   test('fetches and maps release notes correctly', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(
         JSON.stringify({
           notes: 'Proxy notes content',
@@ -159,6 +159,15 @@ describe('ProxyUpdateProvider', () => {
 
     const provider = new ProxyUpdateProvider();
     const result = await provider.fetchReleaseNotes('1.3.0');
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      expect.stringContaining('/release-notes/1.3.0'),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'X-App-Language': expect.any(String),
+        }),
+      }),
+    );
 
     expect(result).toEqual({
       notes: 'Proxy notes content',
