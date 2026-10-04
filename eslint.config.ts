@@ -18,7 +18,7 @@ export const projectRoot = path.resolve(dirname);
 export const gitignorePath = path.resolve(projectRoot, '.gitignore');
 
 export default defineConfig([
-  globalIgnores(['.agents/**', '.claude/**', '.continue/**']),
+  globalIgnores(['.agents/**', '.claude/**', 'src-tauri/**']),
   includeIgnoreFile(gitignorePath),
   {
     name: 'js/config',
@@ -51,8 +51,8 @@ export default defineConfig([
       sourceType: 'module',
       globals: {
         ...globals.es2024,
+        ...globals.browser,
         ...globals.node,
-        ...globals.jest,
       },
     },
     settings: {
@@ -63,6 +63,7 @@ export default defineConfig([
       ],
     },
     rules: {
+      curly: ['error', 'all'],
       'class-methods-use-this': 'off',
       'no-restricted-syntax': 'off',
       'no-promise-executor-return': 'off',
@@ -122,8 +123,6 @@ export default defineConfig([
     files: plugins.typescriptEslint.files,
     rules: {
       '@typescript-eslint/promise-function-async': 'off',
-      '@typescript-eslint/consistent-type-imports': 'off',
-      '@typescript-eslint/consistent-type-exports': 'off',
       '@typescript-eslint/no-misused-spread': 'off',
       '@typescript-eslint/no-invalid-void-type': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
@@ -134,7 +133,6 @@ export default defineConfig([
       '@typescript-eslint/no-redundant-type-constituents': 'off',
       '@typescript-eslint/method-signature-style': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
-
       '@typescript-eslint/no-use-before-define': [
         'error',
         {
@@ -151,6 +149,14 @@ export default defineConfig([
     },
     rules: {
       ...vitest.configs.recommended.rules,
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        {
+          prefer: 'type-imports',
+          disallowTypeAnnotations: false,
+          fixStyle: 'separate-type-imports',
+        },
+      ],
     },
     languageOptions: {
       globals: {

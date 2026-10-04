@@ -1,7 +1,6 @@
 .github/
 .agents/
 .claude/
-.continue/
 .next/
 libs/
 node_modules/

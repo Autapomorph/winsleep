@@ -33,12 +33,6 @@ Always structure and assign files according to the FSD v2.1 specifications:
 - **Rust Architecture**: Organize backend code into feature modules under `src-tauri/src/` (e.g. `app`, `logging`, `settings`, `tray`, `pc_management`, `notifications`). Each module should contain its core business logic and expose its Tauri commands directly or via a nested `commands` submodule, registered cleanly in `lib.rs`.
 - Do not hardcode user-facing strings.
 - All UI text must go through i18n resources.
-- **Conditional Returns**: Never write a `return` statement on the same line as the `if` condition. `if (condition) return;` is strictly forbidden. Always use block formatting:
-  ```typescript
-  if (condition) {
-    return;
-  }
-  ```
 
 ## Git Guidelines
 - **Commit, Push & Dangerous Operations**: The AI agent MUST NOT perform `git commit`, `git push`, or any potentially destructive git operations (such as resetting, deleting branches, or forcing changes) without explicit user approval or direct user instruction.
@@ -54,7 +48,7 @@ Before declaring any task complete, the AI agent MUST run the following command 
 - **If Rust backend files (e.g., in `src-tauri/src/`, `src-tauri/Cargo.toml`, etc.) are modified**:
   1. Run compiler check: `cargo check --manifest-path src-tauri/Cargo.toml`
 
-## Definition of Done**All other shells** (cmd.exe, Git Bash, WSL, macOS/Linux terminals)
+## Definition of Done
 A task is complete only if:
 1. The relevant AI Agent Hooks sequence is executed successfully based on the modified files.
 2. TypeScript typecheck passes (if frontend files were modified).

@@ -5,12 +5,13 @@ import { ProxyUpdateProvider } from './providers/proxy.provider';
 import { type UnifiedRelease, type UpdateProvider } from './update.interface';
 
 export class UpdateService {
+  private readonly providers: UpdateProvider[];
+
   constructor(
-    private readonly providers: UpdateProvider[] = [
-      new ProxyUpdateProvider(),
-      new GitHubUpdateProvider(),
-    ],
-  ) {}
+    providers: UpdateProvider[] = [new ProxyUpdateProvider(), new GitHubUpdateProvider()],
+  ) {
+    this.providers = providers;
+  }
 
   getReleaseUrl(version?: string): string {
     if (version) {
