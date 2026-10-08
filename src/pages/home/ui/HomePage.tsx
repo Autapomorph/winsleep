@@ -11,7 +11,7 @@ export const HomePage = () => {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {/* Navbar */}
-      <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 bg-background py-4">
+      <div className="flex w-full items-center justify-between gap-4 bg-background px-4 py-4">
         <SettingsButton />
 
         <div className="flex items-center gap-2">
