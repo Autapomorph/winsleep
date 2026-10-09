@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import '@heroui/styles';
 @import '@fontsource-variable/inter';
+@import '@fontsource-variable/raleway';
 @import '@fontsource-variable/jetbrains-mono';
 
 html {
@@ -75,6 +76,7 @@ body {
   --font-sans: 'Inter Variable', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', system-ui, sans-serif;
   --font-inter: 'Inter Variable', system-ui, sans-serif;
+  --font-raleway: 'Raleway Variable', system-ui, sans-serif;
   --font-jetbrains-mono: 'JetBrains Mono Variable', system-ui, sans-serif;
 
   /* Scrollbar */

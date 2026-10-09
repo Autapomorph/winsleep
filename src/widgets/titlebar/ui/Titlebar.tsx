@@ -16,7 +16,7 @@ export const Titlebar = () => {
       data-tauri-drag-region
     >
       <div className="pointer-events-none pl-2.5">
-        <Logo className="w-25" />
+        <Logo className="w-45" />
       </div>
 
       <div className="flex items-center justify-center" data-tauri-no-drag>
