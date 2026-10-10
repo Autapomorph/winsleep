@@ -10,6 +10,7 @@ import { StartMinimizedSwitch } from './StartMinimizedSwitch';
 import { ThemeSelector } from './ThemeSelector';
 import { TrayModeSwitch } from './TrayModeSwitch';
 import { UpdateIntervalSelector } from './UpdateIntervalSelector';
+import { ZoomControl } from './ZoomControl';
 import { SettingsGroup } from '../../layout/SettingsGroup';
 import { SettingsSeparator } from '../../layout/SettingsSeparator';
 
@@ -36,6 +37,7 @@ export const GeneralSettings = () => {
       <SettingsGroup title={t($ => $.settings.sections.general.groups.appearance.title)}>
         <div className="flex flex-col gap-4">
           <ThemeSelector />
+          <ZoomControl />
         </div>
       </SettingsGroup>
 

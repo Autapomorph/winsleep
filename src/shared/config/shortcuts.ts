@@ -104,6 +104,20 @@ export const SHORTCUTS = {
       scopes: SHORTCUT_SCOPES.SETTINGS,
     },
   },
+  ZOOM: {
+    IN: {
+      keys: ['mod+=', 'mod+plus', 'mod+add', 'mod+equal'],
+      scopes: SHORTCUT_SCOPES.GLOBAL,
+    },
+    OUT: {
+      keys: ['mod+-', 'mod+minus', 'mod+subtract'],
+      scopes: SHORTCUT_SCOPES.GLOBAL,
+    },
+    RESET: {
+      keys: ['mod+0', 'mod+num0'],
+      scopes: SHORTCUT_SCOPES.GLOBAL,
+    },
+  },
   // Default WebView shortcuts
   WEBVIEW: {
     RELOAD: {

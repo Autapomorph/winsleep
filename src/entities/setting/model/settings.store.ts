@@ -8,7 +8,13 @@ import {
   createActionSlice,
   initialActionState,
 } from './slices/action.slice';
-import { type GeneralActions, type GeneralSlice, createGeneralSlice } from './slices/general.slice';
+import {
+  type GeneralActions,
+  type GeneralSlice,
+  type GeneralState,
+  createGeneralSlice,
+  initialGeneralState,
+} from './slices/general.slice';
 import {
   type NotificationActions,
   type NotificationSlice,
@@ -34,6 +40,7 @@ import {
 export type {
   GeneralActions,
   GeneralSlice,
+  GeneralState,
   NotificationActions,
   NotificationSlice,
   NotificationState,
@@ -54,13 +61,18 @@ export type SettingsStore = TimerActionSlice &
   SystemSlice &
   GeneralSlice;
 
-export type SettingsState = TimerActionState & TimerState & NotificationState & SystemState;
+export type SettingsState = TimerActionState &
+  TimerState &
+  NotificationState &
+  SystemState &
+  GeneralState;
 
 export const initialSettingsState: SettingsState = {
   ...initialActionState,
   ...initialTimerState,
   ...initialNotificationState,
   ...initialSystemState,
+  ...initialGeneralState,
 };
 
 export const useSettingsStore = create<SettingsStore>()(

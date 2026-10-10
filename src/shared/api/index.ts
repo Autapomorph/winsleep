@@ -24,3 +24,4 @@ export type {
 } from './tray-menu';
 
 export { windowClose, windowMinimize } from './window';
+export { setWebviewZoom } from './webview';

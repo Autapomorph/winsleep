@@ -9,3 +9,4 @@ export * from './links';
 export * from './updates';
 export * from './tooltip';
 export * from './system';
+export * from './zoom';

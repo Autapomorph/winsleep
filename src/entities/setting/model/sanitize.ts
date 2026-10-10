@@ -24,8 +24,9 @@ import {
   DEFAULT_TIMER_SECONDS,
   DEFAULT_TIMER_STEP_SECONDS,
   DEFAULT_UPDATE_INTERVAL,
+  DEFAULT_ZOOM,
 } from '@/shared/config';
-import { isValidTimerAction, isValidUpdateInterval } from '@/shared/lib';
+import { clampZoom, isValidTimerAction, isValidUpdateInterval } from '@/shared/lib';
 import { CURRENT_SETTINGS_VERSION } from './migrate';
 import { type SerializedSettings } from './serialize';
 
@@ -54,6 +55,7 @@ export const DEFAULT_SERIALIZED_SETTINGS: SerializedSettings = {
   isAutoUpdateEnabled: DEFAULT_IS_AUTO_UPDATE_ENABLED,
   updateInterval: DEFAULT_UPDATE_INTERVAL,
   hasSeenTrayNotification: DEFAULT_HAS_SEEN_TRAY_NOTIFICATION,
+  zoomFactor: DEFAULT_ZOOM,
 };
 
 export const sanitizeSettings = (rawSettings: Record<string, unknown>): SerializedSettings => {
@@ -189,6 +191,12 @@ export const sanitizeSettings = (rawSettings: Record<string, unknown>): Serializ
       ? rawSettings.hasSeenTrayNotification
       : DEFAULT_HAS_SEEN_TRAY_NOTIFICATION;
 
+  // Sanitize zoomFactor
+  const zoomFactor =
+    typeof rawSettings.zoomFactor === 'number' && !Number.isNaN(rawSettings.zoomFactor)
+      ? clampZoom(rawSettings.zoomFactor)
+      : DEFAULT_ZOOM;
+
   // Sanitize notificationTimes
   const rawNotificationTimes = Array.isArray(rawSettings.notificationTimes)
     ? rawSettings.notificationTimes
@@ -239,5 +247,6 @@ export const sanitizeSettings = (rawSettings: Record<string, unknown>): Serializ
     isAutoUpdateEnabled,
     updateInterval,
     hasSeenTrayNotification,
+    zoomFactor,
   };
 };

@@ -84,6 +84,18 @@ export const HotkeysSettings = () => {
             label={t($ => $.settings.sections.hotkeys.groups.general.back)}
             keys={['Esc']}
           />
+          <HotkeyRow
+            label={t($ => $.settings.sections.hotkeys.groups.general.zoomIn)}
+            keys={['Ctrl', '+']}
+          />
+          <HotkeyRow
+            label={t($ => $.settings.sections.hotkeys.groups.general.zoomOut)}
+            keys={['Ctrl', '-']}
+          />
+          <HotkeyRow
+            label={t($ => $.settings.sections.hotkeys.groups.general.zoomReset)}
+            keys={['Ctrl', '0']}
+          />
         </div>
       </SettingsGroup>
 

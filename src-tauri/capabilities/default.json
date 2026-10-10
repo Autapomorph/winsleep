@@ -24,6 +24,7 @@
     "autostart:allow-is-enabled",
     "updater:default",
     "process:allow-restart",
-    "os:default"
+    "os:default",
+    "core:webview:allow-set-webview-zoom"
   ]
 }
