@@ -30,6 +30,7 @@ export interface SerializedSettings {
   isAutoUpdateEnabled: boolean;
   updateInterval: UpdateInterval;
   hasSeenTrayNotification: boolean;
+  zoomFactor: number;
 }
 
 export const serializeSettings = (
@@ -60,5 +61,6 @@ export const serializeSettings = (
     isAutoUpdateEnabled: state.isAutoUpdateEnabled,
     updateInterval: state.updateInterval,
     hasSeenTrayNotification: state.hasSeenTrayNotification,
+    zoomFactor: state.zoomFactor,
   };
 };

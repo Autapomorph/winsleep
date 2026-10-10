@@ -27,6 +27,7 @@ describe('serializeSettings', () => {
       isAutoUpdateEnabled: true,
       updateInterval: 6,
       hasSeenTrayNotification: false,
+      zoomFactor: 1.0,
     };
 
     const serialized = serializeSettings(

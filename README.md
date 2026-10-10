@@ -67,6 +67,8 @@ WinSleep is built for speed and full keyboard accessibility:
 | **`Q`** | Select action: **Sign out** |
 | **`A`** | Select action: **Keep awake** |
 | **`Ctrl + ,`** | Open / Close Settings |
+| **`Ctrl + +` / `Ctrl + -`** (or **`Ctrl + Scroll`**) | Zoom in / Zoom out UI |
+| **`Ctrl + 0`** | Reset UI zoom to 100% |
 
 ---
 

@@ -55,8 +55,10 @@ export const SettingsPage = () => {
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* Navigation Sidebar */}
-        <aside className="flex shrink-0 bg-background/50 px-2 py-4">
-          <SettingsNavigation activeId={activeSectionId} onItemClick={scrollToSection} />
+        <aside className="flex min-h-0 shrink-0 bg-background/50 px-2 py-4">
+          <div className="flex min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+            <SettingsNavigation activeId={activeSectionId} onItemClick={scrollToSection} />
+          </div>
           <Separator orientation="vertical" />
         </aside>
 

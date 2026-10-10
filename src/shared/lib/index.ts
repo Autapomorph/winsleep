@@ -50,4 +50,6 @@ export { isValidUpdateInterval } from './updates/isValidUpdateInterval';
 
 export { isMainWindow } from './window/isMainWindow';
 
+export { clampZoom, formatZoomPercentage } from './zoom';
+
 export { initializePortable } from './system/initializePortable';

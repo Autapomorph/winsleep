@@ -674,6 +674,11 @@
                   "systemLabel": "System theme"
                 }
               }
+            },
+            "zoom": {
+              "title": "UI Scale",
+              "zoomInAria": "Zoom in",
+              "zoomOutAria": "Zoom out"
             }
           },
           "system": {
@@ -761,7 +766,10 @@
           "general": {
             "title": "Interface & Navigation",
             "openSettings": "Open Settings",
-            "back": "Close Settings / Back"
+            "back": "Close Settings / Back",
+            "zoomIn": "Zoom in",
+            "zoomOut": "Zoom out",
+            "zoomReset": "Reset zoom (100%)"
           },
           "dev": {
             "title": "For Developers",

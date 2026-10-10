@@ -7,6 +7,7 @@ import {
   useTimerCompletionListener,
   useTimerNotification,
 } from '@/features/manage-timer';
+import { useZoomShortcuts, useZoomSync } from '@/features/manage-zoom';
 import { useTrayMode } from '@/features/system-tray';
 import { useDevLanguageShortcut } from '@/features/toggle-language';
 import { useDevThemeShortcut } from '@/features/toggle-theme';
@@ -19,6 +20,8 @@ export const MainWindowInitializer = () => {
   useTabUnsuspend();
   useTimerListeners();
   useAppShortcuts();
+  useZoomShortcuts();
+  useZoomSync();
   useDevThemeShortcut();
   useDevLanguageShortcut();
   usePowerSystemEvents();
