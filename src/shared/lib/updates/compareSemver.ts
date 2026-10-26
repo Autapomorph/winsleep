@@ -51,6 +51,7 @@ export const compareSemver = (
   const [bMaj, bMin, bPatch] = parse(b);
 
   let diff = 0;
+
   if (aMaj !== bMaj) {
     diff = aMaj - bMaj;
   } else if (aMin !== bMin) {

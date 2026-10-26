@@ -7,6 +7,7 @@ import { TimerDisplay } from './TimerDisplay';
 
 vi.mock(import('react-i18next'), async importOriginal => {
   const { createMockUseTranslation } = await import('@/tests/i18nMock');
+
   return {
     ...(await importOriginal()),
     useTranslation: createMockUseTranslation(),

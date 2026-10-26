@@ -59,6 +59,7 @@ try {
 
   const newReleaseNotesLines = releaseNotesLines.filter(line => {
     const sanitizedLine = line.trim().toLowerCase();
+
     return !excludedKeywords.some(keyword => sanitizedLine.includes(keyword));
   });
 

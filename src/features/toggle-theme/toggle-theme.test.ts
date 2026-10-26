@@ -7,6 +7,7 @@ let mockTheme = 'system';
 
 vi.mock(import('next-themes'), async importOriginal => {
   const original = await importOriginal();
+
   return {
     ...original,
     useTheme: () => ({
@@ -23,6 +24,7 @@ vi.mock(import('next-themes'), async importOriginal => {
 let capturedAppHotkeyCallback: (() => void) | undefined;
 vi.mock(import('@/shared/lib'), async importOriginal => {
   const original = await importOriginal();
+
   return {
     ...original,
     useAppHotkey: (_shortcut: unknown, callback: Parameters<typeof original.useAppHotkey>[1]) => {

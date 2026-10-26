@@ -63,6 +63,7 @@ export const TimerEditModal = ({ isOpen, onOpenChange, currentSeconds, setExactT
     });
 
     resizeObserver.observe(element);
+
     return () => {
       resizeObserver.disconnect();
     };

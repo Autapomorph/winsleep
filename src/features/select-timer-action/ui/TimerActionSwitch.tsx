@@ -41,6 +41,7 @@ export const TimerActionSwitch = ({ action, isLocked = false, onActionChange }: 
         isDisabled={isLocked}
         onSelectionChange={keys => {
           const selected = Array.from(keys)[0];
+
           if (isValidTimerAction(selected)) {
             onActionChange(selected);
           }

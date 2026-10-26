@@ -34,6 +34,7 @@ export const useZoomShortcuts = () => {
     };
 
     window.addEventListener('wheel', handleWheel, { passive: false });
+
     return () => {
       window.removeEventListener('wheel', handleWheel);
     };

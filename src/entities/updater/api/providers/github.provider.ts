@@ -12,6 +12,7 @@ export class GitHubUpdateProvider implements UpdateProvider {
 
   getReleaseUrl(version: string): string {
     const tag = version.replace(/^v/, '');
+
     return `${RELEASES_PAGE_URL}/tag/${tag}`;
   }
 
@@ -41,6 +42,7 @@ export class GitHubUpdateProvider implements UpdateProvider {
       };
     } catch (err) {
       logger.debug(`[GitHubUpdateProvider] Failed to fetch release notes: ${err}`);
+
       return null;
     }
   }

@@ -9,6 +9,7 @@ const formatTimestamp = (isoString?: string) => {
 
   try {
     const date = new Date(isoString);
+
     return date.toLocaleTimeString([], { hour12: false });
   } catch {
     return isoString;

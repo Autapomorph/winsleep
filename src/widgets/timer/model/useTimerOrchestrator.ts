@@ -25,6 +25,7 @@ export const useTimerOrchestrator = () => {
   } = useTimer();
 
   let currentSeconds: number;
+
   if (timerMode === 'indefinite') {
     currentSeconds = 0;
   } else if (timerState === 'idle') {

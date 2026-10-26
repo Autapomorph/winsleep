@@ -204,6 +204,7 @@ export const sanitizeSettings = (rawSettings: Record<string, unknown>): Serializ
 
   const notificationTimes = rawNotificationTimes.map((seconds: unknown) => {
     const num = typeof seconds === 'number' ? seconds : Number(seconds);
+
     return Number.isNaN(num) || num <= 0 ? DEFAULT_NOTIFICATION_SECONDS : num;
   });
 
@@ -215,10 +216,12 @@ export const sanitizeSettings = (rawSettings: Record<string, unknown>): Serializ
   const customTimerPresets = rawCustomPresets.map((preset: unknown) => {
     if (preset && typeof preset === 'object' && 'seconds' in preset) {
       const sec = typeof preset.seconds === 'number' ? preset.seconds : Number(preset.seconds);
+
       return Number.isNaN(sec) || sec < 0 ? 0 : sec;
     }
 
     const num = typeof preset === 'number' ? preset : Number(preset);
+
     return Number.isNaN(num) || num < 0 ? 0 : num;
   });
 

@@ -26,6 +26,7 @@ vi.mock(import('@tauri-apps/plugin-os'), () => ({
 
 vi.mock(import('@/shared/config'), async importOriginal => {
   const original = await importOriginal();
+
   return {
     ...original,
     config: {
@@ -39,6 +40,7 @@ vi.mock(import('@/shared/config'), async importOriginal => {
 
 vi.mock(import('@/shared/lib'), async importOriginal => {
   const original = await importOriginal();
+
   return {
     ...original,
     delay: (ms: number, signal?: AbortSignal) => {

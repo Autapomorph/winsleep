@@ -8,5 +8,6 @@ export const formatDays = (totalSeconds: number, t: TFunction): string | null =>
   }
 
   const days = Math.round(totalSeconds / SECONDS_IN_DAY);
+
   return `${days} ${t($ => $.common.time.units.day.full, { count: days })}`;
 };

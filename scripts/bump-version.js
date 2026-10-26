@@ -24,6 +24,7 @@ try {
 
 // 2. tauri.conf.json
 const tauriConfPath = 'src-tauri/tauri.conf.json';
+
 if (fs.existsSync(tauriConfPath)) {
   let tauriConf = fs.readFileSync(tauriConfPath, 'utf8');
   tauriConf = tauriConf.replace(/(^\s*"version"\s*:\s*")[^"]+(")/m, `$1${newVersion}$2`);
@@ -33,6 +34,7 @@ if (fs.existsSync(tauriConfPath)) {
 
 // 3. Cargo.toml
 const cargoTomlPath = 'src-tauri/Cargo.toml';
+
 if (fs.existsSync(cargoTomlPath)) {
   let cargoToml = fs.readFileSync(cargoTomlPath, 'utf8');
   cargoToml = cargoToml.replace(
@@ -45,6 +47,7 @@ if (fs.existsSync(cargoTomlPath)) {
 
 // 4. Cargo.lock
 const cargoLockPath = 'src-tauri/Cargo.lock';
+
 if (fs.existsSync(cargoLockPath)) {
   let cargoLock = fs.readFileSync(cargoLockPath, 'utf8');
   cargoLock = cargoLock.replace(

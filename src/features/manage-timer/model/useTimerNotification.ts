@@ -36,6 +36,7 @@ export const useTimerNotification = () => {
       armedTimesRef.current.clear();
       notifiedTimesRef.current.clear();
       prevEndTimeRef.current = null;
+
       return;
     }
 
@@ -43,11 +44,13 @@ export const useTimerNotification = () => {
       armedTimesRef.current.clear();
       notifiedTimesRef.current.clear();
       prevEndTimeRef.current = null;
+
       return;
     }
 
     if (timerState !== 'running') {
       prevEndTimeRef.current = null;
+
       return;
     }
 
@@ -62,6 +65,7 @@ export const useTimerNotification = () => {
           armedTimesRef.current.add(seconds);
         }
       });
+
       return;
     }
 

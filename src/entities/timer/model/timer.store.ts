@@ -84,6 +84,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
     }
 
     let actualSeconds = plannedSeconds;
+
     if (timerMode === 'timestamp' && targetDateTime) {
       actualSeconds = Math.max(0, Math.ceil((targetDateTime - getDateNow()) / 1000));
     }
@@ -160,6 +161,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
     }
 
     let clampedPlanned = plannedSeconds;
+
     if (timerMode === 'indefinite') {
       clampedPlanned = 0;
     } else if (timerMode === 'timestamp' && targetDateTime) {
@@ -381,6 +383,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
 
       // mode === 'duration'
       let durationSecs = plannedSeconds > 0 ? plannedSeconds : DEFAULT_TIMER_SECONDS;
+
       if (timerMode === 'timestamp' && remainingSeconds > 0) {
         durationSecs = Math.round(remainingSeconds);
       }
@@ -428,6 +431,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
 
     if (mode === 'timestamp') {
       let seconds = plannedSeconds;
+
       if (targetDateTime) {
         seconds = Math.max(0, Math.ceil((targetDateTime - getDateNow()) / 1000));
       }
@@ -619,6 +623,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
     if (currentAction === 'keep-awake' && timerMode === 'indefinite') {
       get().resetToDefaultDuration(defaultDuration);
       set({ timerAction: action }, false, 'timer/setTimerAction');
+
       return;
     }
 
@@ -627,6 +632,7 @@ const timerSlice: StateCreator<TimerStore, [['zustand/devtools', never]], [], Ti
       if (action === 'keep-awake') {
         get().setIndefinite();
         set({ timerAction: action }, false, 'timer/setTimerAction');
+
         return;
       }
     }

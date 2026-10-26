@@ -7,6 +7,7 @@ import { useDevLanguageShortcut } from './lib/useDevLanguageShortcut';
 
 vi.mock(import('@/shared/config'), async importOriginal => {
   const original = await importOriginal();
+
   return {
     ...original,
     SUPPORTED_LOCALES: [
@@ -20,10 +21,12 @@ vi.mock(import('@/shared/config'), async importOriginal => {
 vi.mock(import('react-i18next'), async importOriginal => {
   const { createMockUseTranslation } = await import('@/tests/i18nMock');
   const original = await importOriginal();
+
   return {
     ...original,
     useTranslation: () => {
       const res = createMockUseTranslation()();
+
       return res;
     },
   };
@@ -32,6 +35,7 @@ vi.mock(import('react-i18next'), async importOriginal => {
 let capturedAppHotkeyCallback: (() => void) | undefined;
 vi.mock(import('@/shared/lib'), async importOriginal => {
   const original = await importOriginal();
+
   return {
     ...original,
     useAppHotkey: (_shortcut: unknown, callback: Parameters<typeof original.useAppHotkey>[1]) => {

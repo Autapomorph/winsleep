@@ -63,6 +63,7 @@ export const TrayMenuPage = () => {
     if (latestTrayStateRef.current) {
       setTrayState(latestTrayStateRef.current);
     }
+
     setIsVisible(true);
   }, []);
 

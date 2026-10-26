@@ -22,6 +22,7 @@ export const GlobalContextMenu = () => {
 
     if (!target || !isEditableElement(target)) {
       setIsMenuOpen(false);
+
       return;
     }
 
@@ -64,6 +65,7 @@ export const GlobalContextMenu = () => {
 
     if (!target) {
       setIsMenuOpen(false);
+
       return;
     }
 
@@ -94,6 +96,7 @@ export const GlobalContextMenu = () => {
 
     if (!target || !isEditableElement(target)) {
       setIsMenuOpen(false);
+
       return;
     }
 
@@ -132,6 +135,7 @@ export const GlobalContextMenu = () => {
 
     if (!target) {
       setIsMenuOpen(false);
+
       return;
     }
 
@@ -179,6 +183,7 @@ export const GlobalContextMenu = () => {
 
         // Enable Copy option only if text is highlighted or the input field contains characters.
         let isCopyDisabled = true;
+
         if (selectedTextVal.length > 0) {
           isCopyDisabled = false;
         } else if (isEditable) {

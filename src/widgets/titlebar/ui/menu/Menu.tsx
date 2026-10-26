@@ -50,6 +50,7 @@ export const Menu = () => {
 
           if (!initialPosition) {
             initialPosition = event.payload;
+
             return;
           }
 

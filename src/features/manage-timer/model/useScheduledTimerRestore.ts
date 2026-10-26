@@ -16,17 +16,20 @@ export const useScheduledTimerRestore = () => {
     isCheckedRef.current = true;
 
     const { isRestoreScheduledTimerOnStartupEnabled } = useSettingsStore.getState();
+
     if (!isRestoreScheduledTimerOnStartupEnabled) {
       return;
     }
 
     const { scheduledTimer } = useAppStateStore.getState();
+
     if (!scheduledTimer) {
       return;
     }
 
     if (scheduledTimer.targetDateTime === null) {
       const rawAction = (scheduledTimer as { timerAction: unknown }).timerAction;
+
       if (rawAction === 'keep-awake') {
         logger.info('Restoring saved indefinite keep-awake from disk');
 

@@ -72,6 +72,7 @@ function updateManifest(filename) {
       console.log(
         `ℹ Skipping update of ${filename}: existing version ${manifest.version} is newer than ${newVersion}`,
       );
+
       return;
     }
   }

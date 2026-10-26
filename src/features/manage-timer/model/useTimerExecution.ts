@@ -20,60 +20,72 @@ export const useTimerExecution = () => {
       if (currentTimerAction === 'sleep') {
         if (!config.isProd) {
           showInfoToast($ => $.timerAction.notifications.planned.sleep);
+
           return;
         }
 
         await pcSleep();
+
         return;
       }
 
       if (currentTimerAction === 'hibernate') {
         if (!config.isProd) {
           showInfoToast($ => $.timerAction.notifications.planned.hibernate);
+
           return;
         }
 
         await pcHibernate();
+
         return;
       }
 
       if (currentTimerAction === 'shutdown') {
         if (!config.isProd) {
           showInfoToast($ => $.timerAction.notifications.planned.shutdown);
+
           return;
         }
 
         await pcShutdown({ isForce });
+
         return;
       }
 
       if (currentTimerAction === 'reboot') {
         if (!config.isProd) {
           showInfoToast($ => $.timerAction.notifications.planned.reboot);
+
           return;
         }
 
         await pcReboot({ isForce });
+
         return;
       }
 
       if (currentTimerAction === 'lock') {
         if (!config.isProd) {
           showInfoToast($ => $.timerAction.notifications.planned.lock);
+
           return;
         }
 
         await pcLock();
+
         return;
       }
 
       if (currentTimerAction === 'signout') {
         if (!config.isProd) {
           showInfoToast($ => $.timerAction.notifications.planned.signout);
+
           return;
         }
 
         await pcSignout({ isForce });
+
         return;
       }
 

@@ -55,6 +55,7 @@ export class ProxyUpdateProvider implements UpdateProvider {
       };
     } catch (err) {
       logger.debug(`[ProxyUpdateProvider] Failed to fetch release notes: ${err}`);
+
       return null;
     }
   }
@@ -79,6 +80,7 @@ export class ProxyUpdateProvider implements UpdateProvider {
       return null;
     } catch (err) {
       logger.debug(`[ProxyUpdateProvider] Failed to fetch available versions: ${err}`);
+
       return null;
     }
   }

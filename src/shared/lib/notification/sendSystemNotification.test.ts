@@ -8,6 +8,7 @@ import { sendSystemNotification } from './sendSystemNotification';
 
 vi.mock(import('@tauri-apps/plugin-notification'), async importOriginal => {
   const original = await importOriginal();
+
   return {
     ...original,
     isPermissionGranted: vi.fn().mockResolvedValue(true),

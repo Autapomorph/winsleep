@@ -12,6 +12,7 @@ const mockT = createMockT({
 
 vi.mock(import('@heroui/react'), async importOriginal => {
   const original = await importOriginal();
+
   return {
     ...original,
     toast: Object.assign(original.toast, {

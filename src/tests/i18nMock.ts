@@ -6,9 +6,11 @@ import { vi } from 'vitest';
 export const createMockT = (customMockValues?: Record<string, string | number>) => {
   const getPathValue = (path: string[]): string => {
     const stringPath = path.join('.');
+
     if (customMockValues && stringPath in customMockValues) {
       return String(customMockValues[stringPath]);
     }
+
     return stringPath;
   };
 
@@ -21,11 +23,14 @@ export const createMockT = (customMockValues?: Record<string, string | number>) 
             if (prop === Symbol.toPrimitive) {
               return () => getPathValue(path);
             }
+
             return undefined;
           }
+
           if (prop === 'toString' || prop === 'valueOf') {
             return () => getPathValue(path);
           }
+
           return createProxy([...path, prop]);
         },
       },
@@ -37,11 +42,14 @@ export const createMockT = (customMockValues?: Record<string, string | number>) 
       const proxy = createProxy();
       const result = (key as (schema: unknown) => unknown)(proxy);
       const stringResult = String(result);
+
       if (options && typeof options.count === 'number') {
         return `${stringResult}_plural_${options.count}`;
       }
+
       return stringResult;
     }
+
     return String(key);
   });
 
@@ -54,5 +62,6 @@ export const createMockUseTranslation = (
   const t = createMockT(customMockValues);
   const arr: [TFunction, typeof i18n, boolean] = [t, i18n, true];
   const response = Object.assign(arr, { t, i18n, ready: true });
+
   return () => response as UseTranslationResponse<'translation', undefined>;
 };

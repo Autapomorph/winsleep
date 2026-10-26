@@ -7,6 +7,7 @@ import { useTimerNotification } from './useTimerNotification';
 
 vi.mock('@/shared/lib', async importOriginal => {
   const actual = await importOriginal<typeof import('@/shared/lib')>();
+
   return {
     ...actual,
     sendSystemNotification: vi.fn().mockResolvedValue(true),

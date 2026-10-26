@@ -15,6 +15,7 @@ if (!newVersion) {
 }
 
 const parsedNew = semver.parse(newVersion);
+
 if (!parsedNew) {
   console.error(`❌ Invalid SemVer version format: "${newVersion}"`);
   process.exit(1);
@@ -32,6 +33,7 @@ if (isFirstRelease) {
 }
 
 const parsedPrev = semver.parse(prevVersion);
+
 if (!parsedPrev) {
   console.warn(
     `⚠️ Warning: Previous version "${prevVersion}" is not valid SemVer. Skipping increment check.`,

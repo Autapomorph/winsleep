@@ -48,6 +48,7 @@ export const TimePoints = ({ addNewTimePoint, editTimePoint }: Props) => {
                   className="h-5 w-5 min-w-0 shrink-0 opacity-70 transition-opacity hover:bg-danger-soft hover:text-danger-soft-foreground hover:opacity-100"
                   onClick={e => {
                     e.stopPropagation();
+
                     if (isNotificationsEnabled) {
                       removeNotificationTime(timePoint.id);
                     }

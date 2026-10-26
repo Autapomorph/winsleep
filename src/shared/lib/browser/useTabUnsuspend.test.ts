@@ -48,6 +48,7 @@ describe('useTabUnsuspend', () => {
     let capturedCallback: (() => Promise<void>) | undefined;
     requestSpy.mockImplementation((_name, cb) => {
       capturedCallback = cb as () => Promise<void>;
+
       return Promise.resolve();
     });
 
@@ -107,6 +108,7 @@ describe('useTabUnsuspend', () => {
 
     const triggerVisibility = async () => {
       expect(visibilityCallback).toBeTypeOf('function');
+
       if (visibilityCallback) {
         visibilityCallback();
       }

@@ -7,12 +7,14 @@ export const useHotkeysScope = (scope: string, isActive = true) => {
   useEffect(() => {
     if (isActive) {
       enableScope(scope);
+
       return () => {
         disableScope(scope);
       };
     }
 
     disableScope(scope);
+
     return () => {
       enableScope(scope);
     };

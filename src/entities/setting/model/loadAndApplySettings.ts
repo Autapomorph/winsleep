@@ -16,6 +16,7 @@ export const loadAndApplySettings = async (
     if (!data) {
       // File does not exist, save current (default) settings immediately
       saveSettings(useSettingsStore.getState());
+
       return;
     }
 

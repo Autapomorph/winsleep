@@ -65,6 +65,7 @@ export const initGlobalErrorTracking = (
     if (isIgnoredError(message)) {
       event.stopImmediatePropagation();
       event.preventDefault();
+
       return;
     }
 

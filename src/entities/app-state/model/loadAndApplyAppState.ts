@@ -16,6 +16,7 @@ export const loadAndApplyAppState = async (
     if (!data) {
       // File does not exist, save current (default) state immediately
       saveAppState(useAppStateStore.getState());
+
       return;
     }
 

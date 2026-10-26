@@ -11,6 +11,7 @@ const mockListeners: Record<string, () => void> = {};
 vi.mock(import('@/shared/api'), () => ({
   typedListen: vi.fn((event, callback) => {
     mockListeners[event] = callback;
+
     return Promise.resolve(() => {
       delete mockListeners[event];
     });

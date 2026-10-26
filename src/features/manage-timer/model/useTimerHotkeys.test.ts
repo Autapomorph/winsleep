@@ -8,6 +8,7 @@ const mockUseAppHotkey = vi.fn<typeof useAppHotkey>();
 
 vi.mock(import('@/shared/lib'), async importOriginal => {
   const original = await importOriginal();
+
   return {
     ...original,
     useAppHotkey: (...args: Parameters<typeof mockUseAppHotkey>) => {

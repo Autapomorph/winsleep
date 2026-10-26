@@ -47,6 +47,7 @@ export const WheelPicker = ({
     }
 
     let newValue = value;
+
     switch (e.key) {
       case 'ArrowUp':
         e.preventDefault();
@@ -81,6 +82,7 @@ export const WheelPicker = ({
       case 'Enter':
         e.preventDefault();
         setIsEditing(true);
+
         return;
 
       default:
@@ -97,9 +99,11 @@ export const WheelPicker = ({
     useCallback(() => {
       onChange(prev => {
         let next = prev + 1;
+
         if (next > max) {
           next = isInfinite ? min : max;
         }
+
         return next;
       });
     }, [min, max, isInfinite, onChange]),
@@ -112,9 +116,11 @@ export const WheelPicker = ({
     useCallback(() => {
       onChange(prev => {
         let next = prev - 1;
+
         if (next < min) {
           next = isInfinite ? max : min;
         }
+
         return next;
       });
     }, [min, max, isInfinite, onChange]),
@@ -182,6 +188,7 @@ export const WheelPicker = ({
         }}
         onFinishEditing={newValue => {
           setIsEditing(false);
+
           if (newValue !== undefined) {
             onChange(newValue);
           }

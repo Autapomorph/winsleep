@@ -116,12 +116,14 @@ export const useTrayLanguageSync = () => {
 
     return allPresetSeconds.map(time => {
       let label = formatDurationShort(time, t);
+
       if (time === 0) {
         label =
           timerAction === 'keep-awake'
             ? t($ => $.timer.indefiniteLabel.text)
             : t($ => $.timer.nowLabel.text);
       }
+
       return { seconds: time, label };
     });
   }, [customTimerPresets, timerAction, t]);

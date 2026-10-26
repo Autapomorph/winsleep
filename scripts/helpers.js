@@ -59,6 +59,7 @@ export async function fetchAllReleases(options = {}) {
     }
 
     const releases = await response.json();
+
     if (!Array.isArray(releases) || releases.length === 0) {
       break;
     }

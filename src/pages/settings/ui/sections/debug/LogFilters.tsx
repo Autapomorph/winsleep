@@ -25,6 +25,7 @@ export const LogFilters = () => {
 
   const filterLevels = useMemo(() => {
     const baseLevels = ['ALL', 'INFO', 'WARN', 'ERROR'] as const;
+
     return config.isDev ? ([...baseLevels, 'DEBUG'] as const) : baseLevels;
   }, []);
 

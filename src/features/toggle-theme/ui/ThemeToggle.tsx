@@ -46,6 +46,7 @@ export const ThemeToggle = () => {
       selectedKeys={theme ? [theme] : []}
       onSelectionChange={keys => {
         const nextTheme = Array.from(keys)[0];
+
         if (nextTheme) {
           setTheme(nextTheme as Theme);
         }

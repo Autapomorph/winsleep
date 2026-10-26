@@ -23,6 +23,7 @@ vi.mock(import('@/shared/api'), () => {
       .mockImplementation(
         (event: string, callback: (event: { payload?: unknown }) => Promise<void> | void) => {
           mockCapturedListeners[event] = callback;
+
           return Promise.resolve(mockUnsubscribe);
         },
       ),
@@ -74,6 +75,7 @@ vi.mock(import('@/shared/lib'), async importOriginal => {
 
 vi.mock(import('react-i18next'), async importOriginal => {
   const { createMockUseTranslation } = await import('@/tests/i18nMock');
+
   return {
     ...(await importOriginal()),
     useTranslation: createMockUseTranslation(),

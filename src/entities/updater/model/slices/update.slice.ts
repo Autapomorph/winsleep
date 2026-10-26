@@ -189,6 +189,7 @@ export const createUpdateSlice: StateCreator<
       }
 
       const currentStatus = get().status;
+
       if (currentStatus !== 'readyToInstall') {
         return;
       }
@@ -228,6 +229,7 @@ export const createUpdateSlice: StateCreator<
         logger.info('Dev mode bypass: Resetting updater store state and reloading');
         resetStore();
         window.location.reload();
+
         return;
       }
 
@@ -253,6 +255,7 @@ export const createUpdateSlice: StateCreator<
 
       if (status !== 'idle') {
         resetStore();
+
         return;
       }
 
@@ -297,6 +300,7 @@ export const createUpdateSlice: StateCreator<
                 } catch (error) {
                   if (error instanceof Error && error.name === 'AbortError') {
                     logger.info('Mock download cancelled via AbortSignal');
+
                     return;
                   }
 
@@ -321,6 +325,7 @@ export const createUpdateSlice: StateCreator<
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
           logger.info('Mock update check cancelled via AbortSignal');
+
           return;
         }
 

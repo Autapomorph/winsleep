@@ -28,6 +28,7 @@ export const useTrayTimerActions = () => {
         if (timerMode === 'duration') {
           pause();
         }
+
         return;
       }
 

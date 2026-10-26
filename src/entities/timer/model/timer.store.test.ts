@@ -10,7 +10,9 @@ vi.mock('@/shared/api', () => ({
     if (!mockListeners[event]) {
       mockListeners[event] = [];
     }
+
     mockListeners[event].push(callback);
+
     return Promise.resolve(() => {
       mockListeners[event] = mockListeners[event].filter(cb => cb !== callback);
     });
