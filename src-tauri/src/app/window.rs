@@ -11,6 +11,7 @@ pub fn setup_window(app_handle: &tauri::AppHandle) -> Result<(), Box<dyn std::er
 
     if let Some(tray_window) = app_handle.get_webview_window("tray_menu") {
         let _ = tray_window.set_background_color(Some(tauri::window::Color(0, 0, 0, 0)));
+        let _ = tray_window.hide();
     }
 
     // Check if launched with --autostart and if minimized boot setting is enabled

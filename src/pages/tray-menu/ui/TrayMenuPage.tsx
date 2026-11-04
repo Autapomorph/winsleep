@@ -106,11 +106,17 @@ export const TrayMenuPage = () => {
     });
 
     const unlistenWindowFocusChanged = getCurrentWindow().onFocusChanged(
-      ({ payload: isFocused }) => {
+      async ({ payload: isFocused }) => {
         if (!isFocused) {
           closeWithAnimation();
         } else {
-          openWithAnimation();
+          const isWindowVisible = await getCurrentWindow()
+            .isVisible()
+            .catch(() => false);
+
+          if (isWindowVisible) {
+            openWithAnimation();
+          }
         }
       },
     );
