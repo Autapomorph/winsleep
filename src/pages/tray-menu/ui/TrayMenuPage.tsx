@@ -1,12 +1,22 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { getCurrentWindow } from '@tauri-apps/api/window';
+import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
 import { cn, Separator } from '@heroui/react';
-import { FaLock, FaLockOpen, FaMinus, FaPause, FaPlay, FaPlus, FaStop } from 'react-icons/fa6';
+import {
+  FaClock,
+  FaLock,
+  FaLockOpen,
+  FaMinus,
+  FaPause,
+  FaPlay,
+  FaPlus,
+  FaStop,
+} from 'react-icons/fa6';
 import { IoSyncOutline } from 'react-icons/io5';
 import { MdOutlineLaunch, MdPowerSettingsNew } from 'react-icons/md';
 
 import { type TrayMenuState, typedEmit, typedListen } from '@/shared/api';
+import { TRAY_MENU_MAX_HEIGHT, TRAY_MENU_MAX_WIDTH, TRAY_MENU_MIN_WIDTH } from '@/shared/config';
 import { logger } from '@/shared/lib';
 import { TimerActionSelector } from './TimerActionSelector';
 import { TimerPresetSelector } from './TimerPresetSelector';
@@ -22,6 +32,12 @@ export const TrayMenuPage = () => {
   const latestTrayStateRef = useRef<TrayMenuState | null>(null);
   const isClosingRef = useRef(false);
   const closeTimeoutRef = useRef<number | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const measurerRef = useRef<HTMLDivElement | null>(null);
+  const lastDimensionsRef = useRef<{ width: number; height: number }>({
+    width: 0,
+    height: 0,
+  });
 
   const closeWithAnimation = useCallback(async () => {
     const currentWindow = getCurrentWindow();
@@ -78,6 +94,63 @@ export const TrayMenuPage = () => {
 
     closeWithAnimation();
   };
+
+  // Sync window size with content dimensions automatically
+  useLayoutEffect(() => {
+    const element = contentRef.current;
+
+    if (!element) {
+      return undefined;
+    }
+
+    const syncSize = async () => {
+      const measuredRect = element.getBoundingClientRect();
+      const naturalWidth = measurerRef.current
+        ? Math.ceil(measurerRef.current.getBoundingClientRect().width)
+        : Math.ceil(element.scrollWidth || measuredRect.width);
+      // Add a 2px buffer to measuredHeight to prevent fractional-pixel scrollbars
+      const measuredHeight = Math.ceil(element.scrollHeight || measuredRect.height) + 2;
+
+      const boundedWidth = Math.min(
+        Math.max(naturalWidth, TRAY_MENU_MIN_WIDTH),
+        TRAY_MENU_MAX_WIDTH,
+      );
+      const boundedHeight = Math.min(measuredHeight, TRAY_MENU_MAX_HEIGHT);
+
+      const hasChanged =
+        boundedWidth !== lastDimensionsRef.current.width ||
+        boundedHeight !== lastDimensionsRef.current.height;
+
+      if (hasChanged && boundedWidth > 0 && boundedHeight > 0) {
+        lastDimensionsRef.current = {
+          width: boundedWidth,
+          height: boundedHeight,
+        };
+
+        try {
+          await getCurrentWindow().setSize(new LogicalSize(boundedWidth, boundedHeight));
+        } catch (err) {
+          logger.error(`Failed to resize tray menu window: ${err}`);
+        }
+      }
+    };
+
+    syncSize().catch(() => {});
+
+    const resizeObserver = new ResizeObserver(() => {
+      syncSize().catch(() => {});
+    });
+
+    resizeObserver.observe(element);
+
+    if (measurerRef.current) {
+      resizeObserver.observe(measurerRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [trayState]);
 
   // Set transparent background before paint to prevent flashing/flicker
   useLayoutEffect(() => {
@@ -189,99 +262,148 @@ export const TrayMenuPage = () => {
       )}
       style={{ transitionDuration: `${ANIMATION_DURATION_MS}ms` }}
     >
-      <div className="flex h-full w-full flex-col gap-1 overflow-y-auto p-1.5">
-        {/* Open */}
-        <TrayMenuButton icon={<MdOutlineLaunch />} onPress={showMainWindow}>
+      <div className="h-full w-full overflow-x-hidden overflow-y-auto">
+        <div ref={contentRef} className="flex h-fit w-full flex-col gap-1 p-1.5">
+          {/* Open */}
+          <TrayMenuButton icon={<MdOutlineLaunch />} onPress={showMainWindow}>
+            {openLabel}
+          </TrayMenuButton>
+
+          <Separator className="shrink-0" />
+
+          {/* Timer Action (Expandable) */}
+          <TimerActionSelector timerAction={timerAction} isSettingsLocked={isSettingsLocked} />
+
+          {/* Presets (Expandable) */}
+          <TimerPresetSelector
+            presets={timerPresets}
+            presetsLabel={presetsLabel}
+            isSettingsLocked={isSettingsLocked}
+          />
+
+          <Separator className="shrink-0" />
+
+          {/* Status (Information item) */}
+          <TimerStatus
+            timerState={timerState}
+            isExpiring={isExpiring}
+            timerStatusLabel={timerStatusLabel}
+          />
+
+          {/* Timer Control: Start / Pause / Resume */}
+          <TrayMenuButton
+            icon={timerState === 'running' ? <FaPause /> : <FaPlay />}
+            isDisabled={
+              (timerState === 'running' && timerMode !== 'duration') ||
+              (timerState !== 'idle' && isSettingsLocked)
+            }
+            onPress={() => typedEmit('tray-timer-start-resume-pause-clicked')}
+          >
+            {startResumePauseTimerLabel}
+          </TrayMenuButton>
+
+          {/* Timer Control: Cancel */}
+          <TrayMenuButton
+            icon={<FaStop />}
+            isDisabled={timerState === 'idle' || isSettingsLocked}
+            onPress={() => typedEmit('tray-timer-cancel-clicked')}
+          >
+            {cancelTimerLabel}
+          </TrayMenuButton>
+
+          {/* Increase Time */}
+          <TrayMenuButton
+            icon={<FaPlus />}
+            isDisabled={isSettingsLocked || timerMode !== 'duration'}
+            onPress={() => typedEmit('tray-timer-increase-clicked')}
+          >
+            {timerIncreaseLabel}
+          </TrayMenuButton>
+
+          {/* Decrease Time */}
+          <TrayMenuButton
+            icon={<FaMinus />}
+            isDisabled={isSettingsLocked || timerMode !== 'duration'}
+            onPress={() => typedEmit('tray-timer-decrease-clicked')}
+          >
+            {timerDecreaseLabel}
+          </TrayMenuButton>
+
+          <Separator className="shrink-0" />
+
+          {/* Lock Settings */}
+          <TrayMenuButton
+            icon={isSettingsLocked ? <FaLock /> : <FaLockOpen />}
+            onPress={() => typedEmit('tray-settings-lock-toggle-clicked')}
+          >
+            {lockSettingsLabel}
+          </TrayMenuButton>
+
+          <Separator className="shrink-0" />
+
+          {/* Check for Updates */}
+          <TrayMenuButton
+            icon={<IoSyncOutline className={cn(updateStatus === 'checking' && 'animate-spin')} />}
+            onPress={() => typedEmit('tray-update-clicked')}
+          >
+            {updateLabel}
+          </TrayMenuButton>
+
+          <Separator className="shrink-0" />
+
+          {/* Quit */}
+          <TrayMenuButton
+            icon={<MdPowerSettingsNew />}
+            onPress={() => typedEmit('app-exit-requested')}
+          >
+            {quitLabel}
+          </TrayMenuButton>
+        </div>
+      </div>
+
+      {/* Invisible off-screen measurer to compute natural unconstrained width */}
+      <div
+        ref={measurerRef}
+        aria-hidden="true"
+        className="pointer-events-none invisible absolute top-0 left-0 flex w-max flex-col gap-1 p-1.5"
+      >
+        <TrayMenuButton disableTruncate icon={<MdOutlineLaunch />}>
           {openLabel}
         </TrayMenuButton>
-
-        <Separator className="shrink-0" />
-
-        {/* Timer Action (Expandable) */}
-        <TimerActionSelector timerAction={timerAction} isSettingsLocked={isSettingsLocked} />
-
-        {/* Presets (Expandable) */}
-        <TimerPresetSelector
-          presets={timerPresets}
-          presetsLabel={presetsLabel}
-          isSettingsLocked={isSettingsLocked}
-        />
-
-        <Separator className="shrink-0" />
-
-        {/* Status (Information item) */}
-        <TimerStatus
-          timerState={timerState}
-          isExpiring={isExpiring}
-          timerStatusLabel={timerStatusLabel}
-        />
-
-        {/* Timer Control: Start / Pause / Resume */}
-        <TrayMenuButton
-          icon={timerState === 'running' ? <FaPause /> : <FaPlay />}
-          isDisabled={
-            (timerState === 'running' && timerMode !== 'duration') ||
-            (timerState !== 'idle' && isSettingsLocked)
-          }
-          onPress={() => typedEmit('tray-timer-start-resume-pause-clicked')}
-        >
+        <TrayMenuButton disableTruncate>
+          <span className="flex items-center gap-3">
+            <span className="text-muted" />
+            <span>{timerAction.selectedTimerActionLabel}</span>
+          </span>
+        </TrayMenuButton>
+        <TrayMenuButton disableTruncate>
+          <span className="flex items-center gap-3">
+            <FaClock className="text-muted" />
+            <span>{presetsLabel}</span>
+          </span>
+        </TrayMenuButton>
+        <div className="mx-1.5 my-0.5 px-3 py-2 text-sm font-semibold whitespace-nowrap">
+          {timerStatusLabel}
+        </div>
+        <TrayMenuButton disableTruncate icon={<FaPlay />}>
           {startResumePauseTimerLabel}
         </TrayMenuButton>
-
-        {/* Timer Control: Cancel */}
-        <TrayMenuButton
-          icon={<FaStop />}
-          isDisabled={timerState === 'idle' || isSettingsLocked}
-          onPress={() => typedEmit('tray-timer-cancel-clicked')}
-        >
+        <TrayMenuButton disableTruncate icon={<FaStop />}>
           {cancelTimerLabel}
         </TrayMenuButton>
-
-        {/* Increase Time */}
-        <TrayMenuButton
-          icon={<FaPlus />}
-          isDisabled={isSettingsLocked || timerMode !== 'duration'}
-          onPress={() => typedEmit('tray-timer-increase-clicked')}
-        >
+        <TrayMenuButton disableTruncate icon={<FaPlus />}>
           {timerIncreaseLabel}
         </TrayMenuButton>
-
-        {/* Decrease Time */}
-        <TrayMenuButton
-          icon={<FaMinus />}
-          isDisabled={isSettingsLocked || timerMode !== 'duration'}
-          onPress={() => typedEmit('tray-timer-decrease-clicked')}
-        >
+        <TrayMenuButton disableTruncate icon={<FaMinus />}>
           {timerDecreaseLabel}
         </TrayMenuButton>
-
-        <Separator className="shrink-0" />
-
-        {/* Lock Settings */}
-        <TrayMenuButton
-          icon={isSettingsLocked ? <FaLock /> : <FaLockOpen />}
-          onPress={() => typedEmit('tray-settings-lock-toggle-clicked')}
-        >
+        <TrayMenuButton disableTruncate icon={<FaLock />}>
           {lockSettingsLabel}
         </TrayMenuButton>
-
-        <Separator className="shrink-0" />
-
-        {/* Check for Updates */}
-        <TrayMenuButton
-          icon={<IoSyncOutline className={cn(updateStatus === 'checking' && 'animate-spin')} />}
-          onPress={() => typedEmit('tray-update-clicked')}
-        >
+        <TrayMenuButton disableTruncate icon={<IoSyncOutline />}>
           {updateLabel}
         </TrayMenuButton>
-
-        <Separator className="shrink-0" />
-
-        {/* Quit */}
-        <TrayMenuButton
-          icon={<MdPowerSettingsNew />}
-          onPress={() => typedEmit('app-exit-requested')}
-        >
+        <TrayMenuButton disableTruncate icon={<MdPowerSettingsNew />}>
           {quitLabel}
         </TrayMenuButton>
       </div>
