@@ -166,7 +166,10 @@ fn read_lines_before_offset_rev(
             if let Some(first_newline_idx) = chunk.iter().position(|&b| b == b'\n') {
                 remainder.clear();
                 remainder.extend_from_slice(&chunk[..first_newline_idx]);
-                (first_newline_idx + 1, seek_pos + (first_newline_idx + 1) as u64)
+                (
+                    first_newline_idx + 1,
+                    seek_pos + (first_newline_idx + 1) as u64,
+                )
             } else {
                 remainder.clear();
                 remainder.extend_from_slice(&chunk);
@@ -347,7 +350,9 @@ pub fn read_logs(
             .to_string_lossy()
             .to_string();
 
-        let end_offset = if i == start_file_idx && cursor.as_ref().map(|c| c.file_name.as_str()) == Some(&file_name) {
+        let end_offset = if i == start_file_idx
+            && cursor.as_ref().map(|c| c.file_name.as_str()) == Some(&file_name)
+        {
             initial_offset
         } else {
             u64::MAX
@@ -568,7 +573,9 @@ mod tests {
         // Generate enough lines to exceed CHUNK_SIZE (64KB)
         let mut content = String::new();
         for i in 0..1000 {
-            content.push_str(&format!("log line number {i:04} with extra padding content\n"));
+            content.push_str(&format!(
+                "log line number {i:04} with extra padding content\n"
+            ));
         }
         let (_dir, file_path) = create_temp_log_file(&content);
 
@@ -582,8 +589,14 @@ mod tests {
         // Read all 1000 lines (spans multiple 64KB chunks)
         let (all_lines, hit_marker_all) = read_lines_from_tail_rev(&file_path, 1500).unwrap();
         assert_eq!(all_lines.len(), 1000);
-        assert_eq!(all_lines[0], "log line number 0999 with extra padding content");
-        assert_eq!(all_lines[999], "log line number 0000 with extra padding content");
+        assert_eq!(
+            all_lines[0],
+            "log line number 0999 with extra padding content"
+        );
+        assert_eq!(
+            all_lines[999],
+            "log line number 0000 with extra padding content"
+        );
         assert!(!hit_marker_all);
     }
 
@@ -603,7 +616,10 @@ mod tests {
         assert_eq!(lines.len(), 2);
         assert_eq!(lines[0], "Вторая строка кириллицы");
         assert!(lines[1].ends_with("Тест многобайтового UTF-8"));
-        assert!(!lines[1].contains('\u{FFFD}'), "UTF-8 corrupted with replacement char");
+        assert!(
+            !lines[1].contains('\u{FFFD}'),
+            "UTF-8 corrupted with replacement char"
+        );
         assert!(!hit_marker);
     }
 
@@ -659,7 +675,8 @@ mod tests {
 
     #[test]
     fn test_read_lines_before_offset_rev_pagination_exactness() {
-        let content = "line 0\nline 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline 9\n";
+        let content =
+            "line 0\nline 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline 9\n";
         let (_dir, file_path) = create_temp_log_file(content);
 
         // Batch 1: newest 4 lines
@@ -724,4 +741,3 @@ mod tests {
         assert_eq!(offset3, 0);
     }
 }
-

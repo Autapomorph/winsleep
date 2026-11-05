@@ -7,5 +7,6 @@ export default {
     'prettier --write --ignore-unknown',
     'eslint --max-warnings=0 --no-warn-ignored',
   ],
-  '**/*': ['prettier --write --ignore-unknown'],
+  '*.rs': 'rustfmt',
+  '!(*.{js,jsx,ts,tsx,rs})': ['prettier --write --ignore-unknown'],
 };

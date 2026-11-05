@@ -98,7 +98,10 @@ pub fn atomic_write(path: &std::path::Path, content: &[u8]) -> Result<(), String
 
     if let Err(e) = file.sync_all() {
         let _ = std::fs::remove_file(&tmp_path);
-        return Err(format!("Failed to flush data to disk for {:?}: {e}", tmp_path));
+        return Err(format!(
+            "Failed to flush data to disk for {:?}: {e}",
+            tmp_path
+        ));
     }
 
     drop(file);
@@ -174,4 +177,3 @@ mod tests {
         let _ = std::fs::remove_dir_all(&temp_dir);
     }
 }
-

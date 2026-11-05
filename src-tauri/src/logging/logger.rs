@@ -276,7 +276,12 @@ mod tests {
         let subscriber = tracing_subscriber::registry().with(layer);
 
         tracing::subscriber::with_default(subscriber, || {
-            tracing::info!(code = 404, user = "alice", is_active = true, "Operation status");
+            tracing::info!(
+                code = 404,
+                user = "alice",
+                is_active = true,
+                "Operation status"
+            );
         });
 
         let output = String::from_utf8(buffer.lock().unwrap().clone()).unwrap();

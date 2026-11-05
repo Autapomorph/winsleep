@@ -61,10 +61,7 @@ pub fn handle_window_event(window: &tauri::Window, event: &tauri::WindowEvent) {
             let app_handle = window.app_handle();
             let settings = app_handle.state::<AppSettings>();
 
-            if settings
-                .is_tray_mode_enabled
-                .load(Ordering::Relaxed)
-            {
+            if settings.is_tray_mode_enabled.load(Ordering::Relaxed) {
                 api.prevent_close();
                 if let Err(e) = window.hide() {
                     tracing::error!("Failed to hide window to tray: {e}");
@@ -85,7 +82,8 @@ pub fn handle_window_event(window: &tauri::Window, event: &tauri::WindowEvent) {
                 // Spawn a fallback watchdog to force exit if frontend hangs or fails to respond
                 let app_handle_clone = app_handle.clone();
                 std::thread::spawn(move || {
-                    const POLL_INTERVAL: std::time::Duration = std::time::Duration::from_millis(500);
+                    const POLL_INTERVAL: std::time::Duration =
+                        std::time::Duration::from_millis(500);
                     const BASE_TIMEOUT_MS: u64 = 15_000;
                     const MAX_CRITICAL_TIMEOUT_MS: u64 = 120_000;
 
@@ -98,7 +96,8 @@ pub fn handle_window_event(window: &tauri::Window, event: &tauri::WindowEvent) {
                         let is_critical = is_critical_operation_in_progress();
 
                         if is_critical {
-                            if elapsed >= std::time::Duration::from_millis(MAX_CRITICAL_TIMEOUT_MS) {
+                            if elapsed >= std::time::Duration::from_millis(MAX_CRITICAL_TIMEOUT_MS)
+                            {
                                 tracing::warn!(
                                     "Critical operation exceeded safety cap ({} ms), forcing application exit via watchdog",
                                     MAX_CRITICAL_TIMEOUT_MS

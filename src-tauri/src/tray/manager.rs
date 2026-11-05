@@ -65,14 +65,19 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
                             const MIN_FALLBACK_WIDTH: f64 = 200.0;
                             const MIN_FALLBACK_HEIGHT: f64 = 96.0;
 
-                            let fallback_physical_width = (MIN_FALLBACK_WIDTH * scale_factor) as u32;
-                            let fallback_physical_height = (MIN_FALLBACK_HEIGHT * scale_factor) as u32;
+                            let fallback_physical_width =
+                                (MIN_FALLBACK_WIDTH * scale_factor) as u32;
+                            let fallback_physical_height =
+                                (MIN_FALLBACK_HEIGHT * scale_factor) as u32;
 
                             let size = window
                                 .outer_size()
                                 .or_else(|_| window.inner_size())
                                 .unwrap_or_else(|_| {
-                                    tauri::PhysicalSize::new(fallback_physical_width, fallback_physical_height)
+                                    tauri::PhysicalSize::new(
+                                        fallback_physical_width,
+                                        fallback_physical_height,
+                                    )
                                 });
 
                             let win_width = if size.width > 0 {
@@ -88,11 +93,15 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
 
                             let (pos_x, pos_y) = match rect.position {
                                 tauri::Position::Physical(p) => (p.x as f64, p.y as f64),
-                                tauri::Position::Logical(l) => (l.x * scale_factor, l.y * scale_factor),
+                                tauri::Position::Logical(l) => {
+                                    (l.x * scale_factor, l.y * scale_factor)
+                                }
                             };
                             let (width, height) = match rect.size {
                                 tauri::Size::Physical(s) => (s.width as f64, s.height as f64),
-                                tauri::Size::Logical(l) => (l.width * scale_factor, l.height * scale_factor),
+                                tauri::Size::Logical(l) => {
+                                    (l.width * scale_factor, l.height * scale_factor)
+                                }
                             };
 
                             let icon_center_x = pos_x + (width / 2.0);
@@ -115,11 +124,14 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
 
                             let x = (icon_center_x - (win_width / 2.0)) as i32;
                             let min_x = (monitor_pos.x as f64 + margin) as i32;
-                            let max_x = (monitor_pos.x as f64 + monitor_size.width as f64 - win_width - margin) as i32;
+                            let max_x = (monitor_pos.x as f64 + monitor_size.width as f64
+                                - win_width
+                                - margin) as i32;
                             let max_x = max_x.max(min_x);
                             let x = x.clamp(min_x, max_x);
 
-                            let monitor_mid_y = monitor_pos.y as f64 + (monitor_size.height as f64 / 2.0);
+                            let monitor_mid_y =
+                                monitor_pos.y as f64 + (monitor_size.height as f64 / 2.0);
                             let y = if icon_top_y > monitor_mid_y {
                                 // Taskbar is in the bottom half, place above the tray icon
                                 (icon_top_y - win_height - margin) as i32
@@ -128,7 +140,9 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
                                 (icon_bottom_y + margin) as i32
                             };
                             let min_y = (monitor_pos.y as f64 + margin) as i32;
-                            let max_y = (monitor_pos.y as f64 + monitor_size.height as f64 - win_height - margin) as i32;
+                            let max_y = (monitor_pos.y as f64 + monitor_size.height as f64
+                                - win_height
+                                - margin) as i32;
                             let max_y = max_y.max(min_y);
                             let y = y.clamp(min_y, max_y);
 
@@ -179,13 +193,28 @@ mod tests {
         let scale_factor = 1.0;
 
         let inside = tauri::Position::Physical(tauri::PhysicalPosition::new(500, 500));
-        assert!(is_point_inside_monitor(&inside, monitor_pos, monitor_size, scale_factor));
+        assert!(is_point_inside_monitor(
+            &inside,
+            monitor_pos,
+            monitor_size,
+            scale_factor
+        ));
 
         let outside_x = tauri::Position::Physical(tauri::PhysicalPosition::new(2000, 500));
-        assert!(!is_point_inside_monitor(&outside_x, monitor_pos, monitor_size, scale_factor));
+        assert!(!is_point_inside_monitor(
+            &outside_x,
+            monitor_pos,
+            monitor_size,
+            scale_factor
+        ));
 
         let outside_y = tauri::Position::Physical(tauri::PhysicalPosition::new(500, 1200));
-        assert!(!is_point_inside_monitor(&outside_y, monitor_pos, monitor_size, scale_factor));
+        assert!(!is_point_inside_monitor(
+            &outside_y,
+            monitor_pos,
+            monitor_size,
+            scale_factor
+        ));
     }
 
     #[test]
@@ -196,11 +225,21 @@ mod tests {
 
         // Logical (1000, 500) * 2.0 = Physical (2000, 1000) -> inside 3840x2160
         let inside = tauri::Position::Logical(tauri::LogicalPosition::new(1000.0, 500.0));
-        assert!(is_point_inside_monitor(&inside, monitor_pos, monitor_size, scale_factor));
+        assert!(is_point_inside_monitor(
+            &inside,
+            monitor_pos,
+            monitor_size,
+            scale_factor
+        ));
 
         // Logical (2000, 500) * 2.0 = Physical (4000, 1000) -> outside 3840x2160
         let outside = tauri::Position::Logical(tauri::LogicalPosition::new(2000.0, 500.0));
-        assert!(!is_point_inside_monitor(&outside, monitor_pos, monitor_size, scale_factor));
+        assert!(!is_point_inside_monitor(
+            &outside,
+            monitor_pos,
+            monitor_size,
+            scale_factor
+        ));
     }
 
     #[test]
@@ -212,13 +251,28 @@ mod tests {
 
         // Physical coordinates on secondary monitor
         let inside_physical = tauri::Position::Physical(tauri::PhysicalPosition::new(2500, 700));
-        assert!(is_point_inside_monitor(&inside_physical, monitor_pos, monitor_size, scale_factor));
+        assert!(is_point_inside_monitor(
+            &inside_physical,
+            monitor_pos,
+            monitor_size,
+            scale_factor
+        ));
 
         let on_primary = tauri::Position::Physical(tauri::PhysicalPosition::new(1000, 500));
-        assert!(!is_point_inside_monitor(&on_primary, monitor_pos, monitor_size, scale_factor));
+        assert!(!is_point_inside_monitor(
+            &on_primary,
+            monitor_pos,
+            monitor_size,
+            scale_factor
+        ));
 
         // Logical coordinates: (2000.0, 500.0) * 1.5 = (3000.0, 750.0) -> inside [1920..4480, 0..1440]
         let inside_logical = tauri::Position::Logical(tauri::LogicalPosition::new(2000.0, 500.0));
-        assert!(is_point_inside_monitor(&inside_logical, monitor_pos, monitor_size, scale_factor));
+        assert!(is_point_inside_monitor(
+            &inside_logical,
+            monitor_pos,
+            monitor_size,
+            scale_factor
+        ));
     }
 }

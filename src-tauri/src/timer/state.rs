@@ -38,4 +38,3 @@ mod tests {
         assert!(timer.cancel_tx.is_none());
     }
 }
-

@@ -53,6 +53,11 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Rustfmt check
+        run: cargo fmt --check --manifest-path src-tauri/Cargo.toml
 
       - name: Setup Rust cache
         uses: swatinem/rust-cache@v2
@@ -60,7 +65,7 @@ jobs:
           workspaces: "./src-tauri -> target"
 
       - name: Cargo check
-        run: cargo check --manifest-path src-tauri/Cargo.toml
+        run: cargo check --manifest-path src-tauri/Cargo.toml --locked
 
       - name: Tests
-        run: cargo test --manifest-path src-tauri/Cargo.toml
+        run: cargo test --manifest-path src-tauri/Cargo.toml --locked
