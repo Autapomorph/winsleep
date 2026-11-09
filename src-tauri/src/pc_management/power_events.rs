@@ -74,12 +74,7 @@ pub fn setup_power_events(window: &WebviewWindow) {
         let _ = APP_HANDLE.set(window.app_handle().clone());
         let hwnd = raw_hwnd.0 as HWND;
         let success = unsafe {
-            SetWindowSubclass(
-                hwnd,
-                Some(power_subclass_proc),
-                POWER_EVENTS_SUBCLASS_ID,
-                0,
-            )
+            SetWindowSubclass(hwnd, Some(power_subclass_proc), POWER_EVENTS_SUBCLASS_ID, 0)
         };
         if success == 0 {
             tracing::error!("SetWindowSubclass failed for power events subclassing");

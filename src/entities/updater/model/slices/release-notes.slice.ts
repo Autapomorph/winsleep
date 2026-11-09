@@ -80,6 +80,7 @@ export const createReleaseNotesSlice: StateCreator<
 
   fetchAvailableVersions: async () => {
     set({ isVersionsLoading: true }, false, 'updater/fetchAvailableVersionsStart');
+
     try {
       const versions = await updateService.fetchAvailableVersions();
 
@@ -89,6 +90,7 @@ export const createReleaseNotesSlice: StateCreator<
           false,
           'updater/fetchAvailableVersionsSuccess',
         );
+
         return;
       }
     } catch (err) {

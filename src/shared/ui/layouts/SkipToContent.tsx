@@ -6,6 +6,7 @@ export const SkipToContent = () => {
 
   const handleSkip = () => {
     const mainContent = document.getElementById('main-content');
+
     if (mainContent) {
       mainContent.focus();
     }

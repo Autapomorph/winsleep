@@ -11,6 +11,7 @@ export const groupLogEntries = (entries: LogEntry[], language: string) => {
   const dateCache = new Map<string, string>();
 
   let formatter: Intl.DateTimeFormat | null = null;
+
   try {
     formatter = new Intl.DateTimeFormat(language, {
       weekday: 'long',

@@ -31,13 +31,17 @@ export const TimerPresetSelector = ({ presets, presetsLabel, isSettingsLocked }:
       className="w-full shrink-0"
     >
       <Disclosure.Heading>
-        <TrayMenuButton className="flex justify-between" onPress={() => setIsExpanded(!isExpanded)}>
-          <span className="flex items-center gap-3">
-            <FaClock className="text-muted" />
-            <span>{presetsLabel}</span>
+        <TrayMenuButton
+          className="flex justify-between"
+          tooltipText={presetsLabel}
+          onPress={() => setIsExpanded(!isExpanded)}
+        >
+          <span className="flex min-w-0 items-center gap-3">
+            <FaClock className="shrink-0 text-muted" />
+            <span className="truncate">{presetsLabel}</span>
           </span>
 
-          <Disclosure.Indicator className="text-muted" />
+          <Disclosure.Indicator className="shrink-0 text-muted" />
         </TrayMenuButton>
       </Disclosure.Heading>
 

@@ -40,6 +40,7 @@ export const TimerTriggerLabel = ({ currentSeconds, action }: Props) => {
   const isIndefiniteMode = timerMode === 'indefinite';
 
   let triggerTimestamp: number;
+
   if (timerState !== 'idle') {
     triggerTimestamp = endTime ?? nowMs + remainingSeconds * 1000;
   } else if (timerMode === 'timestamp' && targetDateTime) {
@@ -62,6 +63,7 @@ export const TimerTriggerLabel = ({ currentSeconds, action }: Props) => {
   });
 
   let triggerAtLabel = '';
+
   if (isIndefiniteMode || (isKeepAwake && currentSeconds === 0)) {
     triggerAtLabel =
       timerState === 'running'

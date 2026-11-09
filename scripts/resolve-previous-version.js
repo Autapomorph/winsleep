@@ -34,6 +34,7 @@ function resolvePreviousVersion(releases, version) {
     // 1. Look for previous pre-release of the same base version (e.g. 1.4.0-beta.1 for 1.4.0-beta.2)
     const prevPrerelease = validReleases.find(r => {
       const base = `${r.sem.major}.${r.sem.minor}.${r.sem.patch}`;
+
       return r.sem.prerelease.length > 0 && base === targetBase && semver.lt(r.sem, target);
     });
 

@@ -12,6 +12,7 @@ vi.mock(import('./logToBackend'), async importOriginal => ({
 
 vi.mock(import('consola'), async importOriginal => {
   const original = await importOriginal();
+
   return {
     ...original,
     default: Object.assign(original.default, {

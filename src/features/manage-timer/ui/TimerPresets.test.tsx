@@ -6,6 +6,7 @@ import { TimerPresets } from './TimerPresets';
 
 vi.mock(import('@/shared/config'), async importOriginal => {
   const original = await importOriginal();
+
   return {
     ...original,
     DEFAULT_TIMER_PRESETS: [0, 60, 300],
@@ -14,6 +15,7 @@ vi.mock(import('@/shared/config'), async importOriginal => {
 
 vi.mock(import('react-i18next'), async importOriginal => {
   const { createMockUseTranslation } = await import('@/tests/i18nMock');
+
   return {
     ...(await importOriginal()),
     useTranslation: createMockUseTranslation(),

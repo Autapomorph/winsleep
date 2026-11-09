@@ -23,12 +23,14 @@ export const sendSystemNotification = async (options: Options | string): Promise
     if (permissionGranted) {
       const notificationOptions = typeof options === 'string' ? { title: options } : options;
       sendNotification(notificationOptions);
+
       return true;
     }
 
     return false;
   } catch (error) {
     logger.error(`Failed to send system notification: ${error}`);
+
     return false;
   }
 };

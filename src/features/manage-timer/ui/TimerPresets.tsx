@@ -55,6 +55,7 @@ export const TimerPresets = ({ action, isLocked = false, setExactTime, setIndefi
       } else {
         useTimerStore.getState().setIndefinite();
       }
+
       return;
     }
 

@@ -95,6 +95,7 @@ export const useWheelScroll = ({
 
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
+
     if (!el || isEditing || isProgrammaticScrollRef.current) {
       return;
     }
@@ -125,11 +126,13 @@ export const useWheelScroll = ({
         e.preventDefault();
 
         const delta = Math.sign(e.deltaY);
+
         if (delta === 0) {
           return;
         }
 
         let newValue = value + delta;
+
         if (newValue > max) {
           newValue = isInfinite ? min : max;
         } else if (newValue < min) {
@@ -143,10 +146,12 @@ export const useWheelScroll = ({
       };
 
       el.addEventListener('wheel', handleWheel, { passive: false });
+
       return () => {
         el.removeEventListener('wheel', handleWheel);
       };
     }
+
     return undefined;
   }, [containerRef, isEditing, isInfinite, max, min, onChange, scrollToValue, value]);
 
@@ -162,6 +167,7 @@ export const useWheelScroll = ({
         if (isInfinite) {
           const { scrollTop } = el;
           const totalHeight = baseItems.length * ITEM_HEIGHT;
+
           if (scrollTop < totalHeight - 1) {
             scrollToValue(value, 'instant');
           } else if (scrollTop >= totalHeight * 2 - 1) {
@@ -176,6 +182,7 @@ export const useWheelScroll = ({
         el.removeEventListener('scrollend', handleScrollEnd);
       };
     }
+
     return undefined;
   }, [baseItems.length, isInfinite, scrollRef, scrollToValue, value]);
 
@@ -187,6 +194,7 @@ export const useWheelScroll = ({
         ...baseItems.map(item => ({ item, key: `next-${item}` })),
       ];
     }
+
     return baseItems.map(item => ({ item, key: `item-${item}` }));
   }, [baseItems, isInfinite]);
 

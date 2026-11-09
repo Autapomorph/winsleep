@@ -5,6 +5,7 @@ import { useScrollSpy } from './useScrollSpy';
 let observerCallback: ((entries: Partial<IntersectionObserverEntry>[]) => void) | null = null;
 const mockIntersectionObserver = vi.fn().mockImplementation(function IntersectionObserverMock(cb) {
   observerCallback = cb;
+
   return {
     observe: vi.fn(),
     disconnect: vi.fn(),
@@ -29,6 +30,7 @@ describe('useScrollSpy', () => {
       const el = document.createElement('div');
       el.setAttribute('id', id);
       document.body.appendChild(el);
+
       return el;
     });
 

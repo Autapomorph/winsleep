@@ -74,6 +74,7 @@ export const LogViewer = () => {
     }
 
     const addedCount = await loadOlderLogs();
+
     if (addedCount > 0) {
       setFirstItemIndex(prev => prev - addedCount);
     }

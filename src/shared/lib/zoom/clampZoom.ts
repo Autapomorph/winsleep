@@ -6,6 +6,7 @@ export const clampZoom = (zoom: number): number => {
   }
 
   const rounded = Math.round(zoom * 100) / 100;
+
   return Math.min(Math.max(rounded, MIN_ZOOM), MAX_ZOOM);
 };
 

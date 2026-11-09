@@ -72,6 +72,7 @@ export const WheelPickerInput = ({
 
     if (val === '') {
       setInputValue('');
+
       return;
     }
 

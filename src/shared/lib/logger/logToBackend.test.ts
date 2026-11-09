@@ -9,6 +9,7 @@ vi.mock(import('@/shared/api'), () => ({
 
 vi.mock(import('consola'), async importOriginal => {
   const original = await importOriginal();
+
   return {
     ...original,
     consola: Object.assign(original.consola, {

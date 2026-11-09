@@ -91,6 +91,7 @@ export const CustomTimerPresetsSetting = () => {
             } else {
               updateCustomTimerPreset(editingPreset.id, { seconds });
             }
+
             setEditingPresetId(null);
           }}
         />

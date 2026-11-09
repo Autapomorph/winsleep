@@ -70,6 +70,7 @@ export const useScrollSpy = (
     // Observe all registered section elements
     ids.forEach(id => {
       const element = document.getElementById(id);
+
       if (element) {
         observer.observe(element);
       }
@@ -81,6 +82,7 @@ export const useScrollSpy = (
      * cancel any manual "locks" so the UI becomes responsive to manual input again.
      */
     const scrollContainer = root?.current ?? window;
+
     const cancelManual = () => {
       manualSelectionRef.current = null;
 
@@ -122,6 +124,7 @@ export const useScrollSpy = (
 
     const onScrollEnd = () => {
       manualSelectionRef.current = null;
+
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }

@@ -14,11 +14,13 @@ export const useUpdater = () => {
     if (config.isPortable && (status === 'available' || status === 'readyToInstall')) {
       await openExternalLink(updateService.getReleasesUrl());
       showInfoToast(t($ => $.titlebar.updateBtn.notifications.portableDownload));
+
       return;
     }
 
     if (status === 'available') {
       await installUpdate();
+
       return;
     }
 
@@ -41,6 +43,7 @@ export const useUpdater = () => {
     if (updateStatus === 'error') {
       logger.error('Manual update check failed');
       showErrorToast(t($ => $.titlebar.updateBtn.notifications.checkFailed));
+
       return;
     }
 

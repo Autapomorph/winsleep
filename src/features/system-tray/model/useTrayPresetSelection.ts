@@ -20,6 +20,7 @@ export const useTrayPresetSelection = () => {
 
       if (timerAction === 'keep-awake' && seconds === 0) {
         setIndefinite();
+
         return;
       }
 

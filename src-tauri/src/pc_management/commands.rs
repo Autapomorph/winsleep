@@ -2,9 +2,7 @@ use std::process::Command;
 use tauri::State;
 use windows_sys::Win32::Foundation::GetLastError;
 use windows_sys::Win32::System::Power::SetSuspendState;
-use windows_sys::Win32::System::Shutdown::{
-    ExitWindowsEx, LockWorkStation, EWX_FORCE, EWX_LOGOFF,
-};
+use windows_sys::Win32::System::Shutdown::{ExitWindowsEx, LockWorkStation, EWX_FORCE, EWX_LOGOFF};
 
 use crate::pc_management::KeepAwakeManager;
 
@@ -58,7 +56,9 @@ pub fn get_shutdown_exe_path() -> std::path::PathBuf {
     let sys_root = std::env::var_os("SystemRoot")
         .or_else(|| std::env::var_os("windir"))
         .unwrap_or_else(|| "C:\\Windows".into());
-    std::path::Path::new(&sys_root).join("System32").join("shutdown.exe")
+    std::path::Path::new(&sys_root)
+        .join("System32")
+        .join("shutdown.exe")
 }
 
 fn create_shutdown_command() -> Command {
@@ -178,5 +178,3 @@ mod tests {
         assert!(path.is_absolute());
     }
 }
-
-

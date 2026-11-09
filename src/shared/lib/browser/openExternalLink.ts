@@ -10,6 +10,7 @@ export const openExternalLink = async (url: string) => {
 
     if (!ALLOWED_PROTOCOLS.has(parsedUrl.protocol)) {
       logger.warn(`Blocked attempt to open unsafe URL protocol: ${parsedUrl.protocol} (${url})`);
+
       return;
     }
 

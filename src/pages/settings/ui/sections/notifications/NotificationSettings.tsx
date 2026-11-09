@@ -80,6 +80,7 @@ export const NotificationSettings = () => {
             } else {
               updateNotificationTime(editingNotificationTime.id, seconds);
             }
+
             setEditingNotificationTimeId(null);
           }}
         />

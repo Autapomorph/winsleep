@@ -11,6 +11,7 @@ vi.mock(import('@/shared/api'), () => ({
   typedInvoke: vi.fn().mockResolvedValue(undefined),
   typedListen: vi.fn((event, callback) => {
     mockListeners[event] = callback;
+
     return Promise.resolve(() => {
       delete mockListeners[event];
     });

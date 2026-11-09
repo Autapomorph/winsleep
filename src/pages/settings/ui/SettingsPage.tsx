@@ -28,6 +28,7 @@ export const SettingsPage = () => {
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
+
     if (element) {
       setManualActiveId(id);
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });

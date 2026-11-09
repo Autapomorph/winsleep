@@ -18,6 +18,7 @@ export const useIntersectionObserver = (
     }
 
     const element = targetRef.current;
+
     if (!element) {
       return undefined;
     }

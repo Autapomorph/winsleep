@@ -13,6 +13,7 @@ const mockExecute = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('@/features/manage-timer', async importOriginal => {
   const actual = await importOriginal<typeof import('@/features/manage-timer')>();
+
   return {
     ...actual,
     useTimerExecution: () => ({ execute: mockExecute }),

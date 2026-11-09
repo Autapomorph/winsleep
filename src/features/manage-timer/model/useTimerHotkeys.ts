@@ -36,6 +36,7 @@ export const useTimerHotkeys = ({
 
     if (timerState === 'idle') {
       start();
+
       return;
     }
 
@@ -45,6 +46,7 @@ export const useTimerHotkeys = ({
       }
 
       pause();
+
       return;
     }
 

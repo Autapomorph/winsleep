@@ -223,8 +223,14 @@ mod tests {
         let data2 = br#"{"selectedAction":"sleep"}"#;
         let data3 = br#"{"selectedAction":"hibernate"}"#;
 
-        assert_eq!(AppSettings::calculate_hash(data1), AppSettings::calculate_hash(data2));
-        assert_ne!(AppSettings::calculate_hash(data1), AppSettings::calculate_hash(data3));
+        assert_eq!(
+            AppSettings::calculate_hash(data1),
+            AppSettings::calculate_hash(data2)
+        );
+        assert_ne!(
+            AppSettings::calculate_hash(data1),
+            AppSettings::calculate_hash(data3)
+        );
     }
 
     #[test]

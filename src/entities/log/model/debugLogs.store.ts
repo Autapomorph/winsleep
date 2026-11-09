@@ -168,6 +168,7 @@ const debugLogsSlice: StateCreator<
           false,
           'debugLogs/loadOlderLogs/settled',
         );
+
         return 0;
       }
 
@@ -191,6 +192,7 @@ const debugLogsSlice: StateCreator<
     } catch (err) {
       logger.error(`Failed to load older logs: ${err}`);
       set({ isLoadingOlder: false }, false, 'debugLogs/loadOlderLogs/rejected');
+
       return 0;
     }
   },
