@@ -35,7 +35,7 @@ export class ProxyUpdateProvider implements UpdateProvider {
   async fetchReleaseNotes(version: string): Promise<UnifiedRelease | null> {
     try {
       const cleanVersion = version.replace(/^v/, '');
-      const response = await fetch(`${PROXY_UPDATER_URL}/api/release-notes/${cleanVersion}`, {
+      const response = await fetch(`${PROXY_UPDATER_URL}/api/v1/release-notes/${cleanVersion}`, {
         cache: 'no-cache',
         headers: this.getHeaders(),
       });
@@ -62,7 +62,7 @@ export class ProxyUpdateProvider implements UpdateProvider {
 
   async fetchAvailableVersions(): Promise<string[] | null> {
     try {
-      const response = await fetch(`${PROXY_UPDATER_URL}/api/release-notes`, {
+      const response = await fetch(`${PROXY_UPDATER_URL}/api/v1/release-notes`, {
         cache: 'no-cache',
         headers: this.getHeaders(),
       });
