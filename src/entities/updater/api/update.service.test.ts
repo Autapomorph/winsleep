@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from 'vitest';
 
+import { GatewayUpdateProvider } from './providers/gateway.provider';
 import { GitHubUpdateProvider } from './providers/github.provider';
-import { ProxyUpdateProvider } from './providers/proxy.provider';
 import { type UpdateProvider } from './update.interface';
 import { UpdateService } from './update.service';
 
@@ -143,7 +143,7 @@ describe('UpdateService', () => {
   });
 });
 
-describe('ProxyUpdateProvider', () => {
+describe('GatewayUpdateProvider', () => {
   test('fetches and maps release notes correctly', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(
@@ -157,7 +157,7 @@ describe('ProxyUpdateProvider', () => {
       ),
     );
 
-    const provider = new ProxyUpdateProvider();
+    const provider = new GatewayUpdateProvider();
     const result = await provider.fetchReleaseNotes('1.3.0');
 
     expect(fetchSpy).toHaveBeenCalledWith(
@@ -180,7 +180,7 @@ describe('ProxyUpdateProvider', () => {
   test('returns null when proxy returns non-ok status', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 404 }));
 
-    const provider = new ProxyUpdateProvider();
+    const provider = new GatewayUpdateProvider();
     const result = await provider.fetchReleaseNotes('unknown');
 
     expect(result).toBeNull();
@@ -191,7 +191,7 @@ describe('ProxyUpdateProvider', () => {
       new Response(JSON.stringify({ versions: ['1.3.0', '1.2.0'] }), { status: 200 }),
     );
 
-    const provider = new ProxyUpdateProvider();
+    const provider = new GatewayUpdateProvider();
     const result = await provider.fetchAvailableVersions();
 
     expect(result).toEqual(['1.3.0', '1.2.0']);

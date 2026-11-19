@@ -1,14 +1,14 @@
 import { RELEASES_PAGE_URL } from '@/shared/config';
 import { logger } from '@/shared/lib';
+import { GatewayUpdateProvider } from './providers/gateway.provider';
 import { GitHubUpdateProvider } from './providers/github.provider';
-import { ProxyUpdateProvider } from './providers/proxy.provider';
 import { type UnifiedRelease, type UpdateProvider } from './update.interface';
 
 export class UpdateService {
   private readonly providers: UpdateProvider[];
 
   constructor(
-    providers: UpdateProvider[] = [new ProxyUpdateProvider(), new GitHubUpdateProvider()],
+    providers: UpdateProvider[] = [new GatewayUpdateProvider(), new GitHubUpdateProvider()],
   ) {
     this.providers = providers;
   }

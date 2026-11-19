@@ -144,13 +144,11 @@ jobs:
       - name: Create .env.production file
         shell: pwsh
         run: |
-          # Example:
-          # @"
-          # KEY=$env:KEY
-          # "@ | Set-Content .env.production
-          New-Item -Path .env.production -ItemType File -Force
-        # env:
-        # KEY: ${{ secrets.KEY }}
+          $lines = @()
+          if ($env:VITE_GATEWAY_URL) { $lines += "VITE_GATEWAY_URL=$env:VITE_GATEWAY_URL" }
+          $lines | Set-Content .env.production
+        env:
+          VITE_GATEWAY_URL: ${{ secrets.VITE_GATEWAY_URL }}
 
       - name: Build and package Tauri app (${{ matrix.arch }})
         shell: pwsh

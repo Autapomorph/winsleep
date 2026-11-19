@@ -6,5 +6,7 @@ export const GITHUB_API_REPO_URL = `https://api.github.com/repos/${GITHUB_REPO_I
 
 export const RELEASES_PAGE_URL = `${GITHUB_REPO_URL}/releases`;
 
-export const PROXY_UPDATER_URL =
-  config.PROXY_UPDATER_URL ?? 'https://winsleep-proxy-updater.vercel.app';
+export const GATEWAY_URL = config.GATEWAY_URL ?? undefined;
+export const GATEWAY_RELEASE_NOTES_URL = GATEWAY_URL
+  ? `${GATEWAY_URL}/api/v1/release-notes`
+  : undefined;
