@@ -2,6 +2,10 @@ import '@testing-library/jest-dom/vitest';
 import { clearMocks, mockIPC, mockWindows } from '@tauri-apps/api/mocks';
 import { afterEach, beforeEach, vi } from 'vitest';
 
+import { initializeI18n } from '@/shared/config/i18n';
+
+initializeI18n();
+
 vi.mock('@/shared/lib/logger/logger', () => ({
   logger: {
     trace: vi.fn(),
